@@ -16,14 +16,121 @@ let lokasiChart = null;
 let locationWatcher = null;
 let currentCoordinates = null;
 
+// Pagination & Filter State
+let currentSearchTerm = '';
+let currentFilterKondisi = '';
+let currentFilterJenis = '';
+let currentFilterLokasi = '';
+let currentPageNum = 1;
+let itemsPerPage = 10;
+let totalItems = 0;
+let searchDebounceTimer = null;
+
+// Debounce Search
+function debounceSearch(term) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(async () => {
+        currentSearchTerm = term;
+        currentPageNum = 1;
+        if (currentPage === 'laporan') {
+            await loadAndRenderAssets();
+        }
+    }, 300);
+}
+
+// Build Query Params for API
+function buildAssetQueryParams() {
+    const params = {};
+    if (currentSearchTerm) params.search = currentSearchTerm;
+    if (currentFilterKondisi) params.kondisi = currentFilterKondisi;
+    if (currentFilterJenis) params.jenis = currentFilterJenis;
+    if (currentFilterLokasi) params.lokasi = currentFilterLokasi;
+    params.page = currentPageNum;
+    params.per_page = itemsPerPage;
+    return params;
+}
+
+// Load and Render Assets with Pagination
+async function loadAndRenderAssets() {
+    try {
+        const params = buildAssetQueryParams();
+        if (window.assetsAPI?.fetchAssets) {
+            const response = await window.assetsAPI.fetchAssets(params);
+            // Expect API to return { data: [...], pagination: { total, page, per_page } }
+            if (response?.data) {
+                assets = Array.isArray(response.data) ? response.data : [];
+                totalItems = response.pagination?.total || assets.length;
+            } else if (Array.isArray(response)) {
+                assets = response;
+            }
+        }
+    } catch (e) {
+        console.warn('API fetchAssets gagal, fallback localStorage', e);
+    }
+    renderLaporan();
+    renderPagination();
+}
+
+// Render Pagination Controls
+function renderPagination() {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const paginationContainer = document.getElementById('paginationControls');
+    
+    if (!paginationContainer || totalPages <= 1) {
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let html = '<nav aria-label="Page navigation"><ul class="pagination justify-content-center">';
+    
+    // Previous button
+    if (currentPageNum > 1) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${currentPageNum - 1})">Sebelumnya</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">Sebelumnya</span></li>`;
+    }
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPageNum) {
+            html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${i})">${i}</a></li>`;
+        }
+    }
+    
+    // Next button
+    if (currentPageNum < totalPages) {
+        html += `<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${currentPageNum + 1})">Berikutnya</a></li>`;
+    } else {
+        html += `<li class="page-item disabled"><span class="page-link">Berikutnya</span></li>`;
+    }
+    
+    html += '</ul></nav>';
+    paginationContainer.innerHTML = html;
+}
+
+// Go to Page
+async function goToPage(pageNum) {
+    currentPageNum = pageNum;
+    await loadAndRenderAssets();
+    window.scrollTo(0, 0);
+}
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async function() {
+    const authenticated = checkLogin();
+    setupEventListeners();
+
+    if (!authenticated) {
+        return;
+    }
+
     loadUsers();
     loadNotifications();
     await loadAssets();
-    checkLogin();
     initSidebar();
-    setupEventListeners();
+    showMainApp();
 });
 
 // Load Users from LocalStorage
@@ -52,12 +159,12 @@ function checkLogin() {
         const storedUser = window.auth.getCurrentUser();
         if (window.auth.isAuthenticated() && storedUser) {
             currentUser = storedUser;
-            showMainApp();
-            return;
+            return true;
         }
     }
 
     showLoginPage();
+    return false;
 }
 
 // Show Login Page
@@ -228,7 +335,8 @@ function showPage(page) {
             initScanPage();
             break;
         case 'laporan':
-            renderLaporan();
+            currentPageNum = 1;
+            loadAndRenderAssets();
             break;
         case 'pengaturan':
             renderUserTable();
@@ -419,7 +527,7 @@ function renderLaporan() {
     if (tbody) {
         tbody.innerHTML = assets.map((asset, index) => `
             <tr>
-                <td>${index + 1}</td>
+                <td>${(currentPageNum - 1) * itemsPerPage + index + 1}</td>
                 <td><strong>${asset.kodeAset}</strong></td>
                 <td>${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'}</td>
                 <td>${asset.namaAset}</td>
@@ -454,31 +562,39 @@ function renderUserTable() {
 
 // Filter Assets
 function filterAssets(searchTerm) {
-    const term = searchTerm.toLowerCase();
-    const filtered = assets.filter(a => 
-        a.kodeAset.toLowerCase().includes(term) ||
-        a.namaAset.toLowerCase().includes(term) ||
-        a.merkType.toLowerCase().includes(term) ||
-        a.lokasi.toLowerCase().includes(term)
-    );
-    
-    const tbody = document.querySelector('#laporanTable tbody');
-    if (tbody) {
-        tbody.innerHTML = filtered.map((asset, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td><strong>${asset.kodeAset}</strong></td>
-                <td>${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'}</td>
-                <td>${asset.namaAset}</td>
-                <td>${asset.merkType}</td>
-                <td>${asset.serialNumber || '-'}</td>
-                <td>${asset.lokasi}</td>
-                <td>${asset.koordinat ? `<small>${asset.koordinat.lat.toFixed(4)}, ${asset.koordinat.lng.toFixed(4)}</small>` : '-'}</td>
-                <td><span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span></td>
-                <td>${asset.tglPerolehan ? formatDate(asset.tglPerolehan) : '-'}</td>
-            </tr>
-        `).join('');
-    }
+    debounceSearch(searchTerm);
+}
+
+// Filter by Kondisi
+function setFilterKondisi(kondisi) {
+    currentFilterKondisi = kondisi;
+    currentPageNum = 1;
+    loadAndRenderAssets();
+}
+
+// Filter by Jenis
+function setFilterJenis(jenis) {
+    currentFilterJenis = jenis;
+    currentPageNum = 1;
+    loadAndRenderAssets();
+}
+
+// Filter by Lokasi
+function setFilterLokasi(lokasi) {
+    currentFilterLokasi = lokasi;
+    currentPageNum = 1;
+    loadAndRenderAssets();
+}
+
+// Clear All Filters
+function clearFilters() {
+    currentSearchTerm = '';
+    currentFilterKondisi = '';
+    currentFilterJenis = '';
+    currentFilterLokasi = '';
+    currentPageNum = 1;
+    document.getElementById('searchInput').value = '';
+    loadAndRenderAssets();
 }
 
 // Show Modal
@@ -1225,6 +1341,11 @@ window.manualScan = manualScan;
 window.exportExcel = exportExcel;
 window.exportPDF = exportPDF;
 window.filterAssets = filterAssets;
+window.setFilterKondisi = setFilterKondisi;
+window.setFilterJenis = setFilterJenis;
+window.setFilterLokasi = setFilterLokasi;
+window.clearFilters = clearFilters;
+window.goToPage = goToPage;
 window.showUserModal = showUserModal;
 window.saveUser = saveUser;
 window.deleteUser = deleteUser;

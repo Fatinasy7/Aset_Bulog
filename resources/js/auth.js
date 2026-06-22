@@ -1,16 +1,19 @@
 import api from './api.js';
 
 // Authentication helper for frontend
-export async function login(username, password) {
+export async function login(username, password, role) {
   try {
-    const res = await api.post('/auth/login', { username, password });
+    const res = await api.post('/auth/login', { username, password, role });
 
     // common token locations
     const token = res.data?.access_token || res.data?.token || res.data?.data?.token;
-    const user = res.data?.user || res.data?.data?.user || res.data?.data || res.data;
+    let user = res.data?.user || res.data?.data?.user || res.data?.data || res.data;
 
     if (token) localStorage.setItem('auth_token', token);
-    if (user && typeof user === 'object') localStorage.setItem('currentUser', JSON.stringify(user));
+    if (user && typeof user === 'object') {
+      if (!user.role && role) user.role = role;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    }
 
     return res;
   } catch (err) {
@@ -29,7 +32,7 @@ export async function logout() {
     if (typeof window.showLoginPage === 'function') {
       window.showLoginPage();
     } else {
-      window.location.href = '/login';
+      window.location.reload();
     }
   }
 }
