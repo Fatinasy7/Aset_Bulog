@@ -300,6 +300,7 @@ function setupEventListeners() {
 
 // Show Page
 function showPage(page) {
+    stopScanPage();
     currentPage = page;
     
     // Hide all pages
@@ -885,12 +886,16 @@ async function manualScan() {
     }
 
     let asset = null;
-    if (window.assetsAPI?.getAsset) {
+    if (window.assetsAPI?.scanAsset) {
         try {
-            asset = await window.assetsAPI.getAsset(code);
+            asset = await window.assetsAPI.scanAsset(code, currentCoordinates?.lat || null, currentCoordinates?.lng || null);
         } catch (e) {
             console.warn('API manualScan gagal', e);
         }
+    }
+
+    if (!asset && window.assetsAPI?.getAsset) {
+        asset = await window.assetsAPI.getAsset(code);
     }
 
     if (!asset) {

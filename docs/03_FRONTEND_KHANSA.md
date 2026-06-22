@@ -39,12 +39,12 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 ### 🔷 MINGGU 1 — Setup Arsitektur & Autentikasi
 
 #### Setup HTTP Client & Struktur File JS
-- [ ] Inisiasi struktur folder JavaScript (lihat referensi di bawah)
-- [ ] Install/import **Axios** via CDN atau npm:
+- [x] Inisiasi struktur folder JavaScript (lihat referensi di bawah)
+- [x] Install/import **Axios** via CDN atau npm:
   ```html
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   ```
-- [ ] Buat **`api.js`** — file konfigurasi base URL dan interceptor:
+- [x] Buat **`api.js`** — file konfigurasi base URL dan interceptor:
   ```javascript
   // resources/js/api.js
   const api = axios.create({
@@ -74,10 +74,10 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 - [ ] **Branch:** `feature/frontend-setup`
 
 #### Integrasi Autentikasi (FR-01, FR-02, FR-03, FR-04)
-- [ ] Hubungkan form login (buatan Wahyu) ke `POST /api/auth/login`
-- [ ] Simpan token JWT / session ID di `localStorage` atau `sessionStorage` setelah login berhasil
-- [ ] Simpan data user (nama, role) di `localStorage` untuk keperluan tampilan
-- [ ] Implementasi **Route Guarding:**
+- [x] Hubungkan form login (buatan Wahyu) ke `POST /api/auth/login`
+- [x] Simpan token JWT / session ID di `localStorage` atau `sessionStorage` setelah login berhasil
+- [x] Simpan data user (nama, role) di `localStorage` untuk keperluan tampilan
+- [x] Implementasi **Route Guarding:**
   ```javascript
   // Cek di awal setiap halaman (kecuali login)
   function guardRoute() {
@@ -87,7 +87,7 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
   guardRoute();
   ```
 - [ ] Sembunyikan/tampilkan elemen UI berdasarkan **role** (Admin IT vs User/PIC vs Manajemen)
-- [ ] Hubungkan tombol Logout ke `POST /api/auth/logout` + hapus token dari storage
+- [x] Hubungkan tombol Logout ke `POST /api/auth/logout` + hapus token dari storage
 - [ ] **Branch:** `feature/auth-integration`
 
 ---
@@ -137,7 +137,7 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
   <div id="qr-reader" style="width:300px"></div>
   <div id="qr-reader-results"></div>
   ```
-- [ ] Implementasi inisiasi kamera dan scan:
+- [x] Implementasi inisiasi kamera dan scan:
   ```javascript
   const html5QrCode = new Html5Qrcode("qr-reader");
 
@@ -151,14 +151,14 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
     (errorMessage) => { /* abaikan error sementara */ }
   );
   ```
-- [ ] Setelah scan berhasil, **HENTIKAN kamera** untuk hemat baterai:
+- [x] Setelah scan berhasil, **HENTIKAN kamera** untuk hemat baterai:
   ```javascript
   html5QrCode.stop().then(() => console.log('Kamera dimatikan'));
   ```
 - [ ] **Branch:** `feature/qr-scanner`
 
 #### Implementasi Geotagging Bersamaan Saat Scan (FR-16, FR-20)
-- [ ] Setelah QR Code terbaca, langsung ambil koordinat lokasi:
+- [x] Setelah QR Code terbaca, langsung ambil koordinat lokasi:
   ```javascript
   function onScanSuccess(assetId) {
     if (!navigator.geolocation) {

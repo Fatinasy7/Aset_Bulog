@@ -35,9 +35,16 @@ class AssetController extends Controller
         return response()->json($asset, Response::HTTP_CREATED);
     }
 
-    public function show(Asset $asset)
+    protected function resolveAsset($assetParam)
     {
-        return $asset;
+        return Asset::where('id', $assetParam)
+            ->orWhere('kode_aset', $assetParam)
+            ->firstOrFail();
+    }
+
+    public function show($asset)
+    {
+        return $this->resolveAsset($asset);
     }
 
     public function update(Request $request, Asset $asset)
@@ -69,8 +76,31 @@ class AssetController extends Controller
         return response()->json([ 'message' => 'Asset deleted successfully.' ]);
     }
 
-    public function qrcode(Asset $asset)
+    public function scan(Request $request, $asset)
     {
+        $asset = $this->resolveAsset($asset);
+
+        $validated = $request->validate([
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'scanned_at' => 'nullable|date_format:Y-m-d\TH:i:sP'
+        ]);
+
+        if (isset($validated['latitude'])) {
+            $asset->koordinat_lat = $validated['latitude'];
+        }
+        if (isset($validated['longitude'])) {
+            $asset->koordinat_lng = $validated['longitude'];
+        }
+        $asset->save();
+
+        return response()->json($asset);
+    }
+
+    public function qrcode($asset)
+    {
+        $asset = $this->resolveAsset($asset);
+
         $payload = [
             'id' => $asset->id,
             'kode_aset' => $asset->kode_aset,
