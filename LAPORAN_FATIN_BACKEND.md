@@ -21,6 +21,10 @@
 | Asset audit trail model | `app/Models/AssetHistory.php` | Model untuk merekam perubahan asset |
 | Asset audit/migration | `database/migrations/2026_06_22_010000_add_soft_deletes_and_asset_history.php` | Menambahkan soft deletes ke `assets` dan tabel `asset_histories` |
 | Asset controller enhancements | `app/Http/Controllers/AssetController.php` | Filter assets, pencatatan audit trail untuk create/update/delete |
+| PIC list | `app/Http/Controllers/PicController.php` | Endpoint `GET /api/pics` untuk daftar PIC |
+| PIC CRUD | `app/Http/Controllers/PicController.php` | Endpoint `POST /api/pics`, `PUT /api/pics/{pic}`, `DELETE /api/pics/{pic}` |
+| PIC assignment | `app/Http/Controllers/PicController.php` | Endpoint `POST /api/assets/{asset}/assign-pic` dengan validasi BR-03 |
+| PIC migrations | `database/migrations/2026_06_22_020000_create_pics_table.php` and `2026_06_22_030000_create_pic_histories_table.php` | Buat tabel PIC dan riwayat pergantian PIC |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`

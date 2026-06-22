@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\AssetHistory;
+use App\Models\Pic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -24,6 +25,7 @@ class Asset extends Model
         'harga',
         'keterangan',
         'jenis',
+        'pic_id',
     ];
 
     protected $casts = [
@@ -36,5 +38,10 @@ class Asset extends Model
     public function histories()
     {
         return $this->hasMany(AssetHistory::class);
+    }
+
+    public function pic()
+    {
+        return $this->belongsTo(Pic::class);
     }
 }

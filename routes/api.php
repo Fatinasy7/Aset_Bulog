@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PicController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,9 +30,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('assets/{asset}', [AssetController::class, 'show']);
     Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
 
+    Route::get('pics', [PicController::class, 'index']);
     Route::middleware('role:admin_it')->group(function () {
         Route::post('assets', [AssetController::class, 'store']);
         Route::put('assets/{asset}', [AssetController::class, 'update']);
         Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
+
+        Route::post('pics', [PicController::class, 'store']);
+        Route::put('pics/{pic}', [PicController::class, 'update']);
+        Route::delete('pics/{pic}', [PicController::class, 'destroy']);
+        Route::post('assets/{asset}/assign-pic', [PicController::class, 'assignPic']);
     });
 });
