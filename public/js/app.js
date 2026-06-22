@@ -17,10 +17,10 @@ let locationWatcher = null;
 let currentCoordinates = null;
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     loadUsers();
     loadNotifications();
-    loadAssets();
+    await loadAssets();
     checkLogin();
     initSidebar();
     setupEventListeners();
@@ -48,13 +48,16 @@ function saveUsers() {
 
 // Check Login Status
 function checkLogin() {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-        showMainApp();
-    } else {
-        showLoginPage();
+    if (window.auth?.isAuthenticated && window.auth?.getCurrentUser) {
+        const storedUser = window.auth.getCurrentUser();
+        if (window.auth.isAuthenticated() && storedUser) {
+            currentUser = storedUser;
+            showMainApp();
+            return;
+        }
     }
+
+    showLoginPage();
 }
 
 // Show Login Page
@@ -95,30 +98,6 @@ function applyRoleAccess() {
         adminOnlyElements.forEach(el => el.classList.add('d-none'));
         picOnlyElements.forEach(el => el.classList.remove('d-none'));
     }
-}
-
-// Login Function
-function login(username, password, role) {
-    const user = users.find(u => u.username === username && u.password === password && u.role === role);
-    
-    if (user) {
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        showMainApp();
-        showToast('Login berhasil!', 'success');
-    } else {
-        showToast('Username, password, atau role salah!', 'error');
-    }
-}
-
-// Logout Function
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('currentUser');
-    if (locationWatcher) {
-        navigator.geolocation.clearWatch(locationWatcher);
-    }
-    showLoginPage();
 }
 
 // Initialize Location Tracking
@@ -195,18 +174,6 @@ function initSidebar() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Login form
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            const role = document.getElementById('loginRole').value;
-            login(username, password, role);
-        });
-    }
-    
     // Search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -231,6 +198,11 @@ function showPage(page) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.add('d-none'));
     
+    // Guard page access
+    if (window.auth?.guardRoute && !window.auth.guardRoute()) {
+        return;
+    }
+
     // Show selected page
     const pageElement = document.getElementById(page + 'Page');
     if (pageElement) {
@@ -252,6 +224,9 @@ function showPage(page) {
         case 'notifikasi':
             renderNotifications();
             break;
+        case 'scan':
+            initScanPage();
+            break;
         case 'laporan':
             renderLaporan();
             break;
@@ -260,6 +235,74 @@ function showPage(page) {
             break;
     }
 }
+
+function initScanPage() {
+    const resultContainer = document.getElementById('scanResult');
+    resultContainer.innerHTML = '<p class="text-muted">Scan QR Code untuk melihat detail aset</p>';
+
+    if (window.qrScanner?.startQrScanner) {
+        window.qrScanner.startQrScanner('qr-reader', onScanSuccess, onScanError, {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        });
+    } else {
+        resultContainer.innerHTML = '<div class="alert alert-warning">QR scanner tidak tersedia. Pastikan library HTML5-QRCode dimuat.</div>';
+    }
+}
+
+function stopScanPage() {
+    if (window.qrScanner?.stopQrScanner) {
+        window.qrScanner.stopQrScanner();
+    }
+}
+
+function onScanSuccess(decodedText, coords) {
+    const assetId = parseScannedCode(decodedText);
+    if (!assetId) {
+        onScanError(new Error('Kode QR tidak valid'));
+        return;
+    }
+
+    if (window.assetsAPI?.scanAsset) {
+        window.assetsAPI.scanAsset(assetId, coords?.latitude, coords?.longitude)
+            .then(asset => {
+                if (asset) {
+                    displayScanResult(asset);
+                } else {
+                    onScanError(new Error('Aset tidak ditemukan'));
+                }
+            })
+            .catch(err => {
+                console.warn('scanAsset API gagal', err);
+                onScanError(err);
+            });
+    } else {
+        const asset = assets.find(a => a.kodeAset === assetId || a.id === assetId);
+        if (asset) {
+            displayScanResult(asset);
+        } else {
+            onScanError(new Error('Aset tidak ditemukan'));
+        }
+    }
+}
+
+function onScanError(error) {
+    document.getElementById('scanResult').innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> ${error.message || 'Gagal memindai QR Code.'}
+        </div>
+    `;
+}
+
+function parseScannedCode(decodedText) {
+    try {
+        const payload = JSON.parse(decodedText);
+        return payload.id || payload.kode || payload.code || payload.asset_id || payload.assetId || null;
+    } catch (e) {
+        return decodedText;
+    }
+}
+
 
 // Update Dashboard
 function updateDashboard() {
@@ -517,7 +560,7 @@ function resetForm() {
 }
 
 // Save Asset
-function saveAsset() {
+async function saveAsset() {
     const form = document.getElementById('assetForm');
     if (!form.checkValidity()) {
         form.reportValidity();
@@ -525,7 +568,7 @@ function saveAsset() {
     }
     
     const assetType = document.getElementById('assetType').value;
-    const assetData = {
+    let assetData = {
         id: editingId || generateId(),
         kodeAset: document.getElementById('kodeAset').value,
         namaAset: document.getElementById('namaAset').value,
@@ -541,11 +584,21 @@ function saveAsset() {
         updatedAt: new Date().toISOString()
     };
     
+    try {
+        if (editingId && window.assetsAPI?.updateAsset) {
+            assetData = await window.assetsAPI.updateAsset(editingId, assetData) || assetData;
+        } else if (!editingId && window.assetsAPI?.createAsset) {
+            assetData = await window.assetsAPI.createAsset(assetData) || assetData;
+        }
+    } catch (error) {
+        console.warn('API saveAsset gagal, menggunakan local storage', error);
+    }
+    
     if (editingId) {
         const index = assets.findIndex(a => a.id === editingId);
-        assets[index] = { ...assets[index], ...assetData };
+        if (index !== -1) assets[index] = { ...assets[index], ...assetData };
     } else {
-        assetData.createdAt = new Date().toISOString();
+        assetData.createdAt = assetData.createdAt || new Date().toISOString();
         assets.push(assetData);
     }
     
@@ -629,9 +682,17 @@ function editAsset(id) {
 }
 
 // Delete Asset
-function deleteAsset(id) {
+async function deleteAsset(id) {
     const asset = assets.find(a => a.id === id);
     if (confirm('Apakah Anda yakin ingin menghapus aset ini?')) {
+        try {
+            if (window.assetsAPI?.deleteAsset) {
+                await window.assetsAPI.deleteAsset(id);
+            }
+        } catch (error) {
+            console.warn('API deleteAsset gagal, hapus lokal tetap dilakukan', error);
+        }
+
         assets = assets.filter(a => a.id !== id);
         saveAssets();
         if (currentUser && currentUser.role === 'pic' && asset) {
@@ -700,14 +761,26 @@ function printQRCode() {
 }
 
 // Manual Scan
-function manualScan() {
+async function manualScan() {
     const code = document.getElementById('manualCodeInput').value.trim();
     if (!code) {
         showToast('Masukkan kode aset terlebih dahulu!', 'warning');
         return;
     }
-    
-    const asset = assets.find(a => a.kodeAset === code || a.id === code);
+
+    let asset = null;
+    if (window.assetsAPI?.getAsset) {
+        try {
+            asset = await window.assetsAPI.getAsset(code);
+        } catch (e) {
+            console.warn('API manualScan gagal', e);
+        }
+    }
+
+    if (!asset) {
+        asset = assets.find(a => a.kodeAset === code || a.id === code);
+    }
+
     if (asset) {
         displayScanResult(asset);
     } else {
@@ -1050,77 +1123,87 @@ function initDefaultNotifications() {
     });
 }
 
-// Load Assets from LocalStorage
-function loadAssets() {
-    const stored = localStorage.getItem('asetKantor');
-    if (stored) {
-        assets = JSON.parse(stored);
-    } else {
-        // Sample data for demonstration
-        assets = [
-            {
-                id: 'LPT001',
-                kodeAset: 'LPT-001',
-                namaAset: 'MacBook Pro 14"',
-                merkType: 'Apple MacBook Pro M2',
-                serialNumber: 'C02XG0KDJGH5',
-                lokasi: 'Ruang Direksi',
-                kondisi: 'Baik',
-                tglPerolehan: '2024-01-15',
-                harga: 25000000,
-                keterangan: 'Untuk Direktur Utama',
-                jenis: 'laptop',
-                koordinat: { lat: -6.200000, lng: 106.816666 },
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: 'LPT002',
-                kodeAset: 'LPT-002',
-                namaAset: 'ThinkPad X1 Carbon',
-                merkType: 'Lenovo ThinkPad X1 Carbon Gen 11',
-                serialNumber: 'PF2K4R8J',
-                lokasi: 'Ruang IT',
-                kondisi: 'Baik',
-                tglPerolehan: '2024-02-20',
-                harga: 18000000,
-                keterangan: 'Untuk Staff IT',
-                jenis: 'laptop',
-                koordinat: { lat: -6.200000, lng: 106.816666 },
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: 'PRT001',
-                kodeAset: 'PRT-001',
-                namaAset: 'LaserJet Pro',
-                merkType: 'HP LaserJet Pro M404n',
-                serialNumber: 'PHC2345678',
-                lokasi: 'Ruang Rapat',
-                kondisi: 'Baik',
-                tglPerolehan: '2023-06-10',
-                harga: 4500000,
-                keterangan: 'Ruang Rapat Lantai 2',
-                jenis: 'printer',
-                koordinat: { lat: -6.200000, lng: 106.816666 },
-                createdAt: new Date().toISOString()
-            },
-            {
-                id: 'PRT002',
-                kodeAset: 'PRT-002',
-                namaAset: 'OfficeJet Pro',
-                merkType: 'HP OfficeJet Pro 9015e',
-                serialNumber: 'TH53R12345',
-                lokasi: 'Ruang HRD',
-                kondisi: 'Rusak Ringan',
-                tglPerolehan: '2023-08-15',
-                harga: 5500000,
-                keterangan: 'Perlu penggantian cartridge',
-                jenis: 'printer',
-                koordinat: { lat: -6.200000, lng: 106.816666 },
-                createdAt: new Date().toISOString()
-            }
-        ];
-        saveAssets();
+// Load Assets from LocalStorage or API
+async function loadAssets() {
+    if (window.assetsAPI?.fetchAssets) {
+        try {
+            assets = await window.assetsAPI.fetchAssets();
+        } catch (e) {
+            console.warn('Gagal fetch assets dari API, fallback localStorage', e);
+        }
     }
+
+    if (!assets || assets.length === 0) {
+        const stored = localStorage.getItem('asetKantor');
+        if (stored) {
+            assets = JSON.parse(stored);
+        } else {
+            assets = [
+                {
+                    id: 'LPT001',
+                    kodeAset: 'LPT-001',
+                    namaAset: 'MacBook Pro 14"',
+                    merkType: 'Apple MacBook Pro M2',
+                    serialNumber: 'C02XG0KDJGH5',
+                    lokasi: 'Ruang Direksi',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2024-01-15',
+                    harga: 25000000,
+                    keterangan: 'Untuk Direktur Utama',
+                    jenis: 'laptop',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'LPT002',
+                    kodeAset: 'LPT-002',
+                    namaAset: 'ThinkPad X1 Carbon',
+                    merkType: 'Lenovo ThinkPad X1 Carbon Gen 11',
+                    serialNumber: 'PF2K4R8J',
+                    lokasi: 'Ruang IT',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2024-02-20',
+                    harga: 18000000,
+                    keterangan: 'Untuk Staff IT',
+                    jenis: 'laptop',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PRT001',
+                    kodeAset: 'PRT-001',
+                    namaAset: 'LaserJet Pro',
+                    merkType: 'HP LaserJet Pro M404n',
+                    serialNumber: 'PHC2345678',
+                    lokasi: 'Ruang Rapat',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2023-06-10',
+                    harga: 4500000,
+                    keterangan: 'Ruang Rapat Lantai 2',
+                    jenis: 'printer',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PRT002',
+                    kodeAset: 'PRT-002',
+                    namaAset: 'OfficeJet Pro',
+                    merkType: 'HP OfficeJet Pro 9015e',
+                    serialNumber: 'TH53R12345',
+                    lokasi: 'Ruang HRD',
+                    kondisi: 'Rusak Ringan',
+                    tglPerolehan: '2023-08-15',
+                    harga: 5500000,
+                    keterangan: 'Perlu penggantian cartridge',
+                    jenis: 'printer',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            saveAssets();
+        }
+    }
+
     initDefaultNotifications();
     updateDashboard();
 }
@@ -1142,7 +1225,6 @@ window.manualScan = manualScan;
 window.exportExcel = exportExcel;
 window.exportPDF = exportPDF;
 window.filterAssets = filterAssets;
-window.logout = logout;
 window.showUserModal = showUserModal;
 window.saveUser = saveUser;
 window.deleteUser = deleteUser;
