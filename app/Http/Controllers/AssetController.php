@@ -3,14 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
+use App\Models\AssetHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class AssetController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Asset::orderBy('created_at', 'desc')->get();
+        $query = Asset::query()->orderBy('created_at', 'desc');
+
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi', $request->kondisi);
+        }
+
+        if ($request->filled('jenis')) {
+            $query->where('jenis', $request->jenis);
+        }
+
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', 'like', '%' . $request->lokasi . '%');
+        }
+
+        return $query->get();
     }
 
     public function store(Request $request)
@@ -31,6 +47,14 @@ class AssetController extends Controller
         ]);
 
         $asset = Asset::create($validated);
+
+        AssetHistory::create([
+            'asset_id' => $asset->id,
+            'user_id' => Auth::id(),
+            'field_changed' => 'created',
+            'old_value' => null,
+            'new_value' => json_encode($asset->toArray()),
+        ]);
 
         return response()->json($asset, Response::HTTP_CREATED);
     }
@@ -57,14 +81,42 @@ class AssetController extends Controller
             'jenis' => 'required|in:laptop,printer',
         ]);
 
+        $before = $asset->only(array_keys($validated));
         $asset->update($validated);
+        $after = $asset->only(array_keys($validated));
+
+        $changed = [];
+        foreach ($before as $key => $value) {
+            if ($after[$key] !== $value) {
+                $changed[$key] = ['old' => $value, 'new' => $after[$key]];
+            }
+        }
+
+        if (! empty($changed)) {
+            AssetHistory::create([
+                'asset_id' => $asset->id,
+                'user_id' => Auth::id(),
+                'field_changed' => implode(',', array_keys($changed)),
+                'old_value' => json_encode(array_combine(array_keys($changed), array_column($changed, 'old'))),
+                'new_value' => json_encode(array_combine(array_keys($changed), array_column($changed, 'new'))),
+            ]);
+        }
 
         return response()->json($asset);
     }
 
     public function destroy(Asset $asset)
     {
+        $previous = $asset->toArray();
         $asset->delete();
+
+        AssetHistory::create([
+            'asset_id' => $asset->id,
+            'user_id' => Auth::id(),
+            'field_changed' => 'deleted',
+            'old_value' => json_encode($previous),
+            'new_value' => null,
+        ]);
 
         return response()->json([ 'message' => 'Asset deleted successfully.' ]);
     }

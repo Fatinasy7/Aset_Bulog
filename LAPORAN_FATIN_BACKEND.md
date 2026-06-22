@@ -2,9 +2,9 @@
 
 ## Ringkasan
 - Periode pengerjaan: 22 Juni 2026
-- Branch utama: `feature/auth-sanctum`
-- Fokus: Fondasi Keamanan & Autentikasi menggunakan Laravel Sanctum
-- Status: Selesai untuk langkah pertama (autentikasi + role-based access)
+- Branch utama: `feature/auth-sanctum` dan `feature/asset-crud`
+- Fokus: Fondasi Keamanan, Autentikasi, dan Penguatan CRUD Aset
+- Status: Selesai untuk langkah pertama dan dua (autentikasi, role-based access, asset CRUD, soft delete, audit trail)
 
 ## Fitur yang Diselesaikan
 | Fitur | File / Area | Keterangan |
@@ -17,6 +17,10 @@
 | User model update | `app/Models/User.php` | Menambahkan `role` ke fillable dan helper role check |
 | API route auth | `routes/api.php` | Menambahkan route register/login/logout dan mengamankan route assets dengan Sanctum |
 | Seeder default admin | `database/seeders/DatabaseSeeder.php` | Membuat user `admin@bulog.local` dengan role `admin_it` |
+| Asset soft delete | `app/Models/Asset.php` | Menambahkan `SoftDeletes` untuk penghapusan lembut |
+| Asset audit trail model | `app/Models/AssetHistory.php` | Model untuk merekam perubahan asset |
+| Asset audit/migration | `database/migrations/2026_06_22_010000_add_soft_deletes_and_asset_history.php` | Menambahkan soft deletes ke `assets` dan tabel `asset_histories` |
+| Asset controller enhancements | `app/Http/Controllers/AssetController.php` | Filter assets, pencatatan audit trail untuk create/update/delete |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
