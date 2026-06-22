@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Aset Perkantoran</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8f9fb;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: #232e3c;
+            color: #fff;
+            width: 250px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+        .sidebar .nav-link {
+            color: #cfd8dc;
+            font-weight: 500;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+        .sidebar .nav-link.active, .sidebar .nav-link:hover {
+            background: #1a2230;
+            color: #fff;
+        }
+        .sidebar-header {
+            padding: 24px 16px 12px 16px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid #2c394b;
+        }
+        .sidebar.collapsed {
+            margin-left: -250px;
+        }
+        .content {
+            margin-left: 250px;
+            min-height: 100vh;
+            background: #f8f9fb;
+            transition: margin-left 0.3s ease;
+        }
+        .content.expanded {
+            margin-left: 0;
+        }
+        .navbar {
+            border-bottom: 1px solid #e3e6f0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        #sidebarCollapse {
+            margin-left: 0;
+        }
+        .card-stat {
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 24px 20px;
+            margin-bottom: 20px;
+        }
+        .card-stat.bg-blue { background: #2196f3; }
+        .card-stat.bg-green { background: #26a69a; }
+        .card-stat.bg-teal { background: #0097a7; }
+        .card-stat.bg-orange { background: #ff9800; }
+        .badge-kondisi {
+            background: #ff9800;
+            color: #fff;
+            font-size: 0.9em;
+            border-radius: 8px;
+            padding: 4px 12px;
+        }
+        .table thead th {
+            font-weight: bold;
+        }
+        .table td, .table th {
+            vertical-align: middle;
+        }
+        .btn-primary, .btn-success, .btn-danger {
+            border-radius: 8px;
+        }
+        .form-switch .form-check-input {
+            width: 2.5em;
+            height: 1.3em;
+        }
+        .login-page {
+            background: #232e3c;
+            min-height: 100vh;
+        }
+        .login-card {
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(44,57,75,0.15);
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h2><i class="fas fa-building"></i> Aset Kantor</h2>
+                    <p>Sistem Manajemen Aset Perkantoran</p>
+                </div>
+                <div class="login-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="loginUsername" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="loginRole" required>
+                                <option value="">Pilih Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="pic">PIC (Penanggung Jawab)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                    <div class="login-info mt-3">
+                        <small class="text-muted">
+                            <strong>Demo Account:</strong><br>
+                            Admin: admin / admin123<br>
+                            PIC: pic / pic123
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="wrapper d-none">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h4><i class="fas fa-building"></i> Aset Kantor</h4>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-page="dashboard">
+                        <i class="fas fa-chart-pie"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item admin-only">
+                    <a class="nav-link" href="#" data-page="laptop">
+                        <i class="fas fa-laptop"></i> Data Laptop
+                    </a>
+                </li>
+                <li class="nav-item admin-only">
+                    <a class="nav-link" href="#" data-page="printer">
+                        <i class="fas fa-print"></i> Data Printer
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-page="scan">
+                        <i class="fas fa-qrcode"></i> Scan QR Code
+                    </a>
+                </li>
+                <li class="nav-item pic-only d-none">
+                    <a class="nav-link" href="#" data-page="notifikasi">
+                        <i class="fas fa-bell"></i> Notifikasi
+                        <span id="notificationBadge" class="badge bg-danger ms-2 d-none"></span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only">
+                    <a class="nav-link" href="#" data-page="laporan">
+                        <i class="fas fa-file-alt"></i> Laporan
+                    </a>
+                </li>
+                <li class="nav-item mt-3">
+                    <a class="nav-link" href="#" data-page="pengaturan">
+                        <i class="fas fa-cog"></i> Pengaturan
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div id="content" class="content">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+                <div class="container-fluid">
+                    <button type="button" id="sidebarCollapse" class="btn btn-primary">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="navbar-brand ms-3">Sistem Manajemen Aset Perkantoran</span>
+                    <div class="ms-auto d-flex align-items-center">
+                        <!-- Location Info -->
+                        <div class="me-3" id="locationInfo">
+                            <span class="badge bg-info">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                <span id="currentLocation">Mendeteksi...</span>
+                            </span>
+                        </div>
+                        <!-- User Info -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> <span id="userName">User</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text">
+                                    <strong id="userRoleDisplay">Role</strong>
+                                </span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="container-fluid mt-4" id="pageContent">
+                <!-- Dashboard Page -->
+                <div id="dashboardPage" class="page">
+                    <h2 class="mb-4"><i class="fas fa-chart-pie"></i> Dashboard</h2>
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5>Total Aset</h5>
+                                    <h2 id="totalAset">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5>Laptop</h5>
+                                    <h2 id="totalLaptop">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5>Printer</h5>
+                                    <h2 id="totalPrinter">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5>Perlu Perbaikan</h5>
+                                    <h2 id="perluPerbaikan">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4 d-none" id="dashboardNotificationRow">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Notifikasi PIC Terbaru</h5>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="showPage('notifikasi')">
+                                        <i class="fas fa-bell"></i> Lihat semua
+                                    </button>
+                                </div>
+                                <div class="card-body" id="dashboardNotificationList">
+                                    <p class="text-muted mb-0">Memuat notifikasi...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Aset per Kondisi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="kondisiChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Aset per Lokasi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="lokasiChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifikasi Page -->
+                <div id="notifikasiPage" class="page d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-bell"></i> Notifikasi</h2>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="markAllNotificationsRead()">
+                            <i class="fas fa-check-double"></i> Tandai Semua Dibaca
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="notificationList">
+                            <p class="text-muted mb-0">Memuat notifikasi...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laptop Page -->
+                <div id="laptopPage" class="page d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-laptop"></i> Data Laptop</h2>
+                        <button class="btn btn-primary" onclick="showModal('laptop')">
+                            <i class="fas fa-plus"></i> Tambah Laptop
+                        </button>
+                    </div>
+                        <div class="card p-3">
+                            <table class="table table-hover align-middle mb-0" id="laptopTable">
+                                <thead>
+                                    <tr>
+                                        <th>NO</th>
+                                        <th>KODE ASET</th>
+                                        <th>NAMA LAPTOP</th>
+                                        <th>MERK/TYPE</th>
+                                        <th>SERIAL NUMBER</th>
+                                        <th>LOKASI SEKARANG</th>
+                                        <th>KOORDINAT</th>
+                                        <th>KONDISI</th>
+                                        <th>AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td><b>LPT-001</b></td>
+                                        <td>MacBook Pro 14"</td>
+                                        <td>Apple MacBook Pro M2</td>
+                                        <td>C02XG0KDJGH5</td>
+                                        <td>Ruang Direksi</td>
+                                        <td>-</td>
+                                        <td></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-light"><i class="fas fa-eye"></i></button>
+                                            <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td><b>LPT-002</b></td>
+                                        <td>ThinkPad X1 Carbon</td>
+                                        <td>Lenovo ThinkPad X1 Carbon Gen 11</td>
+                                        <td>PF2K4R8J</td>
+                                        <td>Ruang IT</td>
+                                        <td>-</td>
+                                        <td></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-light"><i class="fas fa-eye"></i></button>
+                                            <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                </div>
+
+                <!-- Printer Page -->
+                <div id="printerPage" class="page d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-print"></i> Data Printer</h2>
+                        <button class="btn btn-primary" onclick="showModal('printer')">
+                            <i class="fas fa-plus"></i> Tambah Printer
+                        </button>
+                    </div>
+                    <div class="card p-3">
+                        <table class="table table-hover align-middle mb-0" id="printerTable">
+                            <thead>
+                                <tr>
+                                    <th>NO</th>
+                                    <th>KODE ASET</th>
+                                    <th>NAMA PRINTER</th>
+                                    <th>MERK/TYPE</th>
+                                    <th>SERIAL NUMBER</th>
+                                    <th>LOKASI SEKARANG</th>
+                                    <th>KOORDINAT</th>
+                                    <th>KONDISI</th>
+                                    <th>AKSI</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Scan QR Page -->
+                <div id="scanPage" class="page d-none">
+                    <h2 class="mb-4"><i class="fas fa-qrcode"></i> Scan QR Code</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Scan QR Code</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="qr-reader" class="mb-3"></div>
+                                    <p class="text-muted">Arahkan kamera ke QR Code aset</p>
+                                    <div class="mt-3">
+                                        <input type="text" id="manualCodeInput" class="form-control" placeholder="Masukkan kode aset secara manual">
+                                        <button class="btn btn-primary mt-2" onclick="manualScan()">
+                                            <i class="fas fa-search"></i> Cari Aset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Detail Aset</h5>
+                                </div>
+                                <div class="card-body" id="scanResult">
+                                    <p class="text-muted">Scan QR Code untuk melihat detail aset</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laporan Page -->
+                <div id="laporanPage" class="page d-none">
+                    <h2 class="mb-4"><i class="fas fa-file-alt"></i> Laporan</h2>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Daftar Aset Keseluruhan</h5>
+                                    <div>
+                                        <button class="btn btn-success btn-sm" onclick="exportExcel()">
+                                            <i class="fas fa-file-excel"></i> Export Excel
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="exportPDF()">
+                                            <i class="fas fa-file-pdf"></i> Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <input type="text" id="searchInput" class="form-control" placeholder="Cari aset...">
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="laporanTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Kode Aset</th>
+                                                    <th>Jenis</th>
+                                                    <th>Nama Aset</th>
+                                                    <th>Merk/Type</th>
+                                                    <th>Serial Number</th>
+                                                    <th>Lokasi Sekarang</th>
+                                                    <th>Koordinat</th>
+                                                    <th>Kondisi</th>
+                                                    <th>Tgl Perolehan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pengaturan Page -->
+                <div id="pengaturanPage" class="page d-none">
+                    <h2 class="mb-4"><i class="fas fa-cog"></i> Pengaturan</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Manajemen User</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button class="btn btn-primary mb-3" onclick="showUserModal()">
+                                        <i class="fas fa-plus"></i> Tambah User
+                                    </button>
+                                    <table class="table table-sm" id="userTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Username</th>
+                                                <th>Role</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Pengaturan Lokasi</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="locationEnabled" checked>
+                                        <label class="form-check-label" for="locationEnabled">
+                                            Aktifkan Pelacakan Lokasi Real-time
+                                        </label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Lokasi Default Kantor</label>
+                                        <input type="text" class="form-control" id="defaultLocation" value="Kantor Pusat">
+                                    </div>
+                                    <button class="btn btn-secondary" onclick="updateLocationSettings()">
+                                        <i class="fas fa-save"></i> Simpan Pengaturan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Aset -->
+    <div class="modal fade" id="assetModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Tambah Aset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="assetForm">
+                        <input type="hidden" id="assetId">
+                        <input type="hidden" id="assetType">
+                        <div class="mb-3">
+                            <label class="form-label">Jenis Aset</label>
+                            <input type="text" class="form-control" id="assetTypeDisplay" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kode Aset</label>
+                            <input type="text" class="form-control" id="kodeAset" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nama Aset</label>
+                            <input type="text" class="form-control" id="namaAset" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Merk / Type</label>
+                            <input type="text" class="form-control" id="merkType" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Serial Number</label>
+                            <input type="text" class="form-control" id="serialNumber">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lokasi</label>
+                            <input type="text" class="form-control" id="lokasi" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kondisi</label>
+                            <select class="form-select" id="kondisi" required>
+                                <option value="Baik">Baik</option>
+                                <option value="Rusak Ringan">Rusak Ringan</option>
+                                <option value="Rusak Berat">Rusak Berat</option>
+                                <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal Perolehan</label>
+                            <input type="date" class="form-control" id="tglPerolehan">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Harga</label>
+                            <input type="number" class="form-control" id="harga" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Keterangan</label>
+                            <textarea class="form-control" id="keterangan" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Koordinat Saat Ini</label>
+                            <p id="autoLocation" class="form-control-plaintext">Mendeteksi...</p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAsset()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tambah User -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tambah User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="userUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="userPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="userRole" required>
+                                <option value="">Pilih Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="pic">PIC</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal QR Code -->
+    <div class="modal fade" id="qrModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">QR Code Aset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="qrcode" class="mb-3"></div>
+                    <h6 id="qrCodeLabel"></h6>
+                    <button class="btn btn-primary btn-sm" onclick="printQRCode()">
+                        <i class="fas fa-print"></i> Cetak QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Aset -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Aset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/qrcode.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
