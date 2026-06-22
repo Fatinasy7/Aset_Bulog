@@ -6,7 +6,6 @@
 // Global Variables
 let assets = [];
 let users = [];
-let pics = [];
 let notifications = [];
 let currentUser = null;
 let currentPage = 'dashboard';
@@ -18,44 +17,14 @@ let locationWatcher = null;
 let currentCoordinates = null;
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', function() {
-    attachApiDefaults();
+document.addEventListener('DOMContentLoaded', async function() {
     loadUsers();
     loadNotifications();
-    loadAssets();
+    await loadAssets();
     checkLogin();
     initSidebar();
     setupEventListeners();
 });
-
-function attachApiDefaults() {
-    if (!window.axios) return;
-
-    window.axios.defaults.baseURL = window.__API_BASE_URL__ || 'http://127.0.0.1:8000';
-    window.axios.defaults.headers.common['Accept'] = 'application/json';
-    window.axios.defaults.headers.common['Content-Type'] = 'application/json';
-    window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-    const token = localStorage.getItem('apiToken');
-    if (token) {
-        window.axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-        delete window.axios.defaults.headers.common['Authorization'];
-    }
-
-    window.axios.interceptors.response.use(
-        (response) => response,
-        (error) => {
-            if (error.response?.status === 401) {
-                localStorage.removeItem('apiToken');
-                localStorage.removeItem('currentUser');
-                delete window.axios.defaults.headers.common['Authorization'];
-                window.location.href = '/';
-            }
-            return Promise.reject(error);
-        }
-    );
-}
 
 // Load Users from LocalStorage
 function loadUsers() {
@@ -78,17 +47,17 @@ function saveUsers() {
 }
 
 // Check Login Status
-async function checkLogin() {
-    const storedUser = localStorage.getItem('currentUser');
-    const apiToken = localStorage.getItem('apiToken');
-    if (storedUser && apiToken) {
-        currentUser = JSON.parse(storedUser);
-        attachApiDefaults();
-        await loadProfile();
-        showMainApp();
-    } else {
-        showLoginPage();
+function checkLogin() {
+    if (window.auth?.isAuthenticated && window.auth?.getCurrentUser) {
+        const storedUser = window.auth.getCurrentUser();
+        if (window.auth.isAuthenticated() && storedUser) {
+            currentUser = storedUser;
+            showMainApp();
+            return;
+        }
     }
+
+    showLoginPage();
 }
 
 // Show Login Page
@@ -103,8 +72,8 @@ function showMainApp() {
     document.getElementById('mainApp').classList.remove('d-none');
     
     // Update user info
-    document.getElementById('userName').textContent = currentUser.username || currentUser.name || 'User';
-    document.getElementById('userRoleDisplay').textContent = currentUser.role === 'admin' ? 'Administrator' : currentUser.role === 'pic' ? 'PIC' : 'Manajemen';
+    document.getElementById('userName').textContent = currentUser.username;
+    document.getElementById('userRoleDisplay').textContent = currentUser.role === 'admin' ? 'Administrator' : 'PIC';
     
     // Apply role-based access
     applyRoleAccess();
@@ -122,119 +91,13 @@ function applyRoleAccess() {
     const adminOnlyElements = document.querySelectorAll('.admin-only');
     const picOnlyElements = document.querySelectorAll('.pic-only');
 
-    if (currentUser?.role === 'admin') {
+    if (currentUser.role === 'admin') {
         adminOnlyElements.forEach(el => el.classList.remove('d-none'));
         picOnlyElements.forEach(el => el.classList.add('d-none'));
-    } else if (currentUser?.role === 'pic') {
-        adminOnlyElements.forEach(el => el.classList.add('d-none'));
-        picOnlyElements.forEach(el => el.classList.remove('d-none'));
     } else {
         adminOnlyElements.forEach(el => el.classList.add('d-none'));
-        picOnlyElements.forEach(el => el.classList.add('d-none'));
+        picOnlyElements.forEach(el => el.classList.remove('d-none'));
     }
-}
-
-async function loadProfile() {
-    if (!localStorage.getItem('apiToken')) return;
-
-    try {
-        const response = await window.axios.get('/api/user');
-        const payload = response.data?.data || response.data;
-        const user = {
-            ...payload,
-            username: payload.name,
-            role: payload.role === 'admin_it' ? 'admin' : payload.role === 'user_pic' ? 'pic' : payload.role === 'manajemen' ? 'manager' : payload.role
-        };
-
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-    } catch (error) {
-        console.warn('Profile fetch failed:', error);
-    }
-}
-
-async function login(email, password) {
-    try {
-        const response = await window.axios.post('/api/auth/login', { email, password });
-        const payload = response.data;
-
-        const authToken = payload.auth_token || payload.token || payload.access_token;
-        const user = {
-            ...payload.user,
-            username: payload.user.name,
-            role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
-        };
-
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        if (authToken) {
-            localStorage.setItem('apiToken', authToken);
-        }
-        attachApiDefaults();
-        await loadProfile();
-        await loadAssets();
-        await loadNotifications();
-        showMainApp();
-        showToast('Login berhasil!', 'success');
-    } catch (error) {
-        const message = error.response?.data?.message || 'Login gagal. Cek kredensial Anda.';
-        showToast(message, 'error');
-    }
-}
-
-async function register(name, email, password, passwordConfirmation, role) {
-    try {
-        const response = await window.axios.post('/api/auth/register', {
-            name,
-            email,
-            password,
-            password_confirmation: passwordConfirmation,
-            role
-        });
-        const payload = response.data;
-        const authToken = payload.auth_token || payload.token || payload.access_token;
-        const user = {
-            ...payload.user,
-            username: payload.user.name,
-            role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
-        };
-
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        if (authToken) {
-            localStorage.setItem('apiToken', authToken);
-        }
-        attachApiDefaults();
-        await loadProfile();
-        await loadAssets();
-        showMainApp();
-        showToast('Registrasi berhasil!', 'success');
-    } catch (error) {
-        const message = error.response?.data?.message || 'Registrasi gagal.';
-        const errors = error.response?.data?.errors;
-        const validationMessage = errors ? Object.values(errors).flat().join(' ') : message;
-        showToast(validationMessage, 'error');
-    }
-}
-
-// Logout Function
-async function logout() {
-    try {
-        if (localStorage.getItem('apiToken')) {
-            await window.axios.post('/api/auth/logout');
-        }
-    } catch (error) {
-        console.warn('Logout API error:', error);
-    }
-
-    currentUser = null;
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('apiToken');
-    delete window.axios.defaults.headers.common['Authorization'];
-    if (locationWatcher) {
-        navigator.geolocation.clearWatch(locationWatcher);
-    }
-    showLoginPage();
 }
 
 // Initialize Location Tracking
@@ -311,59 +174,6 @@ function initSidebar() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Login form
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            login(email, password);
-        });
-    }
-
-    const registerForm = document.getElementById('registerForm');
-    if (registerForm) {
-        registerForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('registerName').value.trim();
-            const email = document.getElementById('registerEmail').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const passwordConfirmation = document.getElementById('registerPasswordConfirmation').value;
-            const role = document.getElementById('registerRole').value;
-            register(name, email, password, passwordConfirmation, role);
-        });
-    }
-
-    const picForm = document.getElementById('picForm');
-    if (picForm) {
-        picForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('picId').value;
-            const payload = {
-                nama: document.getElementById('picNama').value.trim(),
-                email: document.getElementById('picEmail').value.trim(),
-                jabatan: document.getElementById('picJabatan').value,
-                telepon: document.getElementById('picTelepon').value.trim(),
-                password: document.getElementById('picPassword').value,
-            };
-
-            try {
-                if (id) {
-                    await window.axios.put(`/api/pics/${id}`, payload);
-                } else {
-                    await window.axios.post('/api/pics', payload);
-                }
-                picForm.reset();
-                await loadPics();
-                showToast('PIC berhasil disimpan.', 'success');
-            } catch (error) {
-                const message = error.response?.data?.message || 'Gagal menyimpan PIC.';
-                showToast(message, 'error');
-            }
-        });
-    }
-    
     // Search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -388,6 +198,11 @@ function showPage(page) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.add('d-none'));
     
+    // Guard page access
+    if (window.auth?.guardRoute && !window.auth.guardRoute()) {
+        return;
+    }
+
     // Show selected page
     const pageElement = document.getElementById(page + 'Page');
     if (pageElement) {
@@ -409,17 +224,85 @@ function showPage(page) {
         case 'notifikasi':
             renderNotifications();
             break;
+        case 'scan':
+            initScanPage();
+            break;
         case 'laporan':
             renderLaporan();
-            break;
-        case 'pics':
-            loadPics();
             break;
         case 'pengaturan':
             renderUserTable();
             break;
     }
 }
+
+function initScanPage() {
+    const resultContainer = document.getElementById('scanResult');
+    resultContainer.innerHTML = '<p class="text-muted">Scan QR Code untuk melihat detail aset</p>';
+
+    if (window.qrScanner?.startQrScanner) {
+        window.qrScanner.startQrScanner('qr-reader', onScanSuccess, onScanError, {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        });
+    } else {
+        resultContainer.innerHTML = '<div class="alert alert-warning">QR scanner tidak tersedia. Pastikan library HTML5-QRCode dimuat.</div>';
+    }
+}
+
+function stopScanPage() {
+    if (window.qrScanner?.stopQrScanner) {
+        window.qrScanner.stopQrScanner();
+    }
+}
+
+function onScanSuccess(decodedText, coords) {
+    const assetId = parseScannedCode(decodedText);
+    if (!assetId) {
+        onScanError(new Error('Kode QR tidak valid'));
+        return;
+    }
+
+    if (window.assetsAPI?.scanAsset) {
+        window.assetsAPI.scanAsset(assetId, coords?.latitude, coords?.longitude)
+            .then(asset => {
+                if (asset) {
+                    displayScanResult(asset);
+                } else {
+                    onScanError(new Error('Aset tidak ditemukan'));
+                }
+            })
+            .catch(err => {
+                console.warn('scanAsset API gagal', err);
+                onScanError(err);
+            });
+    } else {
+        const asset = assets.find(a => a.kodeAset === assetId || a.id === assetId);
+        if (asset) {
+            displayScanResult(asset);
+        } else {
+            onScanError(new Error('Aset tidak ditemukan'));
+        }
+    }
+}
+
+function onScanError(error) {
+    document.getElementById('scanResult').innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> ${error.message || 'Gagal memindai QR Code.'}
+        </div>
+    `;
+}
+
+function parseScannedCode(decodedText) {
+    try {
+        const payload = JSON.parse(decodedText);
+        return payload.id || payload.kode || payload.code || payload.asset_id || payload.assetId || null;
+    } catch (e) {
+        return decodedText;
+    }
+}
+
 
 // Update Dashboard
 function updateDashboard() {
@@ -683,49 +566,47 @@ async function saveAsset() {
         form.reportValidity();
         return;
     }
-
+    
     const assetType = document.getElementById('assetType').value;
-    const payload = {
-        kode_aset: document.getElementById('kodeAset').value,
-        nama_aset: document.getElementById('namaAset').value,
-        merk_type: document.getElementById('merkType').value,
-        serial_number: document.getElementById('serialNumber').value,
+    let assetData = {
+        id: editingId || generateId(),
+        kodeAset: document.getElementById('kodeAset').value,
+        namaAset: document.getElementById('namaAset').value,
+        merkType: document.getElementById('merkType').value,
+        serialNumber: document.getElementById('serialNumber').value,
         lokasi: document.getElementById('lokasi').value,
         kondisi: document.getElementById('kondisi').value,
-        tgl_perolehan: document.getElementById('tglPerolehan').value,
+        tglPerolehan: document.getElementById('tglPerolehan').value,
         harga: parseInt(document.getElementById('harga').value) || 0,
         keterangan: document.getElementById('keterangan').value,
         jenis: assetType,
-        koordinat_lat: currentCoordinates?.lat ?? null,
-        koordinat_lng: currentCoordinates?.lng ?? null,
+        koordinat: currentCoordinates ? { ...currentCoordinates } : null,
+        updatedAt: new Date().toISOString()
     };
-
+    
     try {
-        let response;
-        if (editingId) {
-            response = await axios.put(`/api/assets/${editingId}`, payload);
-        } else {
-            response = await axios.post('/api/assets', payload);
+        if (editingId && window.assetsAPI?.updateAsset) {
+            assetData = await window.assetsAPI.updateAsset(editingId, assetData) || assetData;
+        } else if (!editingId && window.assetsAPI?.createAsset) {
+            assetData = await window.assetsAPI.createAsset(assetData) || assetData;
         }
-
-        const savedAsset = response.data?.data || response.data;
-        const normalized = normalizeAsset(savedAsset);
-
-        if (editingId) {
-            assets = assets.map(asset => asset.id === editingId ? normalized : asset);
-        } else {
-            assets.unshift(normalized);
-        }
-
-        saveAssets();
-        bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
-        showToast('Data aset berhasil disimpan!', 'success');
-        showPage(assetType);
-        await loadAssets();
     } catch (error) {
-        const message = error.response?.data?.message || 'Gagal menyimpan aset.';
-        showToast(message, 'error');
+        console.warn('API saveAsset gagal, menggunakan local storage', error);
     }
+    
+    if (editingId) {
+        const index = assets.findIndex(a => a.id === editingId);
+        if (index !== -1) assets[index] = { ...assets[index], ...assetData };
+    } else {
+        assetData.createdAt = assetData.createdAt || new Date().toISOString();
+        assets.push(assetData);
+    }
+    
+    saveAssets();
+    handleAssetNotification(assetData, !editingId);
+    bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
+    showToast('Data aset berhasil disimpan!', 'success');
+    showPage(assetType);
 }
 
 // Generate ID
@@ -803,24 +684,27 @@ function editAsset(id) {
 // Delete Asset
 async function deleteAsset(id) {
     const asset = assets.find(a => a.id === id);
-    if (!confirm('Apakah Anda yakin ingin menghapus aset ini?')) return;
+    if (confirm('Apakah Anda yakin ingin menghapus aset ini?')) {
+        try {
+            if (window.assetsAPI?.deleteAsset) {
+                await window.assetsAPI.deleteAsset(id);
+            }
+        } catch (error) {
+            console.warn('API deleteAsset gagal, hapus lokal tetap dilakukan', error);
+        }
 
-    try {
-        await axios.delete(`/api/assets/${id}`);
         assets = assets.filter(a => a.id !== id);
         saveAssets();
         if (currentUser && currentUser.role === 'pic' && asset) {
             addNotification(
                 'Aset dihapus',
-                `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`,
+                `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`, 
                 'warning',
                 'pic'
             );
         }
         showToast('Aset berhasil dihapus!', 'success');
         showPage(currentPage);
-    } catch (error) {
-        showToast('Gagal menghapus aset.', 'error');
     }
 }
 
@@ -884,76 +768,43 @@ async function manualScan() {
         return;
     }
 
-    try {
-        const response = await axios.get('/api/assets');
-        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        const asset = payload.find(item => (item.kode_aset || item.kodeAset || '').toString() === code || item.id.toString() === code);
-        if (asset) {
-            const normalized = normalizeAsset(asset);
-            const scanResult = await sendScanData(normalized.id);
-            const scannedAsset = scanResult?.asset ? normalizeAsset(scanResult.asset) : normalized;
-
-            if (scannedAsset?.id) {
-                assets = assets.map(item => item.id === scannedAsset.id ? scannedAsset : item);
-                saveAssets();
-            }
-
-            displayScanResult(scannedAsset);
-            showToast(scanResult?.message || 'Scan berhasil.', 'success');
-        } else {
-            throw new Error('Aset tidak ditemukan');
+    let asset = null;
+    if (window.assetsAPI?.getAsset) {
+        try {
+            asset = await window.assetsAPI.getAsset(code);
+        } catch (e) {
+            console.warn('API manualScan gagal', e);
         }
-    } catch (error) {
+    }
+
+    if (!asset) {
+        asset = assets.find(a => a.kodeAset === code || a.id === code);
+    }
+
+    if (asset) {
+        displayScanResult(asset);
+    } else {
         document.getElementById('scanResult').innerHTML = `
             <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${code}" tidak ditemukan atau server tidak merespons.
+                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${code}" tidak ditemukan!
             </div>
         `;
-    }
-}
-
-async function sendScanData(assetId) {
-    const payload = {
-        latitude: currentCoordinates?.lat ?? null,
-        longitude: currentCoordinates?.lng ?? null,
-        scanned_by: currentUser?.name || currentUser?.username || 'anonymous',
-        scanned_at: new Date().toISOString(),
-    };
-
-    try {
-        const response = await axios.post(`/api/assets/${assetId}/scan`, payload);
-        return response.data;
-    } catch (error) {
-        console.warn('Scan API error:', error);
-        showToast('Pencatatan scan gagal, tetapi data aset tetap ditampilkan.', 'warning');
-        return null;
     }
 }
 
 // Display Scan Result
 function displayScanResult(asset) {
     const resultDiv = document.getElementById('scanResult');
-    const assetName = asset.nama_aset || asset.namaAset || 'Aset';
-    const assetCode = asset.kode_aset || asset.kodeAset || '-';
-    const assetMerk = asset.merk_type || asset.merkType || '-';
-    const assetLocation = asset.lokasi || '-';
-    const assetCondition = asset.kondisi || '-';
-    const assetCoordinates = asset.koordinat && asset.koordinat.lat != null && asset.koordinat.lng != null
-        ? `${Number(asset.koordinat.lat).toFixed(6)}, ${Number(asset.koordinat.lng).toFixed(6)}`
-        : (asset.koordinat_lat != null && asset.koordinat_lng != null
-            ? `${Number(asset.koordinat_lat).toFixed(6)}, ${Number(asset.koordinat_lng).toFixed(6)}`
-            : '-');
-
     resultDiv.innerHTML = `
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">${assetName}</h5>
+                <h5 class="card-title">${asset.namaAset}</h5>
                 <p class="card-text">
-                    <strong>Kode:</strong> ${assetCode}<br>
-                    <strong>Merk/Type:</strong> ${assetMerk}<br>
-                    <strong>Lokasi:</strong> ${assetLocation}<br>
-                    <strong>Koordinat:</strong> ${assetCoordinates}<br>
-                    <strong>Kondisi:</strong> <span class="badge badge-${assetCondition.toLowerCase().replace(' ', '-')}">${assetCondition}</span>
+                    <strong>Kode:</strong> ${asset.kodeAset}<br>
+                    <strong>Merk/Type:</strong> ${asset.merkType}<br>
+                    <strong>Lokasi:</strong> ${asset.lokasi}<br>
+                    <strong>Koordinat:</strong> ${asset.koordinat ? `${asset.koordinat.lat.toFixed(6)}, ${asset.koordinat.lng.toFixed(6)}` : '-'}<br>
+                    <strong>Kondisi:</strong> <span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span>
                 </p>
                 <button class="btn btn-primary btn-sm" onclick="viewAsset('${asset.id}')">
                     <i class="fas fa-eye"></i> Lihat Detail
@@ -964,33 +815,20 @@ function displayScanResult(asset) {
 }
 
 // Export Excel
-async function exportExcel() {
-    try {
-        const response = await axios.get('/api/reports/assets', { params: { format: 'excel' } });
-        const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
-
-        data.forEach((asset, index) => {
-            const koordinat = asset.koordinat_lat != null && asset.koordinat_lng != null ? `${asset.koordinat_lat}, ${asset.koordinat_lng}` : '';
-            csv += `${index + 1},${asset.kode_aset || asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.nama_aset || asset.namaAset},"${asset.merk_type || asset.merkType}",${asset.serial_number || asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tgl_perolehan || asset.tglPerolehan || ''},${asset.harga || 0}\n`;
-        });
-
-        downloadFile(csv, 'laporan_aset.csv', 'text/csv');
-        showToast('Laporan Excel diunduh.', 'success');
-    } catch (error) {
-        showToast('Gagal mengambil data laporan dari server.', 'error');
-    }
+function exportExcel() {
+    let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
+    
+    assets.forEach((asset, index) => {
+        const koordinat = asset.koordinat ? `${asset.koordinat.lat}, ${asset.koordinat.lng}` : '';
+        csv += `${index + 1},${asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.namaAset},"${asset.merkType}",${asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tglPerolehan || ''},${asset.harga || 0}\n`;
+    });
+    
+    downloadFile(csv, 'laporan_aset.csv', 'text/csv');
 }
 
 // Export PDF
-async function exportPDF() {
-    try {
-        const response = await axios.get('/api/reports/assets', { params: { format: 'pdf' } });
-        console.log(response.data);
-        showToast('Export PDF sedang disiapkan.', 'info');
-    } catch (error) {
-        showToast('Gagal mengambil data laporan PDF.', 'error');
-    }
+function exportPDF() {
+    showToast('Fitur Export PDF dalam pengembangan!', 'info');
 }
 
 // Download File
@@ -1116,31 +954,12 @@ function createToastContainer() {
     return container;
 }
 
-async function loadNotifications() {
+function loadNotifications() {
     const stored = localStorage.getItem('notifications');
     if (stored) {
         notifications = JSON.parse(stored);
     } else {
         notifications = [];
-    }
-
-    if (!localStorage.getItem('apiToken')) return;
-
-    try {
-        const response = await window.axios.get('/api/notifications');
-        const payload = response.data?.data || [];
-        notifications = payload.map((item) => ({
-            id: item.id,
-            title: item.title || 'Notifikasi',
-            message: item.message || '',
-            type: 'info',
-            role: 'all',
-            read: Boolean(item.read),
-            createdAt: item.createdAt || new Date().toISOString(),
-        }));
-        saveNotifications();
-    } catch (error) {
-        console.warn('Notifications fetch failed:', error);
     }
 }
 
@@ -1206,13 +1025,7 @@ function handleAssetNotification(asset, isNew = false) {
     }
 }
 
-async function markNotificationRead(id) {
-    try {
-        await window.axios.patch(`/api/notifications/${id}/read`);
-    } catch (error) {
-        console.warn('Mark read failed:', error);
-    }
-
+function markNotificationRead(id) {
     notifications = notifications.map(n => n.id === id ? { ...n, read: true } : n);
     saveNotifications();
     renderNotifications();
@@ -1310,102 +1123,85 @@ function initDefaultNotifications() {
     });
 }
 
-async function loadPics() {
-    try {
-        const response = await window.axios.get('/api/pics');
-        const payload = response.data;
-        pics = Array.isArray(payload) ? payload : (payload?.data || []);
-        renderPicsPage();
-    } catch (error) {
-        console.warn('PIC fetch failed:', error);
-    }
-}
-
-function renderPicsPage() {
-    const tbody = document.querySelector('#picsTable tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = pics.map((pic) => `
-        <tr>
-            <td>${pic.nama}</td>
-            <td>${pic.email}</td>
-            <td>${pic.jabatan}</td>
-            <td>${pic.telepon || '-'}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-secondary" onclick="editPic(${JSON.stringify(pic).replace(/"/g, '&quot;')})">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deletePic(${pic.id})">Hapus</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function editPic(pic) {
-    document.getElementById('picId').value = pic.id;
-    document.getElementById('picNama').value = pic.nama || '';
-    document.getElementById('picEmail').value = pic.email || '';
-    document.getElementById('picJabatan').value = pic.jabatan || 'user_pic';
-    document.getElementById('picTelepon').value = pic.telepon || '';
-    document.getElementById('picPassword').value = '';
-}
-
-async function deletePic(id) {
-    if (!confirm('Hapus PIC ini?')) return;
-
-    try {
-        await window.axios.delete(`/api/pics/${id}`);
-        await loadPics();
-        showToast('PIC berhasil dihapus.', 'success');
-    } catch (error) {
-        showToast('Gagal menghapus PIC.', 'error');
-    }
-}
-
-function normalizeAsset(asset = {}) {
-    const koordinat = asset.koordinat
-        ? { lat: asset.koordinat.lat, lng: asset.koordinat.lng }
-        : (asset.koordinat_lat != null || asset.koordinat_lng != null)
-            ? { lat: asset.koordinat_lat, lng: asset.koordinat_lng }
-            : null;
-
-    return {
-        ...asset,
-        id: asset.id,
-        kodeAset: asset.kode_aset || asset.kodeAset,
-        namaAset: asset.nama_aset || asset.namaAset,
-        merkType: asset.merk_type || asset.merkType,
-        serialNumber: asset.serial_number || asset.serialNumber,
-        lokasi: asset.lokasi,
-        kondisi: asset.kondisi,
-        tglPerolehan: asset.tgl_perolehan || asset.tglPerolehan,
-        harga: asset.harga,
-        keterangan: asset.keterangan,
-        jenis: asset.jenis,
-        koordinat,
-        createdAt: asset.createdAt || asset.created_at,
-        updatedAt: asset.updatedAt || asset.updated_at,
-    };
-}
-
-// Load Assets from API or fallback
+// Load Assets from LocalStorage or API
 async function loadAssets() {
-    const stored = localStorage.getItem('asetKantor');
-
-    if (stored && !localStorage.getItem('apiToken')) {
-        assets = JSON.parse(stored);
-        initDefaultNotifications();
-        updateDashboard();
-        return;
+    if (window.assetsAPI?.fetchAssets) {
+        try {
+            assets = await window.assetsAPI.fetchAssets();
+        } catch (e) {
+            console.warn('Gagal fetch assets dari API, fallback localStorage', e);
+        }
     }
 
-    try {
-        const response = await axios.get('/api/assets');
-        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        assets = payload.map(normalizeAsset);
-        saveAssets();
-    } catch (error) {
-        const fallback = JSON.parse(stored || '[]');
-        assets = fallback.length ? fallback : [];
-        showToast('Gagal memuat data aset dari server. Menampilkan data lokal.', 'warning');
+    if (!assets || assets.length === 0) {
+        const stored = localStorage.getItem('asetKantor');
+        if (stored) {
+            assets = JSON.parse(stored);
+        } else {
+            assets = [
+                {
+                    id: 'LPT001',
+                    kodeAset: 'LPT-001',
+                    namaAset: 'MacBook Pro 14"',
+                    merkType: 'Apple MacBook Pro M2',
+                    serialNumber: 'C02XG0KDJGH5',
+                    lokasi: 'Ruang Direksi',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2024-01-15',
+                    harga: 25000000,
+                    keterangan: 'Untuk Direktur Utama',
+                    jenis: 'laptop',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'LPT002',
+                    kodeAset: 'LPT-002',
+                    namaAset: 'ThinkPad X1 Carbon',
+                    merkType: 'Lenovo ThinkPad X1 Carbon Gen 11',
+                    serialNumber: 'PF2K4R8J',
+                    lokasi: 'Ruang IT',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2024-02-20',
+                    harga: 18000000,
+                    keterangan: 'Untuk Staff IT',
+                    jenis: 'laptop',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PRT001',
+                    kodeAset: 'PRT-001',
+                    namaAset: 'LaserJet Pro',
+                    merkType: 'HP LaserJet Pro M404n',
+                    serialNumber: 'PHC2345678',
+                    lokasi: 'Ruang Rapat',
+                    kondisi: 'Baik',
+                    tglPerolehan: '2023-06-10',
+                    harga: 4500000,
+                    keterangan: 'Ruang Rapat Lantai 2',
+                    jenis: 'printer',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'PRT002',
+                    kodeAset: 'PRT-002',
+                    namaAset: 'OfficeJet Pro',
+                    merkType: 'HP OfficeJet Pro 9015e',
+                    serialNumber: 'TH53R12345',
+                    lokasi: 'Ruang HRD',
+                    kondisi: 'Rusak Ringan',
+                    tglPerolehan: '2023-08-15',
+                    harga: 5500000,
+                    keterangan: 'Perlu penggantian cartridge',
+                    jenis: 'printer',
+                    koordinat: { lat: -6.200000, lng: 106.816666 },
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            saveAssets();
+        }
     }
 
     initDefaultNotifications();
@@ -1429,10 +1225,7 @@ window.manualScan = manualScan;
 window.exportExcel = exportExcel;
 window.exportPDF = exportPDF;
 window.filterAssets = filterAssets;
-window.logout = logout;
 window.showUserModal = showUserModal;
 window.saveUser = saveUser;
 window.deleteUser = deleteUser;
 window.updateLocationSettings = updateLocationSettings;
-window.editPic = editPic;
-window.deletePic = deletePic;
