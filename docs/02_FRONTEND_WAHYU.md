@@ -32,6 +32,52 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 
 ---
 
+## ✅ FINAL SCOPE PENGERJAAN
+
+Bagian ini adalah urutan kerja yang dipakai sampai selesai. Fokusnya dibuat bertahap supaya implementasi tidak lompat-lompat antar halaman.
+
+### Prioritas 1 - Pondasi Visual
+- [ ] Finalisasi design system: warna, font, badge status, tombol, card, tabel, alert, modal
+- [ ] Siapkan layout dasar yang dipakai semua halaman: navbar, sidebar, konten utama, footer
+- [ ] Pastikan semua komponen responsif untuk desktop dan mobile
+
+### Prioritas 2 - Halaman Inti Operasional
+- [ ] Halaman Login
+- [ ] Dashboard Utama
+- [ ] Daftar Aset
+- [ ] Form Tambah/Edit Aset
+- [ ] Detail Aset
+
+### Prioritas 3 - Halaman Pendukung Operasional
+- [ ] Halaman Scan QR Code
+- [ ] Halaman Manajemen PIC
+- [ ] Halaman Laporan Aset
+- [ ] Halaman Riwayat Perubahan / Audit Trail
+- [ ] Dashboard Manajemen read-only
+
+### Prioritas 4 - Penyelarasan Akhir
+- [ ] Konsistensi spacing, warna, dan tipografi
+- [ ] Uji tampilan desktop, tablet, dan mobile
+- [ ] Rapikan state kosong, error state, dan tombol aksi
+- [ ] Finalisasi laporan untuk PM
+
+### Urutan Kerja yang Disarankan
+1. Design system
+2. Layout dasar
+3. Login
+4. Dashboard utama
+5. Daftar aset
+6. Form tambah/edit aset
+7. Detail aset
+8. Scan QR Code
+9. Manajemen PIC
+10. Laporan aset
+11. Audit trail
+12. Dashboard manajemen
+13. Final QA dan laporan PM
+
+---
+
 ## 📋 CHECKLIST TUGAS LENGKAP
 
 ### 🔷 MINGGU 1 — Perancangan Visual
