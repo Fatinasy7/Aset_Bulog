@@ -25,6 +25,7 @@ class Asset extends Model
         'harga',
         'keterangan',
         'jenis',
+        'qr_code_path',
         'pic_id',
     ];
 

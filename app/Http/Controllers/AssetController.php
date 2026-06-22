@@ -7,6 +7,8 @@ use App\Models\AssetHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AssetController extends Controller
 {
@@ -47,6 +49,20 @@ class AssetController extends Controller
         ]);
 
         $asset = Asset::create($validated);
+
+        $payload = json_encode([
+            'id' => $asset->id,
+            'kode_aset' => $asset->kode_aset,
+            'jenis' => $asset->jenis,
+            'nama_aset' => $asset->nama_aset,
+        ]);
+
+        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
+        $path = 'qrcodes/' . $filename;
+        $svg = QrCode::format('svg')->size(400)->generate($payload);
+        Storage::disk('local')->put($path, $svg);
+
+        $asset->update(['qr_code_path' => $path]);
 
         AssetHistory::create([
             'asset_id' => $asset->id,
@@ -123,17 +139,34 @@ class AssetController extends Controller
 
     public function qrcode(Asset $asset)
     {
-        $payload = [
+        $payload = json_encode([
             'id' => $asset->id,
             'kode_aset' => $asset->kode_aset,
             'jenis' => $asset->jenis,
             'nama_aset' => $asset->nama_aset,
-        ];
+        ]);
 
-        return response()->json([
-            'asset' => $asset,
-            'qr_text' => json_encode($payload),
-            'qr_data' => base64_encode(json_encode($payload)),
+        if ($asset->qr_code_path && Storage::disk('local')->exists($asset->qr_code_path)) {
+            $filename = basename($asset->qr_code_path);
+            $contentType = str_ends_with($filename, '.svg') ? 'image/svg+xml' : 'image/png';
+
+            return response()->download(storage_path('app/' . $asset->qr_code_path), $filename, [
+                'Content-Type' => $contentType,
+            ]);
+        }
+
+        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
+        $path = 'qrcodes/' . $filename;
+
+        $svg = QrCode::format('svg')
+            ->size(400)
+            ->generate($payload);
+
+        Storage::disk('local')->put($path, $svg);
+        $asset->update(['qr_code_path' => $path]);
+
+        return response()->download(storage_path('app/' . $path), $filename, [
+            'Content-Type' => 'image/svg+xml',
         ]);
     }
 }
