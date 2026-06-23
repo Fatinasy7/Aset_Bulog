@@ -29,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('assets', [AssetController::class, 'index']);
     Route::get('assets/{asset}', [AssetController::class, 'show']);
     Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
+    Route::post('assets/{asset}/scan', [AssetController::class, 'scan']);
+    Route::get('assets/{asset}/location', [AssetController::class, 'location']);
 
     Route::get('pics', [PicController::class, 'index']);
     Route::middleware('role:admin_it')->group(function () {

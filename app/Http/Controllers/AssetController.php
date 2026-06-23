@@ -169,4 +169,61 @@ class AssetController extends Controller
             'Content-Type' => 'image/svg+xml',
         ]);
     }
+
+    public function scan(Request $request, Asset $asset)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'scanned_at' => 'nullable|date',
+            'scanned_by' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $scannedBy = $validated['scanned_by'] ?? Auth::id();
+        $scannedAt = $validated['scanned_at'] ?? now()->toDateTimeString();
+
+        $oldCoordinates = [
+            'latitude' => $asset->koordinat_lat,
+            'longitude' => $asset->koordinat_lng,
+        ];
+
+        $asset->update([
+            'koordinat_lat' => $validated['latitude'],
+            'koordinat_lng' => $validated['longitude'],
+        ]);
+
+        AssetHistory::create([
+            'asset_id' => $asset->id,
+            'user_id' => $scannedBy,
+            'field_changed' => 'scan',
+            'old_value' => json_encode($oldCoordinates),
+            'new_value' => json_encode([
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'scanned_at' => $scannedAt,
+            ]),
+        ]);
+
+        return response()->json([
+            'message' => 'Scan berhasil, lokasi aset diperbarui.',
+            'asset' => $asset->fresh(),
+            'scanned_at' => $scannedAt,
+        ]);
+    }
+
+    public function location(Asset $asset)
+    {
+        $lastScan = $asset->histories()
+            ->where('field_changed', 'scan')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        return response()->json([
+            'asset_id' => $asset->id,
+            'lokasi' => $asset->lokasi,
+            'latitude' => $asset->koordinat_lat,
+            'longitude' => $asset->koordinat_lng,
+            'last_scan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+        ]);
+    }
 }

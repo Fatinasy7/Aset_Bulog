@@ -25,7 +25,8 @@
 | PIC CRUD | `app/Http/Controllers/PicController.php` | Endpoint `POST /api/pics`, `PUT /api/pics/{pic}`, `DELETE /api/pics/{pic}` |
 | PIC assignment | `app/Http/Controllers/PicController.php` | Endpoint `POST /api/assets/{asset}/assign-pic` dengan validasi BR-03 |
 | PIC migrations | `database/migrations/2026_06_22_020000_create_pics_table.php` and `2026_06_22_030000_create_pic_histories_table.php` | Buat tabel PIC dan riwayat pergantian PIC |
-| QR code generator | `app/Http/Controllers/AssetController.php`, `database/migrations/2026_06_22_040000_add_qr_code_path_to_assets_table.php` | Menyimpan path QR SVG di asset, membuat file QR SVG saat asset dibuat, dan endpoint download `GET /api/assets/{asset}/qrcode` |
+v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/migrations/2026_06_22_040000_add_qr_code_path_to_assets_table.php` | Menyimpan path QR SVG di asset, membuat file QR SVG saat asset dibuat, dan endpoint download `GET /api/assets/{asset}/qrcode` |
+| QR geotagging | `app/Http/Controllers/AssetController.php`, `routes/api.php` | Endpoint `POST /api/assets/{asset}/scan` untuk scan QR + simpan lokasi, `GET /api/assets/{asset}/location` untuk lokasi terakhir aset |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
@@ -35,7 +36,7 @@
 
 ## Catatan Tambahan
 - Saat ini fitur CRUD aset masih menggunakan controller `AssetController` dan hanya dapat dimodifikasi oleh `admin_it`
-- Fitur lanjutannya seperti PIC management dan QR code generator sudah dikerjakan; scan geotagging dan laporan PDF/Excel masih belum dikerjakan di langkah ini
+- Fitur lanjutannya seperti PIC management, QR code generator, dan QR geotagging sudah dikerjakan; laporan PDF/Excel masih belum dikerjakan di langkah ini
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
 
 ## Rekomendasi Tindak Lanjut
