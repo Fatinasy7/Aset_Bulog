@@ -27,6 +27,7 @@
 | PIC migrations | `database/migrations/2026_06_22_020000_create_pics_table.php` and `2026_06_22_030000_create_pic_histories_table.php` | Buat tabel PIC dan riwayat pergantian PIC |
 v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/migrations/2026_06_22_040000_add_qr_code_path_to_assets_table.php` | Menyimpan path QR SVG di asset, membuat file QR SVG saat asset dibuat, dan endpoint download `GET /api/assets/{asset}/qrcode` |
 | QR geotagging | `app/Http/Controllers/AssetController.php`, `routes/api.php` | Endpoint `POST /api/assets/{asset}/scan` untuk scan QR + simpan lokasi, `GET /api/assets/{asset}/location` untuk lokasi terakhir aset |
+| Report export | `app/Http/Controllers/ReportController.php`, `app/Exports/AssetsExport.php`, `resources/views/reports/assets.blade.php` | Ekspor aset ke format PDF dan Excel via `GET /api/reports/assets?format=pdf|excel` |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
@@ -36,7 +37,7 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 
 ## Catatan Tambahan
 - Saat ini fitur CRUD aset masih menggunakan controller `AssetController` dan hanya dapat dimodifikasi oleh `admin_it`
-- Fitur lanjutannya seperti PIC management, QR code generator, dan QR geotagging sudah dikerjakan; laporan PDF/Excel masih belum dikerjakan di langkah ini
+- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, dan Report Engine (PDF/Excel export) sudah dikerjakan
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
 
 ## 📚 Dokumentasi API Lengkap
@@ -466,9 +467,10 @@ php artisan test --coverage
 ### Feature Tests Included
 - **AssetScanTest**: 10+ test cases untuk scan & location endpoints
 - **NotificationTest**: 3 test cases untuk notifikasi endpoint dan scheduler
+- **ReportExportTest**: 3 test cases untuk laporan preview, Excel download, dan PDF download
 
 ## Rekomendasi Tindak Lanjut
 1. Jalankan `php artisan migrate` lalu `php artisan db:seed`
 2. Uji semua endpoint menggunakan Postman atau Insomnia dengan collection yang sudah disediakan
 3. Jalankan `php artisan test` untuk memastikan semua feature test lolos
-4. Lanjutan berikutnya: laporan PDF/Excel export
+4. Lanjutan berikutnya: integrasi UI laporannya dan validasi CORS untuk download file
