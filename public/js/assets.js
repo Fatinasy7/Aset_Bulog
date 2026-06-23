@@ -217,6 +217,37 @@ async function getDashboardSummary() {
     }
 }
 
+async function getReportExport(format = 'excel', filters = {}) {
+    if (!hasApiAccess()) {
+        console.warn('API tidak tersedia untuk report export');
+        return null;
+    }
+
+    try {
+        const params = new URLSearchParams({
+            format: format,
+            ...filters
+        });
+        
+        const response = await window.api.get(`/reports/assets?${params.toString()}`, {
+            responseType: 'blob' // Important: get file as blob
+        });
+        
+        // Return blob directly for download handling
+        return {
+            blob: response.data,
+            contentType: response.headers['content-type'] || 'application/octet-stream',
+            filename: response.headers['content-disposition'] ? 
+                response.headers['content-disposition'].split('filename=')[1].replace(/"/g, '') :
+                `laporan_aset.${format}`
+        };
+    } catch (error) {
+        console.warn('getReportExport API gagal', error);
+        // Return null to trigger fallback
+        return null;
+    }
+}
+
 window.assetsAPI = {
     fetchAssets,
     getAsset,
@@ -225,5 +256,6 @@ window.assetsAPI = {
     deleteAsset: deleteAssetById,
     scanAsset,
     getDashboardSummary,
+    getReportExport,
     hasApiAccess
 };

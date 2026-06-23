@@ -1078,25 +1078,85 @@ function getScanHistory(limit = 10) {
 }
 
 // Export Excel
-function exportExcel() {
-    let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
+async function exportExcel() {
+    try {
+        // Try to export from API first
+        if (window.assetsAPI?.getReportExport) {
+            const report = await window.assetsAPI.getReportExport('excel', {
+                search: currentSearchTerm,
+                kondisi: currentFilterKondisi,
+                jenis: currentFilterJenis,
+                lokasi: currentFilterLokasi
+            });
+            
+            if (report && report.blob) {
+                downloadBlob(report.blob, report.filename || 'laporan_aset.xlsx');
+                showToast('Export Excel berhasil diunduh!', 'success');
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('Export Excel dari API gagal', error);
+    }
     
-    assets.forEach((asset, index) => {
-        const koordinat = asset.koordinat ? `${asset.koordinat.lat}, ${asset.koordinat.lng}` : '';
-        csv += `${index + 1},${asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.namaAset},"${asset.merkType}",${asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tglPerolehan || ''},${asset.harga || 0}\n`;
-    });
-    
-    downloadFile(csv, 'laporan_aset.csv', 'text/csv');
+    // Fallback: Generate CSV locally
+    try {
+        let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
+        
+        assets.forEach((asset, index) => {
+            const koordinat = asset.koordinat ? `${asset.koordinat.lat}, ${asset.koordinat.lng}` : '';
+            csv += `${index + 1},${asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.namaAset},"${asset.merkType}",${asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tglPerolehan || ''},${asset.harga || 0}\n`;
+        });
+        
+        downloadFile(csv, 'laporan_aset.csv', 'text/csv');
+        showToast('Export CSV (lokal) berhasil diunduh!', 'success');
+    } catch (error) {
+        showToast('Gagal mengekspor laporan.', 'error');
+        console.error('Export error:', error);
+    }
 }
 
 // Export PDF
-function exportPDF() {
-    showToast('Fitur Export PDF dalam pengembangan!', 'info');
+async function exportPDF() {
+    try {
+        // Try to export from API first
+        if (window.assetsAPI?.getReportExport) {
+            const report = await window.assetsAPI.getReportExport('pdf', {
+                search: currentSearchTerm,
+                kondisi: currentFilterKondisi,
+                jenis: currentFilterJenis,
+                lokasi: currentFilterLokasi
+            });
+            
+            if (report && report.blob) {
+                downloadBlob(report.blob, report.filename || 'laporan_aset.pdf');
+                showToast('Export PDF berhasil diunduh!', 'success');
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('Export PDF dari API gagal', error);
+    }
+    
+    // Fallback message
+    showToast('Fitur Export PDF memerlukan backend API. Gunakan Export Excel untuk saat ini.', 'info');
 }
 
 // Download File
 function downloadFile(content, filename, type) {
     const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Download Blob (for API file responses)
+function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
