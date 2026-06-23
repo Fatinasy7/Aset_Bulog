@@ -322,6 +322,56 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 }
 ```
 
+### Notification Endpoints
+
+#### 12. List Notifications
+**Endpoint:** `GET /api/notifications`  
+**Auth:** Required  
+**Description:** Ambil daftar notifikasi untuk user saat ini atau role terkait
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "user_id": null,
+    "role": "user_pic",
+    "title": "Pengingat Pemeriksaan Aset",
+    "message": "Pengingat harian: Anda memiliki 3 aset untuk pemeriksaan.",
+    "data": {
+      "asset_ids": [1, 2, 3]
+    },
+    "is_read": false,
+    "created_at": "2026-06-23T11:00:00Z"
+  }
+]
+```
+
+#### 13. Mark Notification Read
+**Endpoint:** `PATCH /api/notifications/{notification_id}/read`  
+**Auth:** Required  
+**Description:** Tandai notifikasi sebagai sudah dibaca
+
+**Response (200 OK):**
+```json
+{
+  "id": 1,
+  "user_id": null,
+  "role": "user_pic",
+  "title": "Pengingat Pemeriksaan Aset",
+  "message": "Pengingat harian: Anda memiliki 3 aset untuk pemeriksaan.",
+  "data": {
+    "asset_ids": [1, 2, 3]
+  },
+  "is_read": true,
+  "created_at": "2026-06-23T11:00:00Z"
+}
+```
+
+### Scheduled Notifications
+- `app:send-inspection-reminders` — command scheduler daily untuk mengirim pengingat pemeriksaan ke PIC
+- Notifikasi internal juga direkam ke tabel `notifications`
+
 ### PIC Endpoints
 
 #### 12. List All PIC
@@ -415,9 +465,10 @@ php artisan test --coverage
 
 ### Feature Tests Included
 - **AssetScanTest**: 10+ test cases untuk scan & location endpoints
+- **NotificationTest**: 3 test cases untuk notifikasi endpoint dan scheduler
 
 ## Rekomendasi Tindak Lanjut
 1. Jalankan `php artisan migrate` lalu `php artisan db:seed`
 2. Uji semua endpoint menggunakan Postman atau Insomnia dengan collection yang sudah disediakan
 3. Jalankan `php artisan test` untuk memastikan semua feature test lolos
-4. Lanjutan berikutnya: laporan PDF/Excel export dan notification system
+4. Lanjutan berikutnya: laporan PDF/Excel export

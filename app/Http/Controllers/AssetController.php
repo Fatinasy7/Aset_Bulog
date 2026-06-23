@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\DamageReportMail;
 use App\Models\Asset;
 use App\Models\AssetHistory;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -116,6 +120,27 @@ class AssetController extends Controller
                 'old_value' => json_encode(array_combine(array_keys($changed), array_column($changed, 'old'))),
                 'new_value' => json_encode(array_combine(array_keys($changed), array_column($changed, 'new'))),
             ]);
+        }
+
+        if (isset($changed['kondisi'])) {
+            $newCondition = strtolower(trim($after['kondisi']));
+            if (str_contains($newCondition, 'rusak')) {
+                $adminUsers = User::where('role', 'admin_it')->get();
+                foreach ($adminUsers as $admin) {
+                    Mail::mailer('log')->to($admin->email)->send(new DamageReportMail($asset, $before['kondisi'] ?? null, $after['kondisi']));
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'role' => 'admin_it',
+                        'title' => 'Laporan Kerusakan Aset',
+                        'message' => "Aset {$asset->kode_aset} dilaporkan dengan kondisi {$after['kondisi']}.",
+                        'data' => [
+                            'asset_id' => $asset->id,
+                            'old_condition' => $before['kondisi'] ?? null,
+                            'new_condition' => $after['kondisi'],
+                        ],
+                    ]);
+                }
+            }
         }
 
         return response()->json($asset);

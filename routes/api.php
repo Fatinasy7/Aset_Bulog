@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('assets/{asset}/location', [AssetController::class, 'location']);
 
     Route::get('pics', [PicController::class, 'index']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead']);
+
     Route::middleware('role:admin_it')->group(function () {
         Route::post('assets', [AssetController::class, 'store']);
         Route::put('assets/{asset}', [AssetController::class, 'update']);
