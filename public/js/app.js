@@ -5,6 +5,7 @@
 
 // Global Variables
 let assets = [];
+let laporanData = [];
 let users = [];
 let notifications = [];
 let currentUser = null;
@@ -15,6 +16,7 @@ let kondisiChart = null;
 let lokasiChart = null;
 let locationWatcher = null;
 let currentCoordinates = null;
+let scanHistory = []; // Track QR scan history
 
 // Pagination & Filter State
 let currentSearchTerm = '';
@@ -33,6 +35,7 @@ function debounceSearch(term) {
         currentSearchTerm = term;
         currentPageNum = 1;
         if (currentPage === 'laporan') {
+            currentPageNum = 1;
             await loadAndRenderAssets();
         }
     }, 300);
@@ -56,17 +59,22 @@ async function loadAndRenderAssets() {
         const params = buildAssetQueryParams();
         if (window.assetsAPI?.fetchAssets) {
             const response = await window.assetsAPI.fetchAssets(params);
-            // Expect API to return { data: [...], pagination: { total, page, per_page } }
-            if (response?.data) {
-                assets = Array.isArray(response.data) ? response.data : [];
-                totalItems = response.pagination?.total || assets.length;
-            } else if (Array.isArray(response)) {
+            if (Array.isArray(response)) {
                 assets = response;
+            } else if (response?.data && Array.isArray(response.data)) {
+                assets = response.data;
             }
         }
     } catch (e) {
         console.warn('API fetchAssets gagal, fallback localStorage', e);
     }
+
+    if (!Array.isArray(assets)) {
+        assets = [];
+    }
+
+    laporanData = assets;
+    totalItems = laporanData.length;
     renderLaporan();
     renderPagination();
 }
@@ -128,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     loadUsers();
     loadNotifications();
+    loadScanHistory();
     await loadAssets();
     initSidebar();
     showMainApp();
@@ -320,6 +329,7 @@ function showPage(page) {
     // Update content based on page
     switch(page) {
         case 'dashboard':
+            // updateDashboard is now async but handles errors internally
             updateDashboard();
             renderDashboardNotifications();
             break;
@@ -372,11 +382,18 @@ function onScanSuccess(decodedText, coords) {
         return;
     }
 
+    // Show loading indicator
+    document.getElementById('scanResult').innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin"></i> Memproses scan...
+        </div>
+    `;
+
     if (window.assetsAPI?.scanAsset) {
         window.assetsAPI.scanAsset(assetId, coords?.latitude, coords?.longitude)
             .then(asset => {
                 if (asset) {
-                    displayScanResult(asset);
+                    displayScanResult(asset, coords);
                 } else {
                     onScanError(new Error('Aset tidak ditemukan'));
                 }
@@ -388,7 +405,7 @@ function onScanSuccess(decodedText, coords) {
     } else {
         const asset = assets.find(a => a.kodeAset === assetId || a.id === assetId);
         if (asset) {
-            displayScanResult(asset);
+            displayScanResult(asset, coords);
         } else {
             onScanError(new Error('Aset tidak ditemukan'));
         }
@@ -396,9 +413,19 @@ function onScanSuccess(decodedText, coords) {
 }
 
 function onScanError(error) {
+    let errorMessage = error.message || 'Gagal memindai QR Code.';
+    let alertClass = 'alert-warning';
+    
+    // Specific error handling
+    if (errorMessage.includes('tidak ditemukan')) {
+        alertClass = 'alert-danger';
+    } else if (errorMessage.includes('tidak valid')) {
+        alertClass = 'alert-warning';
+    }
+    
     document.getElementById('scanResult').innerHTML = `
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i> ${error.message || 'Gagal memindai QR Code.'}
+        <div class="alert ${alertClass}">
+            <i class="fas fa-exclamation-triangle"></i> ${errorMessage}
         </div>
     `;
 }
@@ -414,7 +441,25 @@ function parseScannedCode(decodedText) {
 
 
 // Update Dashboard
-function updateDashboard() {
+async function updateDashboard() {
+    // Try to load from API first
+    if (window.assetsAPI?.getDashboardSummary) {
+        try {
+            const summary = await window.assetsAPI.getDashboardSummary();
+            document.getElementById('totalAset').textContent = summary.total_assets || 0;
+            document.getElementById('totalLaptop').textContent = summary.total_laptops || 0;
+            document.getElementById('totalPrinter').textContent = summary.total_printers || 0;
+            document.getElementById('perluPerbaikan').textContent = summary.needs_repair || 0;
+            
+            // Update charts with API data
+            updateCharts(summary.kondisi_breakdown, summary.lokasi_breakdown);
+            return;
+        } catch (error) {
+            console.warn('Dashboard API gagal, fallback to local data', error);
+        }
+    }
+    
+    // Fallback: compute from local assets
     const laptops = assets.filter(a => a.jenis === 'laptop');
     const printers = assets.filter(a => a.jenis === 'printer');
     const perluPerbaikan = assets.filter(a => a.kondisi === 'Rusak Ringan' || a.kondisi === 'Rusak Berat' || a.kondisi === 'Dalam Perbaikan');
@@ -429,12 +474,15 @@ function updateDashboard() {
 }
 
 // Update Charts
-function updateCharts() {
+function updateCharts(kondisiBreakdown = null, lokasiBreakdown = null) {
     // Kondisi Chart
-    const kondisiCounts = {};
-    assets.forEach(a => {
-        kondisiCounts[a.kondisi] = (kondisiCounts[a.kondisi] || 0) + 1;
-    });
+    let kondisiCounts = kondisiBreakdown;
+    if (!kondisiCounts) {
+        kondisiCounts = {};
+        assets.forEach(a => {
+            kondisiCounts[a.kondisi] = (kondisiCounts[a.kondisi] || 0) + 1;
+        });
+    }
     
     const kondisiCtx = document.getElementById('kondisiChart');
     if (kondisiCtx) {
@@ -456,10 +504,13 @@ function updateCharts() {
     }
     
     // Lokasi Chart
-    const lokasiCounts = {};
-    assets.forEach(a => {
-        lokasiCounts[a.lokasi] = (lokasiCounts[a.lokasi] || 0) + 1;
-    });
+    let lokasiCounts = lokasiBreakdown;
+    if (!lokasiCounts) {
+        lokasiCounts = {};
+        assets.forEach(a => {
+            lokasiCounts[a.lokasi] = (lokasiCounts[a.lokasi] || 0) + 1;
+        });
+    }
     
     const lokasiCtx = document.getElementById('lokasiChart');
     if (lokasiCtx) {
@@ -526,9 +577,12 @@ function renderTable(type) {
 function renderLaporan() {
     const tbody = document.querySelector('#laporanTable tbody');
     if (tbody) {
-        tbody.innerHTML = assets.map((asset, index) => `
+        const startIndex = (currentPageNum - 1) * itemsPerPage;
+        const pageItems = laporanData.slice(startIndex, startIndex + itemsPerPage);
+
+        tbody.innerHTML = pageItems.map((asset, index) => `
             <tr>
-                <td>${(currentPageNum - 1) * itemsPerPage + index + 1}</td>
+                <td>${startIndex + index + 1}</td>
                 <td><strong>${asset.kodeAset}</strong></td>
                 <td>${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'}</td>
                 <td>${asset.namaAset}</td>
@@ -536,7 +590,7 @@ function renderLaporan() {
                 <td>${asset.serialNumber || '-'}</td>
                 <td>${asset.lokasi}</td>
                 <td>${asset.koordinat ? `<small>${asset.koordinat.lat.toFixed(4)}, ${asset.koordinat.lng.toFixed(4)}</small>` : '-'}</td>
-                <td><span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span></td>
+                <td><span class="badge badge-${asset.kondisi.toLowerCase().replace(/\s+/g, '-')}">${asset.kondisi}</span></td>
                 <td>${asset.tglPerolehan ? formatDate(asset.tglPerolehan) : '-'}</td>
             </tr>
         `).join('');
@@ -683,7 +737,7 @@ async function saveAsset() {
         form.reportValidity();
         return;
     }
-    
+
     const assetType = document.getElementById('assetType').value;
     let assetData = {
         id: editingId || generateId(),
@@ -700,30 +754,34 @@ async function saveAsset() {
         koordinat: currentCoordinates ? { ...currentCoordinates } : null,
         updatedAt: new Date().toISOString()
     };
-    
+
     try {
         if (editingId && window.assetsAPI?.updateAsset) {
             assetData = await window.assetsAPI.updateAsset(editingId, assetData) || assetData;
         } else if (!editingId && window.assetsAPI?.createAsset) {
             assetData = await window.assetsAPI.createAsset(assetData) || assetData;
         }
+
+        if (editingId) {
+            const index = assets.findIndex(a => a.id === editingId);
+            if (index !== -1) {
+                assets[index] = { ...assets[index], ...assetData };
+            }
+        } else {
+            assetData.createdAt = assetData.createdAt || new Date().toISOString();
+            assets.push(assetData);
+        }
+
+        saveAssets();
+        handleAssetNotification(assetData, !editingId);
+        bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
+        showToast('Data aset berhasil disimpan!', 'success');
+        await refreshAssets();
+        showPage(assetType);
     } catch (error) {
-        console.warn('API saveAsset gagal, menggunakan local storage', error);
+        console.warn('API saveAsset gagal', error);
+        showToast('Gagal menyimpan data aset. Periksa koneksi atau input.', 'error');
     }
-    
-    if (editingId) {
-        const index = assets.findIndex(a => a.id === editingId);
-        if (index !== -1) assets[index] = { ...assets[index], ...assetData };
-    } else {
-        assetData.createdAt = assetData.createdAt || new Date().toISOString();
-        assets.push(assetData);
-    }
-    
-    saveAssets();
-    handleAssetNotification(assetData, !editingId);
-    bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
-    showToast('Data aset berhasil disimpan!', 'success');
-    showPage(assetType);
 }
 
 // Generate ID
@@ -806,22 +864,24 @@ async function deleteAsset(id) {
             if (window.assetsAPI?.deleteAsset) {
                 await window.assetsAPI.deleteAsset(id);
             }
-        } catch (error) {
-            console.warn('API deleteAsset gagal, hapus lokal tetap dilakukan', error);
-        }
 
-        assets = assets.filter(a => a.id !== id);
-        saveAssets();
-        if (currentUser && currentUser.role === 'pic' && asset) {
-            addNotification(
-                'Aset dihapus',
-                `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`, 
-                'warning',
-                'pic'
-            );
+            assets = assets.filter(a => a.id !== id);
+            saveAssets();
+            if (currentUser && currentUser.role === 'pic' && asset) {
+                addNotification(
+                    'Aset dihapus',
+                    `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`, 
+                    'warning',
+                    'pic'
+                );
+            }
+            showToast('Aset berhasil dihapus!', 'success');
+            await refreshAssets();
+            showPage(currentPage);
+        } catch (error) {
+            console.warn('API deleteAsset gagal', error);
+            showToast('Gagal menghapus aset. Periksa koneksi atau coba lagi.', 'error');
         }
-        showToast('Aset berhasil dihapus!', 'success');
-        showPage(currentPage);
     }
 }
 
@@ -914,25 +974,107 @@ async function manualScan() {
 }
 
 // Display Scan Result
-function displayScanResult(asset) {
+function displayScanResult(asset, coords = null) {
     const resultDiv = document.getElementById('scanResult');
+    
+    // Record scan in history for audit trail
+    recordScanHistory(asset, coords);
+    
+    // Determine which coordinates to show
+    let geoInfo = '-';
+    let geoSource = '';
+    if (coords && coords.latitude && coords.longitude) {
+        geoInfo = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+        geoSource = ' <small class="text-muted">(dari GPS saat scan)</small>';
+    } else if (asset.koordinat) {
+        geoInfo = `${asset.koordinat.lat?.toFixed(6) || asset.koordinat.latitude?.toFixed(6)}, ${asset.koordinat.lng?.toFixed(6) || asset.koordinat.longitude?.toFixed(6)}`;
+        geoSource = ' <small class="text-muted">(dari database)</small>';
+    }
+    
     resultDiv.innerHTML = `
+        <div class="alert alert-success mb-3">
+            <i class="fas fa-check-circle"></i> Aset berhasil dipindai!
+        </div>
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">${asset.namaAset}</h5>
-                <p class="card-text">
-                    <strong>Kode:</strong> ${asset.kodeAset}<br>
-                    <strong>Merk/Type:</strong> ${asset.merkType}<br>
-                    <strong>Lokasi:</strong> ${asset.lokasi}<br>
-                    <strong>Koordinat:</strong> ${asset.koordinat ? `${asset.koordinat.lat.toFixed(6)}, ${asset.koordinat.lng.toFixed(6)}` : '-'}<br>
-                    <strong>Kondisi:</strong> <span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span>
-                </p>
-                <button class="btn btn-primary btn-sm" onclick="viewAsset('${asset.id}')">
-                    <i class="fas fa-eye"></i> Lihat Detail
+                <dl class="row mb-0">
+                    <dt class="col-sm-5"><strong>Kode Aset</strong></dt>
+                    <dd class="col-sm-7">${asset.kodeAset}</dd>
+                    
+                    <dt class="col-sm-5"><strong>Jenis</strong></dt>
+                    <dd class="col-sm-7">${asset.jenis === 'laptop' ? '💻 Laptop' : '🖨️ Printer'}</dd>
+                    
+                    <dt class="col-sm-5"><strong>Merk/Type</strong></dt>
+                    <dd class="col-sm-7">${asset.merkType}</dd>
+                    
+                    <dt class="col-sm-5"><strong>Serial Number</strong></dt>
+                    <dd class="col-sm-7">${asset.serialNumber || '-'}</dd>
+                    
+                    <dt class="col-sm-5"><strong>Lokasi</strong></dt>
+                    <dd class="col-sm-7">${asset.lokasi}</dd>
+                    
+                    <dt class="col-sm-5"><strong>Koordinat</strong></dt>
+                    <dd class="col-sm-7"><small>${geoInfo}${geoSource}</small></dd>
+                    
+                    <dt class="col-sm-5"><strong>Kondisi</strong></dt>
+                    <dd class="col-sm-7"><span class="badge badge-${asset.kondisi.toLowerCase().replace(/\s+/g, '-')}">${asset.kondisi}</span></dd>
+                    
+                    <dt class="col-sm-5"><strong>Tanggal Perolehan</strong></dt>
+                    <dd class="col-sm-7">${asset.tglPerolehan ? formatDate(asset.tglPerolehan) : '-'}</dd>
+                </dl>
+                <button class="btn btn-primary btn-sm mt-3" onclick="viewAsset('${asset.id}')">
+                    <i class="fas fa-eye"></i> Lihat Detail Lengkap
                 </button>
             </div>
         </div>
     `;
+}
+
+// Scan History Management
+function recordScanHistory(asset, coords = null) {
+    const scanRecord = {
+        id: generateId(),
+        assetId: asset.id,
+        assetCode: asset.kodeAset,
+        assetName: asset.namaAset,
+        latitude: coords?.latitude || null,
+        longitude: coords?.longitude || null,
+        scannedAt: new Date().toISOString(),
+        userId: currentUser?.id || 'guest',
+        userName: currentUser?.name || 'User'
+    };
+    
+    // Add to memory
+    scanHistory.unshift(scanRecord); // most recent first
+    if (scanHistory.length > 100) {
+        scanHistory = scanHistory.slice(0, 100); // keep last 100 scans
+    }
+    
+    // Persist to localStorage
+    try {
+        localStorage.setItem('scanHistory', JSON.stringify(scanHistory));
+    } catch (e) {
+        console.warn('Failed to persist scan history', e);
+    }
+    
+    return scanRecord;
+}
+
+function loadScanHistory() {
+    try {
+        const stored = localStorage.getItem('scanHistory');
+        if (stored) {
+            scanHistory = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('Failed to load scan history', e);
+        scanHistory = [];
+    }
+}
+
+function getScanHistory(limit = 10) {
+    return scanHistory.slice(0, limit);
 }
 
 // Export Excel
@@ -1245,10 +1387,23 @@ function initDefaultNotifications() {
 }
 
 // Load Assets from LocalStorage or API
+async function refreshAssets() {
+    await loadAssets();
+    if (currentPage === 'laporan') {
+        await loadAndRenderAssets();
+    } else if (currentPage === 'laptop') {
+        renderTable('laptop');
+    } else if (currentPage === 'printer') {
+        renderTable('printer');
+    }
+    updateDashboard();
+}
+
 async function loadAssets() {
     if (window.assetsAPI?.fetchAssets) {
         try {
             assets = await window.assetsAPI.fetchAssets();
+            saveAssets();
         } catch (e) {
             console.warn('Gagal fetch assets dari API, fallback localStorage', e);
         }
@@ -1258,71 +1413,11 @@ async function loadAssets() {
         const stored = localStorage.getItem('asetKantor');
         if (stored) {
             assets = JSON.parse(stored);
-        } else {
-            assets = [
-                {
-                    id: 'LPT001',
-                    kodeAset: 'LPT-001',
-                    namaAset: 'MacBook Pro 14"',
-                    merkType: 'Apple MacBook Pro M2',
-                    serialNumber: 'C02XG0KDJGH5',
-                    lokasi: 'Ruang Direksi',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2024-01-15',
-                    harga: 25000000,
-                    keterangan: 'Untuk Direktur Utama',
-                    jenis: 'laptop',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'LPT002',
-                    kodeAset: 'LPT-002',
-                    namaAset: 'ThinkPad X1 Carbon',
-                    merkType: 'Lenovo ThinkPad X1 Carbon Gen 11',
-                    serialNumber: 'PF2K4R8J',
-                    lokasi: 'Ruang IT',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2024-02-20',
-                    harga: 18000000,
-                    keterangan: 'Untuk Staff IT',
-                    jenis: 'laptop',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PRT001',
-                    kodeAset: 'PRT-001',
-                    namaAset: 'LaserJet Pro',
-                    merkType: 'HP LaserJet Pro M404n',
-                    serialNumber: 'PHC2345678',
-                    lokasi: 'Ruang Rapat',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2023-06-10',
-                    harga: 4500000,
-                    keterangan: 'Ruang Rapat Lantai 2',
-                    jenis: 'printer',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PRT002',
-                    kodeAset: 'PRT-002',
-                    namaAset: 'OfficeJet Pro',
-                    merkType: 'HP OfficeJet Pro 9015e',
-                    serialNumber: 'TH53R12345',
-                    lokasi: 'Ruang HRD',
-                    kondisi: 'Rusak Ringan',
-                    tglPerolehan: '2023-08-15',
-                    harga: 5500000,
-                    keterangan: 'Perlu penggantian cartridge',
-                    jenis: 'printer',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            saveAssets();
         }
+    }
+
+    if (!assets || assets.length === 0) {
+        assets = [];
     }
 
     initDefaultNotifications();

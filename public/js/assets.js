@@ -154,8 +154,66 @@ async function scanAsset(id, latitude = null, longitude = null) {
         });
         return normalizeAsset(response.data?.data || response.data);
     } catch (error) {
-        // Fallback jika endpoint scan belum tersedia di backend
+        // Handle 404 specifically
+        if (error.response?.status === 404) {
+            throw new Error(`Aset dengan ID "${id}" tidak ditemukan dalam database backend.`);
+        }
+        // Handle validation errors (422)
+        if (error.response?.status === 422) {
+            const messages = error.response.data?.errors || error.response.data?.message || 'Data tidak valid';
+            throw new Error(`Validasi gagal: ${typeof messages === 'string' ? messages : JSON.stringify(messages)}`);
+        }
+        // Fallback jika endpoint scan belum tersedia atau error lainnya
+        console.warn('Endpoint scan tidak tersedia, mencoba fallback ke getAsset', error);
         return getAsset(id);
+    }
+}
+
+async function getDashboardSummary() {
+    if (!hasApiAccess()) {
+        // Fallback: compute from local assets
+        const laptops = JSON.parse(localStorage.getItem('assets') || '[]').filter(a => a.jenis === 'laptop');
+        const printers = JSON.parse(localStorage.getItem('assets') || '[]').filter(a => a.jenis === 'printer');
+        const allAssets = JSON.parse(localStorage.getItem('assets') || '[]');
+        const needsRepair = allAssets.filter(a => ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'].includes(a.kondisi));
+        
+        const kondisiCounts = {};
+        allAssets.forEach(a => {
+            kondisiCounts[a.kondisi] = (kondisiCounts[a.kondisi] || 0) + 1;
+        });
+        
+        const lokasiCounts = {};
+        allAssets.forEach(a => {
+            lokasiCounts[a.lokasi] = (lokasiCounts[a.lokasi] || 0) + 1;
+        });
+        
+        return {
+            total_assets: allAssets.length,
+            total_laptops: laptops.length,
+            total_printers: printers.length,
+            needs_repair: needsRepair.length,
+            kondisi_breakdown: kondisiCounts,
+            lokasi_breakdown: lokasiCounts
+        };
+    }
+
+    try {
+        const response = await window.api.get('/dashboard/summary');
+        const data = response.data?.data || response.data;
+        
+        // Ensure proper structure
+        return {
+            total_assets: data.total_assets || 0,
+            total_laptops: data.total_laptops || 0,
+            total_printers: data.total_printers || 0,
+            needs_repair: data.needs_repair || 0,
+            kondisi_breakdown: data.kondisi_breakdown || {},
+            lokasi_breakdown: data.lokasi_breakdown || {}
+        };
+    } catch (error) {
+        console.warn('getDashboardSummary API gagal', error);
+        // Fallback to localStorage
+        return getDashboardSummary(); // recursive fallback
     }
 }
 
@@ -166,5 +224,6 @@ window.assetsAPI = {
     updateAsset,
     deleteAsset: deleteAssetById,
     scanAsset,
+    getDashboardSummary,
     hasApiAccess
 };

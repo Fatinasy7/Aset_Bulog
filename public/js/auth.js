@@ -1,38 +1,3 @@
-function parseJson(raw) {
-  try {
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function getLocalUsers() {
-  const stored = localStorage.getItem('users');
-  return parseJson(stored) || [];
-}
-
-function saveLocalUsers(users) {
-  localStorage.setItem('users', JSON.stringify(users));
-}
-
-function ensureDemoUsers() {
-  const users = getLocalUsers();
-  if (users.length === 0) {
-    const defaultUsers = [
-      { username: 'admin', password: 'admin123', role: 'admin' },
-      { username: 'pic', password: 'pic123', role: 'pic' }
-    ];
-    saveLocalUsers(defaultUsers);
-    return defaultUsers;
-  }
-  return users;
-}
-
-function findLocalUser(username, password, role) {
-  const users = ensureDemoUsers();
-  return users.find(u => u.username === username && u.password === password && (!role || u.role === role));
-}
-
 function login(username, password, role) {
   if (!username || !password || !role) {
     return Promise.reject(new Error('Username, password, dan role wajib diisi'));
@@ -41,24 +6,22 @@ function login(username, password, role) {
   return window.api.post('/auth/login', { username, password, role })
     .then((res) => {
       const token = res.data?.access_token || res.data?.token || res.data?.data?.token;
-      let user = res.data?.user || res.data?.data?.user || res.data?.data || res.data;
+      const user = res.data?.user || res.data?.data?.user || (typeof res.data?.data === 'object' ? res.data.data : null);
 
-      if (token) localStorage.setItem('auth_token', token);
+      if (token) {
+        localStorage.setItem('auth_token', token);
+      }
+
       if (user && typeof user === 'object') {
         if (!user.role && role) user.role = role;
         localStorage.setItem('currentUser', JSON.stringify(user));
       }
+
       return res;
     })
     .catch((err) => {
-      const localUser = findLocalUser(username, password, role);
-      if (localUser) {
-        const token = `local-${username}-${Date.now()}`;
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('currentUser', JSON.stringify({ username: localUser.username, role: localUser.role }));
-        return Promise.resolve({ data: { token, user: localUser } });
-      }
-      return Promise.reject(err);
+      const message = err?.response?.data?.message || 'Login gagal. Periksa kembali username, password, dan role.';
+      return Promise.reject(new Error(message));
     });
 }
 
@@ -74,8 +37,10 @@ function redirectToLogin() {
 
 function logout() {
   return window.api.post('/auth/logout')
-    .catch(() => {})
-    .finally(() => {
+    .then(() => {
+      redirectToLogin();
+    })
+    .catch(() => {
       redirectToLogin();
     });
 }
@@ -130,7 +95,7 @@ function bindLoginForm() {
         }
       })
       .catch((err) => {
-        const message = err?.response?.data?.message || 'Login gagal';
+        const message = err?.response?.data?.message || err?.message || 'Login gagal';
         if (window.showToast) {
           window.showToast(message, 'error');
         } else {
