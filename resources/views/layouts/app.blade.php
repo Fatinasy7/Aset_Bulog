@@ -38,6 +38,8 @@
                         <a class="sidebar-link" href="{{ route('frontend.assets.create') }}">Form Aset</a>
                         <a class="sidebar-link" href="{{ route('frontend.assets.index') }}">Detail Aset</a>
                         <a class="sidebar-link" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
+                        <a class="sidebar-link" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>
+                        <a class="sidebar-link" href="{{ route('frontend.dashboard.management') }}">Dashboard Manajemen</a>
                         <a class="sidebar-link" href="{{ route('frontend.reports.index') }}">Laporan</a>
                         <a class="sidebar-link" href="{{ route('frontend.audit.index') }}">Audit Trail</a>
                     </nav>

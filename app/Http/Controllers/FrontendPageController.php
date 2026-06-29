@@ -85,4 +85,26 @@ class FrontendPageController extends Controller
 
         return view('audit.index', compact('logs'));
     }
+
+    public function scanQr()
+    {
+        return view('scan-qr');
+    }
+
+    public function dashboardManagement()
+    {
+        $assets = Asset::latest()->get();
+        $pics = User::where('role', 'pic')->orderBy('name')->get();
+
+        $summary = [
+            'total_assets' => $assets->count(),
+            'total_laptops' => $assets->where('jenis', 'laptop')->count(),
+            'total_printers' => $assets->where('jenis', 'printer')->count(),
+            'total_pics' => $pics->count(),
+        ];
+
+        $conditionCounts = $assets->groupBy('kondisi')->map->count()->sortDesc();
+
+        return view('dashboard.management', compact('summary', 'conditionCounts', 'assets'));
+    }
 }
