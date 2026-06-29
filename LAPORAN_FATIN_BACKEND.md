@@ -29,18 +29,22 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 | QR geotagging | `app/Http/Controllers/AssetController.php`, `routes/api.php` | Endpoint `POST /api/assets/{asset}/scan` untuk scan QR + simpan lokasi, `GET /api/assets/{asset}/location` untuk lokasi terakhir aset |
 | Report export | `app/Http/Controllers/ReportController.php`, `app/Exports/AssetsExport.php`, `resources/views/reports/assets.blade.php` | Ekspor aset ke format PDF dan Excel via `GET /api/reports/assets?format=pdf|excel` |
 | Backup database | `app/Services/DatabaseBackupService.php`, `app/Console/Commands/CreateDatabaseBackup.php`, `app/Console/Commands/VerifyDatabaseIntegrity.php`, `app/Http/Controllers/BackupController.php`, `config/backup.php` | Membuat backup manual, jadwal harian otomatis via scheduler, endpoint backup dan verifikasi integritas database |
+| Security hardening | `app/Http/Middleware/SanitizeInputMiddleware.php`, `app/Http/Middleware/EnsureJsonApiRequests.php`, `app/Http/Kernel.php`, `routes/api.php`, `config/cors.php`, `app/Http/Middleware/CsrfProtectionMiddleware.php`, `app/Http/Middleware/SecurityHeadersMiddleware.php`, `tests/Feature/SecurityHardeningTest.php` | Menambahkan sanitasi input, middleware autentikasi pada route API, enforcement Content-Type JSON untuk mutasi, konfigurasi CORS untuk frontend, perlindungan CSRF, header keamanan, rate limiting, dan pengujian keamanan |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
 - Aksi mutasi asset (`store`, `update`, `destroy`) dibatasi untuk role `admin_it`
 - Role valid pada registrasi hanya menerima `admin_it`, `user_pic`, atau `manajemen`
 - Token akses dibuat menggunakan Laravel Sanctum di endpoint login/register
+- Middleware CSRF dan header keamanan diterapkan untuk melindungi request mutasi dan mengurangi risiko serangan dari browser
+- Rate limiting diterapkan pada endpoint auth untuk mengurangi abuse dan brute force
 
 ## Catatan Tambahan
 - Saat ini fitur CRUD aset masih menggunakan controller `AssetController` dan hanya dapat dimodifikasi oleh `admin_it`
-- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, Report Engine (PDF/Excel export), dan backup database sudah dikerjakan
+- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, Report Engine (PDF/Excel export), backup database, dan security hardening sudah dikerjakan
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
 - Fitur backup dapat diuji lewat `php artisan app:create-database-backup` dan `php artisan app:verify-database-integrity`
+- Fitur keamanan dapat diuji lewat `php artisan test --filter=SecurityHardeningTest`
 
 ## 📚 Dokumentasi API Lengkap
 
