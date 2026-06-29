@@ -13,14 +13,14 @@
             <div class="app-topbar__inner">
                 <div class="brand-block">
                     <div class="brand-mark" aria-hidden="true">
-                        <span>BA</span>
+                        <span>LA</span>
                     </div>
                     <div>
-                        <p class="brand-title">Sistem Manajemen Aset BULOG</p>
-                        <p class="brand-subtitle">Frontend UI/UX Preview</p>
+                        <p class="brand-title">Lumina Asset</p>
+                        <p class="brand-subtitle">Enterprise Management</p>
                     </div>
                 </div>
-                <div class="brand-subtitle">
+                <div class="brand-subtitle brand-subtitle--meta">
                     @yield('topbar-meta', 'Pondasi visual dan layout dasar')
                 </div>
             </div>
@@ -31,17 +31,14 @@
                 <div class="sidebar-card">
                     <strong>Frontend Navigation</strong>
                     <nav class="sidebar-menu" aria-label="Navigasi frontend">
-                        <a class="sidebar-link is-active" href="{{ route('frontend.design-system') }}">Design System</a>
-                        <a class="sidebar-link" href="{{ route('frontend.login') }}">Login Preview</a>
-                        <a class="sidebar-link" href="{{ route('frontend.dashboard') }}">Dashboard</a>
-                        <a class="sidebar-link" href="{{ route('frontend.assets.index') }}">Daftar Aset</a>
-                        <a class="sidebar-link" href="{{ route('frontend.assets.create') }}">Form Aset</a>
-                        <a class="sidebar-link" href="{{ route('frontend.assets.index') }}">Detail Aset</a>
-                        <a class="sidebar-link" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
-                        <a class="sidebar-link" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>
-                        <a class="sidebar-link" href="{{ route('frontend.dashboard.management') }}">Dashboard Manajemen</a>
-                        <a class="sidebar-link" href="{{ route('frontend.reports.index') }}">Laporan</a>
-                        <a class="sidebar-link" href="{{ route('frontend.audit.index') }}">Audit Trail</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.dashboard') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard') }}">Dashboard</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.assets.laptops') ? 'is-active' : '' }}" href="{{ route('frontend.assets.laptops') }}">Data Laptop</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.assets.printers') ? 'is-active' : '' }}" href="{{ route('frontend.assets.printers') }}">Data Printer</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.scan-qr') ? 'is-active' : '' }}" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.reports.index') ? 'is-active' : '' }}" href="{{ route('frontend.reports.index') }}">Laporan</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.settings') ? 'is-active' : '' }}" href="{{ route('frontend.settings') }}">Pengaturan</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.pics.index') ? 'is-active' : '' }}" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.dashboard.management') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard.management') }}">Dashboard Manajemen</a>
                     </nav>
                 </div>
             </aside>

@@ -6,16 +6,80 @@
 @section('content')
 <section class="page-header">
     <div>
-        <h1 class="page-title">Laporan Aset</h1>
-        <p class="page-lead">Halaman laporan menyediakan filter untuk kondisi, lokasi, jenis, PIC, dan rentang tanggal dengan area preview tabel hasil.</p>
+        <h1 class="page-title">Reports</h1>
+        <p class="page-lead">Real-time monitoring of asset value, availability, maintenance, and forecast data.</p>
     </div>
-    <div class="action-row">
-        <button class="btn-ui btn-secondary-ui" type="button">Export PDF</button>
-        <button class="btn-ui btn-primary-ui" type="button">Export Excel</button>
+    <div class="button-group">
+        <button class="btn-ui btn-secondary-ui" type="button">Filter</button>
+        <button class="btn-ui btn-primary-ui" type="button">Export CSV</button>
     </div>
 </section>
 
+<section class="dashboard-card-grid">
+    <article class="metric-card metric-card--accent">
+        <p class="metric-label">Total Asset Value</p>
+        <h2 class="metric-value">Rp 4,820,500</h2>
+    </article>
+    <article class="metric-card metric-card--soft">
+        <p class="metric-label">Active Assets</p>
+        <h2 class="metric-value">942</h2>
+    </article>
+    <article class="metric-card metric-card--warning">
+        <p class="metric-label">Maintenance Required</p>
+        <h2 class="metric-value">28</h2>
+    </article>
+    <article class="metric-card metric-card--info">
+        <p class="metric-label">Avg. Depreciation</p>
+        <h2 class="metric-value">15.4%</h2>
+    </article>
+</section>
+
+<section class="page-grid">
+    <article class="card-surface report-panel">
+        <div class="card-surface__header">
+            <strong>Asset Life Expectancy</strong>
+        </div>
+        <div class="card-surface__body">
+            <div class="placeholder-box placeholder-box--chart">
+                <div class="text-center-muted">
+                    <div class="placeholder-icon">▴</div>
+                    <p>Fleet durability vs. usage hours</p>
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <aside class="card-surface report-summary">
+        <div class="card-surface__body">
+            <h2 class="metric-value">Q4 Budget Prediction</h2>
+            <p class="surface-note">Automated forecast for procurement and savings.</p>
+            <div class="progress-pill">
+                <span>Procurement Goal</span>
+                <strong>Rp 850,000</strong>
+            </div>
+            <div class="progress-bar">
+                <span style="width: 72%;"></span>
+            </div>
+            <p class="surface-note">Projected savings Rp 124,300 with improved maintenance cycles.</p>
+            <button class="btn-ui btn-primary-ui btn-full" type="button">Download Full Forecast</button>
+        </div>
+    </aside>
+</section>
+
 <section class="card-surface">
+    <div class="card-surface__header">
+        <strong>Inventory Detailed Log</strong>
+        <div class="surface-note">Real-time status of all managed entities</div>
+    </div>
+    <div class="card-surface__body">
+        <div class="table-toolbar">
+            <input class="form-control-ui" type="search" placeholder="Search reports...">
+            <div class="button-group">
+                <button class="btn-ui btn-secondary-ui" type="button">Filter</button>
+                <button class="btn-ui btn-primary-ui" type="button">Export CSV</button>
+            </div>
+        </div>
+        <table class="table-ui">
     <div class="card-surface__body">
         <div class="component-grid component-grid--reports">
             <select class="form-select-ui"><option>Semua Kondisi</option><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select>

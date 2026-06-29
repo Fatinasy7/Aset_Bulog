@@ -6,11 +6,15 @@
 @section('content')
 <section class="page-header">
     <div>
-        <h1 class="page-title">Dashboard Utama</h1>
-        <p class="page-lead">Ringkasan operasional aset yang dipakai untuk memantau total aset, kondisi, dan daftar aset bermasalah.</p>
+        <h1 class="page-title">Asset Dashboard</h1>
+        <p class="page-lead">Selamat datang kembali. Memantau kesehatan dan distribusi infrastruktur TI secara real-time.</p>
     </div>
-    <div>
-        <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.create') }}">Tambah Aset</a>
+    <div class="page-actions">
+        <input class="form-control-ui" type="search" placeholder="Cari aset atau nomor seri...">
+        <div class="button-group">
+            <button class="btn-ui btn-secondary-ui" type="button">Filter</button>
+            <button class="btn-ui btn-secondary-ui" type="button">Export PDF</button>
+        </div>
     </div>
 </section>
 

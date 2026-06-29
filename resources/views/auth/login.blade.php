@@ -4,49 +4,47 @@
 
 @section('content')
 <section class="auth-card">
-    <div class="auth-card__hero">
-        <div class="brand-block">
-            <div class="brand-mark" aria-hidden="true">
-                <span>BA</span>
-            </div>
-            <div>
-                <p class="brand-title">Masuk ke Sistem</p>
-                <p class="brand-subtitle">Preview layout login untuk frontend Wahyu</p>
-            </div>
+    <div class="auth-card__hero auth-card__hero--brand">
+        <div class="brand-icon">LA</div>
+        <div class="auth-heading">
+            <p class="brand-title">Lumina Asset</p>
+            <p class="brand-subtitle">Enterprise Portal</p>
         </div>
     </div>
 
     <div class="auth-card__body stack">
-        <div class="alert-ui alert-info-ui">
-            Gunakan halaman ini sebagai acuan layout login sebelum koneksi autentikasi backend dipasang.
-        </div>
+        <p class="auth-intro">Masuk dengan akun resmi untuk mengelola aset, laporan, dan scan QR secara cepat.</p>
 
         <form class="stack" action="#" method="post">
             @csrf
             <div>
-                <label class="form-label-ui" for="email">Email</label>
-                <input class="form-control-ui" type="email" id="email" name="email" placeholder="nama@bulog.co.id" required>
+                <label class="form-label-ui" for="email">Work Email</label>
+                <input class="form-control-ui" type="email" id="email" name="email" placeholder="name@company.com" required>
             </div>
 
             <div>
-                <label class="form-label-ui" for="password">Password</label>
-                <input class="form-control-ui" type="password" id="password" name="password" placeholder="Masukkan password" required>
+                <div class="form-label-row">
+                    <label class="form-label-ui" for="password">Password</label>
+                    <a class="link-button" href="#">Forgot?</a>
+                </div>
+                <input class="form-control-ui" type="password" id="password" name="password" placeholder="••••••••" required>
             </div>
 
-            <div>
-                <label class="form-label-ui" for="role">Role</label>
-                <select class="form-select-ui" id="role" name="role" required>
-                    <option value="">Pilih role</option>
-                    <option value="admin">Admin IT</option>
-                    <option value="pic">User / PIC</option>
-                    <option value="manajemen">Manajemen</option>
-                </select>
-            </div>
+            <label class="checkbox-ui">
+                <input type="checkbox" name="remember">
+                <span>Remember this terminal for 30 days</span>
+            </label>
 
-            <button class="btn-ui btn-primary-ui" type="submit">Masuk</button>
+            <button class="btn-ui btn-primary-ui btn-full" type="submit">Authenticate <span aria-hidden="true">→</span></button>
         </form>
 
-        <p class="surface-note">Layout ini sudah responsif dan siap dipakai sebagai pondasi untuk login final.</p>
+        <div class="auth-divider"><span>OR SIGN IN WITH</span></div>
+        <div class="auth-socials">
+            <button class="btn-ui btn-secondary-ui btn-block">SSO</button>
+            <button class="btn-ui btn-secondary-ui btn-block">Passkey</button>
+        </div>
+
+        <p class="surface-note auth-footer">Authorized access only. <a href="#">Contact Admin</a></p>
     </div>
 </section>
 @endsection

@@ -28,6 +28,8 @@ Route::view('/frontend/design-system', 'ui.design-system')->name('frontend.desig
 
 Route::controller(FrontendPageController::class)->group(function () {
     Route::get('/frontend/dashboard', 'dashboard')->name('frontend.dashboard');
+    Route::get('/frontend/data-laptop', 'dataLaptop')->name('frontend.assets.laptops');
+    Route::get('/frontend/data-printer', 'dataPrinter')->name('frontend.assets.printers');
     Route::get('/frontend/assets', 'assetsIndex')->name('frontend.assets.index');
     Route::get('/frontend/assets/create', 'assetsCreate')->name('frontend.assets.create');
     Route::get('/frontend/assets/{asset}/edit', 'assetsEdit')->name('frontend.assets.edit');
@@ -37,6 +39,7 @@ Route::controller(FrontendPageController::class)->group(function () {
     Route::get('/frontend/pics/create', 'picsCreate')->name('frontend.pics.create');
     Route::get('/frontend/pics/{pic}/edit', 'picsEdit')->name('frontend.pics.edit');
     Route::get('/frontend/reports', 'reportsIndex')->name('frontend.reports.index');
+    Route::get('/frontend/settings', 'settings')->name('frontend.settings');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
     Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
     Route::get('/frontend/dashboard-management', 'dashboardManagement')->name('frontend.dashboard.management');

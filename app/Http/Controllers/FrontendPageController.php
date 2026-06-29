@@ -127,8 +127,53 @@ class FrontendPageController extends Controller
     public function reportsIndex()
     {
         $assets = Asset::latest()->get();
+        $summary = [
+            'total_assets' => $assets->count(),
+            'total_active' => $assets->where('kondisi', 'Baik')->count(),
+            'total_printers' => $assets->where('jenis', 'printer')->count(),
+            'avg_depreciation' => 15.4,
+        ];
 
-        return view('reports.index', compact('assets'));
+        return view('reports.index', compact('assets', 'summary'));
+    }
+
+    public function dataLaptop()
+    {
+        $assets = Asset::where('jenis', 'laptop')->latest()->get();
+        $summary = [
+            'total_assets' => $assets->count(),
+            'total_operational' => $assets->where('kondisi', 'Baik')->count(),
+            'total_maintenance' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
+            'critical_issues' => $assets->where('kondisi', 'Rusak Berat')->count(),
+        ];
+
+        return view('assets.laptops', compact('assets', 'summary'));
+    }
+
+    public function dataPrinter()
+    {
+        $assets = Asset::where('jenis', 'printer')->latest()->get();
+        $summary = [
+            'total_assets' => $assets->count(),
+            'total_online' => $assets->where('kondisi', 'Baik')->count(),
+            'maintenance_required' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
+            'alerts' => $assets->where('kondisi', 'Rusak Berat')->count(),
+        ];
+
+        return view('assets.printers', compact('assets', 'summary'));
+    }
+
+    public function settings()
+    {
+        $users = User::where('role', 'pic')->orderBy('name')->get();
+        $assets = Asset::latest()->get();
+        $summary = [
+            'total_assets' => $assets->count(),
+            'total_laptops' => $assets->where('jenis', 'laptop')->count(),
+            'total_printers' => $assets->where('jenis', 'printer')->count(),
+        ];
+
+        return view('settings.index', compact('users', 'summary'));
     }
 
     public function auditIndex()
