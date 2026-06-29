@@ -36,6 +36,8 @@ Route::controller(FrontendPageController::class)->group(function () {
     Route::get('/frontend/pics/form', 'picsForm')->name('frontend.pics.form');
     Route::get('/frontend/reports', 'reportsIndex')->name('frontend.reports.index');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
+    Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
+    Route::get('/frontend/dashboard-management', 'dashboardManagement')->name('frontend.dashboard.management');
 });
 
 Route::post('/frontend/assets', [AssetController::class, 'storeWeb'])->name('frontend.assets.store');
