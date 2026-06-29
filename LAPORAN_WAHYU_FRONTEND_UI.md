@@ -6,8 +6,8 @@
 - Kesimpulan utama: sudah ada prototipe frontend statis yang cukup lengkap di folder `public/`, tetapi implementasi frontend Laravel di `resources/views` masih belum dikerjakan
 - Status terbaru: design system dan layout dasar sudah disiapkan di Blade Laravel
 - Status terbaru lanjutan: login final, dashboard utama, daftar aset, dan form aset sudah disiapkan di Blade Laravel
-- Status terbaru akhir: detail aset, manajemen PIC, laporan, dan audit trail sudah disiapkan di Blade Laravel
-- Status terbaru backend: halaman-halaman utama sudah mengambil data dari backend Laravel lewat controller dan Eloquent
+- Status terbaru akhir: detail aset, manajemen PIC, laporan, audit trail, Scan QR mockup, dan Dashboard Manajemen sudah disiapkan di Blade Laravel
+- Status terbaru backend: halaman-halaman utama sudah mengambil data dari backend Laravel lewat controller dan Eloquent, form aset sudah tersambung ke backend CRUD dasar, dan manajemen PIC kini terhubung dengan backend CRUD `users`
 
 ## Yang Sudah Dikerjakan
 - Design system UI selesai dibuat dan diterapkan di `resources/css/app.css`.
@@ -19,25 +19,26 @@
   - `resources/views/dashboard/index.blade.php`
   - `resources/views/assets/index.blade.php`
   - `resources/views/assets/create.blade.php`
+  - `resources/views/assets/edit.blade.php`
   - `resources/views/assets/show.blade.php`
   - `resources/views/pics/index.blade.php`
   - `resources/views/pics/form.blade.php`
   - `resources/views/reports/index.blade.php`
   - `resources/views/audit/index.blade.php`
-- Routing untuk semua halaman ini sudah terdaftar di `routes/web.php`.
+  - `resources/views/scan-qr.blade.php`
+  - `resources/views/dashboard/management.blade.php`
+- Routing untuk semua halaman ini sudah terdaftar di `routes/web.php`, termasuk route CRUD aset (`storeWeb`, `updateWeb`, `destroyWeb`) dan halaman mockup tambahan.
 - Backend data wiring sudah dibuat melalui `FrontendPageController`, `Asset`, `User`, dan `AuditLog`.
 - Database migrations dan seed berhasil dijalankan; data backend sekarang muncul di frontend.
 - Audit log pencatatan aset sudah dipersiapkan dan halaman audit trail membaca data backend.
+- Manajemen PIC sekarang sudah mendukung create/edit/delete di Blade melalui backend.
 
 ## Yang Belum Dikerjakan
 - Autentikasi login Laravel belum diterapkan penuh, saat ini hanya UI login.
-- Form tambah aset belum terhubung ke endpoint backend untuk menyimpan data.
-- Halaman edit aset belum dibuat; saat ini hanya form tambah dan detail aset.
-- Aksi hapus aset belum dipasang di frontend/backend.
-- Manajemen PIC masih belum memiliki backend CRUD lengkap untuk `users`.
+- Autentikasi login Laravel belum diterapkan penuh; saat ini hanya UI login.
 - Filter/search dalam daftar aset belum berfungsi secara dinamis.
 - Laporan aset belum mendukung filter aktif atau ekspor PDF/Excel.
-- Halaman Scan QR Code belum terintegrasi dengan data asset dan logika scan.
+- Halaman Scan QR Code belum terintegrasi dengan data asset dan logika scan kamera/API.
 - Pengujian responsif dan penyempurnaan error state/kosong masih perlu dilakukan.
 
 ## Status Per Bagian
@@ -49,13 +50,13 @@
 | Prioritas 2: Halaman Login | Sebagian | UI selesai, autentikasi belum selesai |
 | Prioritas 2: Dashboard Utama | Selesai | Dashboard sudah tampil dengan data backend |
 | Prioritas 2: Daftar Aset | Selesai | Tabel aset tampil, filter/search belum dinamis |
-| Prioritas 2: Form Tambah/Edit Aset | Sebagian | Form UI siap, backend submit belum terpasang |
+| Prioritas 2: Form Tambah/Edit Aset | Selesai | Form tambah dan edit aset sudah dibuat, route backend CRUD dasar sudah tersambung |
 | Prioritas 2: Detail Aset | Selesai | Detail aset backend sudah tampil |
-| Prioritas 3: Scan QR Code | Belum | Halaman ada, integrasi data belum selesai |
-| Prioritas 3: Manajemen PIC | Sebagian | List PIC ada, backend CRUD belum lengkap |
+| Prioritas 3: Scan QR Code | Sebagian | Mockup scan QR sudah dibuat, tetapi integrasi kamera/API belum selesai |
+| Prioritas 3: Manajemen PIC | Selesai | List PIC ada dan form create/edit/delete sudah terhubung ke backend |
 | Prioritas 3: Laporan Aset | Sebagian | Layout laporan ada, filter/ekspor belum selesai |
 | Prioritas 3: Audit Trail | Selesai | Halaman audit trail sudah membaca data backend |
-| Prioritas 3: Dashboard Manajemen | Belum | Read-only management dashboard belum dibuat |
+| Prioritas 3: Dashboard Manajemen | Sebagian | Dashboard manajemen sudah dibuat sebagai mockup read-only |
 | Prioritas 4: Penyelarasan akhir | Belum | Perlu QA, responsif, dan error state |
 
 ## Langkah Selanjutnya
@@ -64,11 +65,13 @@
   - PUT/PATCH untuk edit aset
   - DELETE untuk hapus aset
 - Terapkan otentikasi login Laravel untuk mengamankan halaman frontend.
-- Lengkapi backend CRUD untuk manajemen PIC (`users`).
+- Terapkan otentikasi login Laravel untuk mengamankan halaman frontend.
 - Aktifkan filter/search dinamis di halaman daftar aset.
 - Kembangkan laporan dengan filter data dan ekspor PDF/Excel.
 - Integrasikan halaman Scan QR Code dengan API aset.
-- Uji tampilan responsif desktop/tablet/mobile dan rapikan state kosong/error.## Rekomendasi Branch Kerja
+- Uji tampilan responsif desktop/tablet/mobile dan rapikan state kosong/error.
+
+## Rekomendasi Branch Kerja
 - `feature/design-system`
 - `feature/mockup-all-pages`
 - `feature/layout-login`
@@ -82,8 +85,8 @@
 
 ## Catatan Untuk PM
 - Saat ini project punya dua lapis frontend: prototipe statis di `public/` dan basis Laravel yang masih kosong di `resources/views`.
-- Halaman frontend utama sekarang sudah membaca data backend, tetapi alur input dari form web ke backend masih perlu disambungkan agar CRUD lengkap.
-- Langkah berikutnya yang paling aman adalah menyambungkan submit form Blade ke endpoint backend dan menutup sisa halaman yang masih bersifat tampilan.
+- Halaman frontend utama sekarang sudah membaca data backend, dan manajemen PIC sudah terhubung ke backend CRUD.
+- Langkah berikutnya yang paling aman adalah menerapkan autentikasi, menyempurnakan filter dan laporan, serta mengintegrasikan Scan QR dengan data aset.
 
 ## File Yang Dicek
 - `routes/web.php`

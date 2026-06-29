@@ -34,6 +34,8 @@ Route::controller(FrontendPageController::class)->group(function () {
     Route::get('/frontend/assets/detail/{asset}', 'assetShow')->name('frontend.assets.show');
     Route::get('/frontend/pics', 'picsIndex')->name('frontend.pics.index');
     Route::get('/frontend/pics/form', 'picsForm')->name('frontend.pics.form');
+    Route::get('/frontend/pics/create', 'picsCreate')->name('frontend.pics.create');
+    Route::get('/frontend/pics/{pic}/edit', 'picsEdit')->name('frontend.pics.edit');
     Route::get('/frontend/reports', 'reportsIndex')->name('frontend.reports.index');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
     Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
@@ -43,3 +45,7 @@ Route::controller(FrontendPageController::class)->group(function () {
 Route::post('/frontend/assets', [AssetController::class, 'storeWeb'])->name('frontend.assets.store');
 Route::put('/frontend/assets/{asset}', [AssetController::class, 'updateWeb'])->name('frontend.assets.update');
 Route::delete('/frontend/assets/{asset}', [AssetController::class, 'destroyWeb'])->name('frontend.assets.destroy');
+
+Route::post('/frontend/pics', [FrontendPageController::class, 'storePic'])->name('frontend.pics.store');
+Route::put('/frontend/pics/{pic}', [FrontendPageController::class, 'updatePic'])->name('frontend.pics.update');
+Route::delete('/frontend/pics/{pic}', [FrontendPageController::class, 'destroyPic'])->name('frontend.pics.destroy');

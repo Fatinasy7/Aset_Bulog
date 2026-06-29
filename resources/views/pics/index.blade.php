@@ -10,7 +10,7 @@
         <p class="page-lead">Halaman ini digunakan untuk mengelola penanggung jawab aset, termasuk daftar, jabatan, dan kontak.</p>
     </div>
     <div>
-        <a class="btn-ui btn-primary-ui" href="{{ route('frontend.pics.form') }}">Tambah PIC</a>
+        <a class="btn-ui btn-primary-ui" href="{{ route('frontend.pics.create') }}">Tambah PIC</a>
     </div>
 </section>
 
@@ -35,7 +35,16 @@
                         <td>{{ $pic->role === 'pic' ? 'PIC' : ucfirst($pic->role) }}</td>
                         <td>{{ $pic->email }}</td>
                         <td>{{ $pic->phone ?? '-' }}</td>
-                        <td><a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.form') }}">Edit</a></td>
+                        <td>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.edit', $pic) }}">Edit</a>
+                                <form method="POST" action="{{ route('frontend.pics.destroy', $pic) }}" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus PIC ini?')">Hapus</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr>

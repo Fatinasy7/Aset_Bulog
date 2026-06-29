@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class FrontendPageController extends Controller
 {
@@ -65,11 +66,62 @@ class FrontendPageController extends Controller
         return view('pics.index', compact('pics'));
     }
 
+    public function picsCreate()
+    {
+        $pics = User::where('role', 'pic')->orderBy('name')->get();
+
+        return view('pics.form', compact('pics'));
+    }
+
+    public function picsEdit(User $pic)
+    {
+        $pics = User::where('role', 'pic')->orderBy('name')->get();
+
+        return view('pics.form', compact('pic', 'pics'));
+    }
+
     public function picsForm()
     {
         $pics = User::where('role', 'pic')->orderBy('name')->get();
 
         return view('pics.form', compact('pics'));
+    }
+
+    public function storePic(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:20',
+            'role' => 'required|in:pic',
+        ]);
+
+        User::create(array_merge($validated, [
+            'password' => bcrypt('password'),
+        ]));
+
+        return redirect()->route('frontend.pics.index')->with('success', 'PIC berhasil ditambahkan.');
+    }
+
+    public function updatePic(Request $request, User $pic)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $pic->id,
+            'phone' => 'nullable|string|max:20',
+            'role' => 'required|in:pic',
+        ]);
+
+        $pic->update($validated);
+
+        return redirect()->route('frontend.pics.index')->with('success', 'PIC berhasil diperbarui.');
+    }
+
+    public function destroyPic(User $pic)
+    {
+        $pic->delete();
+
+        return redirect()->route('frontend.pics.index')->with('success', 'PIC berhasil dihapus.');
     }
 
     public function reportsIndex()
