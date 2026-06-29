@@ -32,6 +32,7 @@
                     <strong>Frontend Navigation</strong>
                     <nav class="sidebar-menu" aria-label="Navigasi frontend">
                         <a class="sidebar-link {{ request()->routeIs('frontend.dashboard') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard') }}">Dashboard</a>
+                        <a class="sidebar-link {{ request()->routeIs('frontend.login') ? 'is-active' : '' }}" href="{{ route('frontend.login') }}">Login</a>
                         <a class="sidebar-link {{ request()->routeIs('frontend.assets.laptops') ? 'is-active' : '' }}" href="{{ route('frontend.assets.laptops') }}">Data Laptop</a>
                         <a class="sidebar-link {{ request()->routeIs('frontend.assets.printers') ? 'is-active' : '' }}" href="{{ route('frontend.assets.printers') }}">Data Printer</a>
                         <a class="sidebar-link {{ request()->routeIs('frontend.scan-qr') ? 'is-active' : '' }}" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>

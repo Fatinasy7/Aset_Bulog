@@ -204,4 +204,5 @@ class FrontendPageController extends Controller
 
         return view('dashboard.management', compact('summary', 'conditionCounts', 'assets'));
     }
+
 }
