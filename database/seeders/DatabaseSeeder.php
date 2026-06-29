@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,9 +17,13 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@bulog.local'],
             [
                 'name' => 'Admin IT',
-                'password' => 'password123',
+                'password' => Hash::make('password123'),
                 'role' => 'admin_it',
             ]
         );
+
+        $this->call([
+            PicSeeder::class,
+        ]);
     }
 }
