@@ -53,45 +53,32 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>AST-001</td>
-                    <td>Laptop</td>
-                    <td>Lenovo ThinkPad</td>
-                    <td><span class="badge-ui badge-baik">Baik</span></td>
-                    <td>Andi</td>
-                    <td>Ruang IT</td>
-                    <td>
-                        <a class="btn-ui btn-secondary-ui" href="#">Detail</a>
-                        <a class="btn-ui btn-secondary-ui" href="#">Edit</a>
+                @forelse ($assets as $index => $asset)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $asset->kode_aset }}</td>
+                        <td>{{ ucfirst($asset->jenis) }}</td>
+                        <td>{{ $asset->merk_type }}</td>
+                        <td><span class="badge-ui badge-{{ str_replace(' ', '-', strtolower($asset->kondisi)) }}">{{ $asset->kondisi }}</span></td>
+                        <td>{{ $asset->pic_name ?? '-' }}</td>
+                        <td>{{ $asset->lokasi }}</td>
+                        <td>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.show', $asset) }}">Detail</a>
+                            <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit</a>
+                            <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus</button>
+                            </form>
+                        </div>
                     </td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>AST-002</td>
-                    <td>Printer</td>
-                    <td>HP LaserJet</td>
-                    <td><span class="badge-ui badge-rusak-ringan">Rusak Ringan</span></td>
-                    <td>Sari</td>
-                    <td>Ruang TU</td>
-                    <td>
-                        <a class="btn-ui btn-secondary-ui" href="#">Detail</a>
-                        <a class="btn-ui btn-secondary-ui" href="#">Edit</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>AST-003</td>
-                    <td>Laptop</td>
-                    <td>Asus VivoBook</td>
-                    <td><span class="badge-ui badge-dalam-perbaikan">Dalam Perbaikan</span></td>
-                    <td>Rudi</td>
-                    <td>Ruang Akunting</td>
-                    <td>
-                        <a class="btn-ui btn-secondary-ui" href="#">Detail</a>
-                        <a class="btn-ui btn-secondary-ui" href="#">Edit</a>
-                    </td>
-                </tr>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8">Belum ada data aset dari backend.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

@@ -22,6 +22,7 @@ class Asset extends Model
         'harga',
         'keterangan',
         'jenis',
+        'pic_name',
     ];
 
     protected $casts = [

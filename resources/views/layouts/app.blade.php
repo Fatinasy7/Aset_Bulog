@@ -36,7 +36,7 @@
                         <a class="sidebar-link" href="{{ route('frontend.dashboard') }}">Dashboard</a>
                         <a class="sidebar-link" href="{{ route('frontend.assets.index') }}">Daftar Aset</a>
                         <a class="sidebar-link" href="{{ route('frontend.assets.create') }}">Form Aset</a>
-                        <a class="sidebar-link" href="{{ route('frontend.assets.show') }}">Detail Aset</a>
+                        <a class="sidebar-link" href="{{ route('frontend.assets.index') }}">Detail Aset</a>
                         <a class="sidebar-link" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
                         <a class="sidebar-link" href="{{ route('frontend.reports.index') }}">Laporan</a>
                         <a class="sidebar-link" href="{{ route('frontend.audit.index') }}">Audit Trail</a>
@@ -45,6 +45,16 @@
             </aside>
 
             <main class="content-area">
+                @if(session('success'))
+                    <div class="alert-ui alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="alert-ui alert-danger">
+                        {{ session('error') }}
+                    </div>
+                @endif
                 <div class="page-grid">
                     @yield('content')
                 </div>

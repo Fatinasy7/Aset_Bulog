@@ -41,6 +41,17 @@
                 <button class="btn-ui btn-secondary-ui" type="reset">Batal</button>
             </div>
         </form>
+
+        <div class="card-surface__body" style="padding-left: 0; padding-right: 0; padding-bottom: 0;">
+            <p class="surface-note">PIC yang sudah terdaftar di backend:</p>
+            <ul>
+                @forelse ($pics as $pic)
+                    <li>{{ $pic->name }} - {{ $pic->email }}</li>
+                @empty
+                    <li>Belum ada PIC tersedia.</li>
+                @endforelse
+            </ul>
+        </div>
     </div>
 </section>
 @endsection

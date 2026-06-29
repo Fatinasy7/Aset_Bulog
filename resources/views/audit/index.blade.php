@@ -28,30 +28,20 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>2026-06-21</td>
-                    <td>AST-001</td>
-                    <td>Kondisi</td>
-                    <td>Baik</td>
-                    <td>Rusak Ringan</td>
-                    <td>Andi</td>
-                </tr>
-                <tr>
-                    <td>2026-06-19</td>
-                    <td>AST-002</td>
-                    <td>Lokasi</td>
-                    <td>Ruang TU</td>
-                    <td>Ruang Arsip</td>
-                    <td>Sari</td>
-                </tr>
-                <tr>
-                    <td>2026-06-17</td>
-                    <td>AST-003</td>
-                    <td>PIC</td>
-                    <td>Rudi</td>
-                    <td>Fajar</td>
-                    <td>Admin IT</td>
-                </tr>
+                @forelse ($logs as $log)
+                    <tr>
+                        <td>{{ $log->created_at->format('Y-m-d') }}</td>
+                        <td>{{ $log->asset_code }}</td>
+                        <td>{{ $log->field_name ?? $log->action }}</td>
+                        <td>{{ $log->old_value ?? '-' }}</td>
+                        <td>{{ $log->new_value ?? '-' }}</td>
+                        <td>{{ $log->changed_by }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6">Belum ada data audit log dari backend.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

@@ -44,36 +44,22 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>AST-001</td>
-                    <td>Laptop</td>
-                    <td>Laptop Operasional</td>
-                    <td><span class="badge-ui badge-baik">Baik</span></td>
-                    <td>Andi</td>
-                    <td>Ruang IT</td>
-                    <td>2026-06-20</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>AST-002</td>
-                    <td>Printer</td>
-                    <td>Printer Administrasi</td>
-                    <td><span class="badge-ui badge-rusak-ringan">Rusak Ringan</span></td>
-                    <td>Sari</td>
-                    <td>Ruang TU</td>
-                    <td>2026-06-18</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>AST-003</td>
-                    <td>Laptop</td>
-                    <td>Laptop Akunting</td>
-                    <td><span class="badge-ui badge-dalam-perbaikan">Dalam Perbaikan</span></td>
-                    <td>Rudi</td>
-                    <td>Ruang Akunting</td>
-                    <td>2026-06-12</td>
-                </tr>
+                @forelse ($assets as $index => $asset)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $asset->kode_aset }}</td>
+                        <td>{{ ucfirst($asset->jenis) }}</td>
+                        <td>{{ $asset->nama_aset }}</td>
+                        <td><span class="badge-ui badge-{{ str_replace(' ', '-', strtolower($asset->kondisi)) }}">{{ $asset->kondisi }}</span></td>
+                        <td>{{ $asset->pic_name ?? '-' }}</td>
+                        <td>{{ $asset->lokasi }}</td>
+                        <td>{{ optional($asset->tgl_perolehan)->format('Y-m-d') ?? '-' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8">Belum ada data laporan dari backend.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

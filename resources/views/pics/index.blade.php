@@ -28,30 +28,20 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Andi Saputra</td>
-                    <td>Staff IT</td>
-                    <td>andi@bulog.co.id</td>
-                    <td>0812-0000-1111</td>
-                    <td><a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.form') }}">Edit</a></td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Sari Wulandari</td>
-                    <td>Staf TU</td>
-                    <td>sari@bulog.co.id</td>
-                    <td>0812-0000-2222</td>
-                    <td><a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.form') }}">Edit</a></td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Rudi Hartono</td>
-                    <td>Supervisor Gudang</td>
-                    <td>rudi@bulog.co.id</td>
-                    <td>0812-0000-3333</td>
-                    <td><a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.form') }}">Edit</a></td>
-                </tr>
+                @forelse ($pics as $index => $pic)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $pic->name }}</td>
+                        <td>{{ $pic->role === 'pic' ? 'PIC' : ucfirst($pic->role) }}</td>
+                        <td>{{ $pic->email }}</td>
+                        <td>{{ $pic->phone ?? '-' }}</td>
+                        <td><a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.form') }}">Edit</a></td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6">Belum ada PIC dari backend.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>

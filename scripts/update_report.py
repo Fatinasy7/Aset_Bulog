@@ -1,15 +1,9 @@
-﻿# Laporan Analisis Frontend UI/UX â€” Wahyu Bonita Juliana Sari
-
-## Ringkasan
-- Tanggal analisis: 2026-06-22
-- Fokus pemeriksaan: status frontend, struktur view Laravel, dan keterhubungan ke backend aset
-- Kesimpulan utama: sudah ada prototipe frontend statis yang cukup lengkap di folder `public/`, tetapi implementasi frontend Laravel di `resources/views` masih belum dikerjakan
-- Status terbaru: design system dan layout dasar sudah disiapkan di Blade Laravel
-- Status terbaru lanjutan: login final, dashboard utama, daftar aset, dan form aset sudah disiapkan di Blade Laravel
-- Status terbaru akhir: detail aset, manajemen PIC, laporan, dan audit trail sudah disiapkan di Blade Laravel
-- Status terbaru backend: halaman-halaman utama sudah mengambil data dari backend Laravel lewat controller dan Eloquent
-
-## Yang Sudah Dikerjakan
+from pathlib import Path
+path = Path(__file__).resolve().parent.parent / 'LAPORAN_WAHYU_FRONTEND_UI.md'
+text = path.read_text(encoding='utf-8')
+start = text.index('## Yang Sudah Dikerjakan')
+end = text.index('## Rekomendasi Branch Kerja')
+new_section = '''## Yang Sudah Dikerjakan
 - Design system UI selesai dibuat dan diterapkan di `resources/css/app.css`.
 - Layout dasar aplikasi tersedia di Blade:
   - `resources/views/layouts/app.blade.php`
@@ -68,30 +62,9 @@
 - Aktifkan filter/search dinamis di halaman daftar aset.
 - Kembangkan laporan dengan filter data dan ekspor PDF/Excel.
 - Integrasikan halaman Scan QR Code dengan API aset.
-- Uji tampilan responsif desktop/tablet/mobile dan rapikan state kosong/error.## Rekomendasi Branch Kerja
-- `feature/design-system`
-- `feature/mockup-all-pages`
-- `feature/layout-login`
-- `feature/layout-asset-form`
-- `feature/layout-pic-form`
-- `feature/layout-asset-list`
-- `feature/layout-asset-detail`
-- `feature/layout-dashboard`
-- `feature/layout-report`
-- `feature/layout-audit-trail`
-
-## Catatan Untuk PM
-- Saat ini project punya dua lapis frontend: prototipe statis di `public/` dan basis Laravel yang masih kosong di `resources/views`.
-- Halaman frontend utama sekarang sudah membaca data backend, tetapi alur input dari form web ke backend masih perlu disambungkan agar CRUD lengkap.
-- Langkah berikutnya yang paling aman adalah menyambungkan submit form Blade ke endpoint backend dan menutup sisa halaman yang masih bersifat tampilan.
-
-## File Yang Dicek
-- `routes/web.php`
-- `routes/api.php`
-- `app/Http/Controllers/AssetController.php`
-- `resources/views/welcome.blade.php`
-- `resources/css/app.css`
-- `resources/js/app.js`
-- `public/index.html`
-- `public/js/app.js`
-- `public/css/style.css`
+- Uji tampilan responsif desktop/tablet/mobile dan rapikan state kosong/error.
+'''
+updated = text[:start] + new_section + text[end:]
+path.write_text(updated, encoding='utf-8')
+print('updated')
+'}
