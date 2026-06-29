@@ -18,21 +18,11 @@ class AssetController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Asset::query()->orderBy('created_at', 'desc');
+        $query = $this->buildAssetQuery($request);
 
-        if ($request->filled('kondisi')) {
-            $query->where('kondisi', $request->kondisi);
-        }
-
-        if ($request->filled('jenis')) {
-            $query->where('jenis', $request->jenis);
-        }
-
-        if ($request->filled('lokasi')) {
-            $query->where('lokasi', 'like', '%' . $request->lokasi . '%');
-        }
-
-        return $query->get();
+        return $query->get()->map(function (Asset $asset) {
+            return $this->formatAssetPayload($asset);
+        });
     }
 
     public function store(Request $request)
@@ -81,7 +71,9 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        return $asset;
+        $asset->load('pic:id,nama,jabatan,email');
+
+        return $this->formatAssetPayload($asset);
     }
 
     public function update(Request $request, Asset $asset)
@@ -240,7 +232,7 @@ class AssetController extends Controller
     {
         $lastScan = $asset->histories()
             ->where('field_changed', 'scan')
-            ->orderBy('created_at', 'desc')
+            ->latest('created_at')
             ->first();
 
         return response()->json([
@@ -249,6 +241,36 @@ class AssetController extends Controller
             'latitude' => $asset->koordinat_lat,
             'longitude' => $asset->koordinat_lng,
             'last_scan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+        ]);
+    }
+
+    protected function buildAssetQuery(Request $request)
+    {
+        $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');
+
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi', $request->kondisi);
+        }
+
+        if ($request->filled('jenis')) {
+            $query->where('jenis', $request->jenis);
+        }
+
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', 'like', '%' . $request->lokasi . '%');
+        }
+
+        return $query;
+    }
+
+    protected function formatAssetPayload(Asset $asset): array
+    {
+        return array_merge($asset->toArray(), [
+            'pic' => $asset->pic ? [
+                'id' => $asset->pic->id,
+                'nama' => $asset->pic->nama,
+                'jabatan' => $asset->pic->jabatan,
+            ] : null,
         ]);
     }
 }

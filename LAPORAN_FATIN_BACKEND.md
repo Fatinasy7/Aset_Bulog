@@ -30,6 +30,7 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 | Report export | `app/Http/Controllers/ReportController.php`, `app/Exports/AssetsExport.php`, `resources/views/reports/assets.blade.php` | Ekspor aset ke format PDF dan Excel via `GET /api/reports/assets?format=pdf|excel` |
 | Backup database | `app/Services/DatabaseBackupService.php`, `app/Console/Commands/CreateDatabaseBackup.php`, `app/Console/Commands/VerifyDatabaseIntegrity.php`, `app/Http/Controllers/BackupController.php`, `config/backup.php` | Membuat backup manual, jadwal harian otomatis via scheduler, endpoint backup dan verifikasi integritas database |
 | Security hardening | `app/Http/Middleware/SanitizeInputMiddleware.php`, `app/Http/Middleware/EnsureJsonApiRequests.php`, `app/Http/Kernel.php`, `routes/api.php`, `config/cors.php`, `app/Http/Middleware/CsrfProtectionMiddleware.php`, `app/Http/Middleware/SecurityHeadersMiddleware.php`, `tests/Feature/SecurityHardeningTest.php` | Menambahkan sanitasi input, middleware autentikasi pada route API, enforcement Content-Type JSON untuk mutasi, konfigurasi CORS untuk frontend, perlindungan CSRF, header keamanan, rate limiting, dan pengujian keamanan |
+| Performance & code quality | `app/Http/Controllers/AssetController.php`, `database/migrations/2026_06_29_000000_add_performance_indexes.php`, `tests/Feature/PerformanceOptimizationTest.php` | Meningkatkan performa endpoint aset dengan eager loading, menambahkan indeks database untuk filter sering dipakai, dan melakukan refactoring kecil agar struktur controller lebih bersih |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
@@ -41,10 +42,11 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 
 ## Catatan Tambahan
 - Saat ini fitur CRUD aset masih menggunakan controller `AssetController` dan hanya dapat dimodifikasi oleh `admin_it`
-- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, Report Engine (PDF/Excel export), backup database, dan security hardening sudah dikerjakan
+- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, Report Engine (PDF/Excel export), backup database, security hardening, serta optimasi performa sudah dikerjakan
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
 - Fitur backup dapat diuji lewat `php artisan app:create-database-backup` dan `php artisan app:verify-database-integrity`
 - Fitur keamanan dapat diuji lewat `php artisan test --filter=SecurityHardeningTest`
+- Optimasi performa dapat diuji lewat `php artisan test --filter=PerformanceOptimizationTest`
 
 ## 📚 Dokumentasi API Lengkap
 
