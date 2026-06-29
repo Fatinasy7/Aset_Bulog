@@ -9,10 +9,10 @@
         <h1 class="page-title">Detail Aset</h1>
         <p class="page-lead">Halaman detail menampilkan informasi lengkap aset, lokasi terakhir, QR code, serta riwayat singkat aset.</p>
     </div>
-    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+    <div class="action-row">
         <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.index') }}">Kembali</a>
         <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit Aset</a>
-        <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" style="margin:0;">
+        <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" class="inline-form">
             @csrf
             @method('DELETE')
             <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus Aset</button>
@@ -26,7 +26,7 @@
             <strong>Informasi Aset</strong>
         </div>
         <div class="card-surface__body stack">
-            <div class="component-grid component-grid--full" style="gap:0.75rem;">
+            <div class="component-grid component-grid--full component-grid--compact">
                 <div><strong>Kode Aset:</strong> {{ $asset->kode_aset }}</div>
                 <div><strong>Nama Aset:</strong> {{ $asset->nama_aset }}</div>
                 <div><strong>Jenis:</strong> {{ ucfirst($asset->jenis) }}</div>
@@ -43,15 +43,14 @@
         <div class="card-surface__header">
             <strong>QR Code</strong>
         </div>
-        <div class="card-surface__body" style="display:grid; place-items:center; min-height: 320px;">
-            <div style="width:220px; height:220px; border-radius:18px; border:2px dashed var(--color-border); background:#fff; display:grid; place-items:center; color: var(--color-muted); text-align:center; padding:1rem;">
+        <div class="card-surface__body card-surface__body--centered">
+            <div class="placeholder-box placeholder-box--qr">
                 <div>
-                    <div style="font-size:3rem; line-height:1;">▣</div>
+                    <div class="placeholder-icon">▣</div>
                     <strong>{{ $asset->kode_aset }}</strong>
                     <p class="surface-note">QR preview untuk {{ $asset->nama_aset }}.</p>
                 </div>
             </div>
-        </div>
     </article>
 </section>
 
@@ -89,7 +88,7 @@
             <strong>Lokasi Terakhir</strong>
         </div>
         <div class="card-surface__body">
-            <div style="min-height: 260px; border-radius: 16px; border:1px dashed var(--color-border); background: linear-gradient(135deg, rgba(31,94,154,0.04), rgba(215,38,56,0.02)); display:grid; place-items:center; color: var(--color-muted); text-align:center; padding:1rem;">
+            <div class="placeholder-box placeholder-box--chart">
                 <div>
                     <strong>Map / Koordinat Placeholder</strong>
                     <p class="surface-note">Area ini disediakan untuk peta atau koordinat lokasi terakhir aset.</p>

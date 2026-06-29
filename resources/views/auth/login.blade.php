@@ -11,7 +11,7 @@
             </div>
             <div>
                 <p class="brand-title">Masuk ke Sistem</p>
-                <p class="brand-subtitle" style="color: rgba(255,255,255,.78)">Preview layout login untuk frontend Wahyu</p>
+                <p class="brand-subtitle">Preview layout login untuk frontend Wahyu</p>
             </div>
         </div>
     </div>

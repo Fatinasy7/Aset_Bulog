@@ -36,9 +36,9 @@
                         <td>{{ $pic->email }}</td>
                         <td>{{ $pic->phone ?? '-' }}</td>
                         <td>
-                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <div class="action-row action-row--compact">
                                 <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.pics.edit', $pic) }}">Edit</a>
-                                <form method="POST" action="{{ route('frontend.pics.destroy', $pic) }}" style="display:inline;">
+                                <form method="POST" action="{{ route('frontend.pics.destroy', $pic) }}" class="inline-form">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus PIC ini?')">Hapus</button>

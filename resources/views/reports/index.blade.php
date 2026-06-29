@@ -9,7 +9,7 @@
         <h1 class="page-title">Laporan Aset</h1>
         <p class="page-lead">Halaman laporan menyediakan filter untuk kondisi, lokasi, jenis, PIC, dan rentang tanggal dengan area preview tabel hasil.</p>
     </div>
-    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+    <div class="action-row">
         <button class="btn-ui btn-secondary-ui" type="button">Export PDF</button>
         <button class="btn-ui btn-primary-ui" type="button">Export Excel</button>
     </div>
@@ -17,19 +17,19 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <div class="component-grid" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+        <div class="component-grid component-grid--reports">
             <select class="form-select-ui"><option>Semua Kondisi</option><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select>
             <select class="form-select-ui"><option>Semua Lokasi</option><option>Ruang IT</option><option>Ruang TU</option><option>Gudang Utama</option></select>
             <select class="form-select-ui"><option>Semua Jenis</option><option>Laptop</option><option>Printer</option></select>
             <select class="form-select-ui"><option>Semua PIC</option><option>Andi</option><option>Sari</option><option>Rudi</option></select>
             <input class="form-control-ui" type="date">
         </div>
-        <div style="margin-top: 1rem;">
+        <div class="mt-1">
             <button class="btn-ui btn-primary-ui" type="button">Tampilkan Laporan</button>
         </div>
     </div>
 
-    <div class="card-surface__body" style="padding-top: 0;">
+    <div class="card-surface__body card-surface__body--no-top">
         <table class="table-ui">
             <thead>
                 <tr>

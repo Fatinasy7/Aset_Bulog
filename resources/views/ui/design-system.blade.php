@@ -101,7 +101,7 @@
             </div>
         </div>
 
-        <div class="card-surface__body" style="padding-top: 0;">
+        <div class="card-surface__body card-surface__body--no-top">
             <table class="table-ui">
                 <thead>
                     <tr>

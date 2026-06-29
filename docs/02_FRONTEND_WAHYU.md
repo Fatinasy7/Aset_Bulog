@@ -192,6 +192,27 @@ Bagian ini adalah urutan kerja yang dipakai sampai selesai. Fokusnya dibuat bert
 - [ ] Bantu Khansa merapikan bug minor terkait layout saat data real-time dari backend masuk
 - [ ] Pastikan semua transisi/animasi micro berjalan mulus
 
+**Langkah cepat untuk optimasi dan verifikasi performa**
+
+- Local build & minify (Vite):
+
+```bash
+npm ci
+npm run build
+```
+
+- Laravel production caching:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+```
+
+- Run Lighthouse or `npx lighthouse` against the running app and review suggestions.
+- Convert large images to `webp` and enable gzip/brotli on the web server for production.
+
 ---
 
 ## 🗂️ Struktur Folder Frontend yang Disarankan

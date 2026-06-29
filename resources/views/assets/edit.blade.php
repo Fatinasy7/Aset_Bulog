@@ -78,15 +78,15 @@
                 <textarea class="form-control-ui" name="keterangan" id="keterangan" rows="4" placeholder="Catatan kondisi atau detail tambahan">{{ old('keterangan', $asset->keterangan) }}</textarea>
             </div>
 
-            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <div class="button-group">
                 <button class="btn-ui btn-primary-ui" type="submit">Simpan Perubahan</button>
                 <button class="btn-ui btn-secondary-ui" type="reset">Batal</button>
             </div>
         </form>
 
         @if ($errors->any())
-            <div class="alert-ui alert-danger" style="margin-top:1rem;">
-                <ul style="margin:0; padding-left:1.25rem;">
+            <div class="alert-ui alert-danger mt-1">
+                <ul class="list-unstyled">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach

@@ -16,28 +16,28 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <div class="stack" style="align-items:center; gap:1.5rem;">
-            <div style="max-width:540px; width:100%;">
+        <div class="stack stack--centered">
+            <div class="content-width-medium">
                 <div class="card-surface__header">
                     <strong>Preview Scan QR</strong>
                 </div>
-                <div class="card-surface__body" style="text-align:center;">
-                    <div style="margin:0 auto; width:260px; height:260px; border-radius:20px; border:2px dashed var(--color-border); display:grid; place-items:center; background:#f9fafb;">
-                        <div style="color: var(--color-muted);">
-                            <div style="font-size:3rem; line-height:1;">▣</div>
+                <div class="card-surface__body text-center-muted">
+                    <div class="placeholder-box placeholder-box--qr">
+                        <div class="text-center-muted">
+                            <div class="placeholder-icon">▣</div>
                             <p class="surface-note">Tampilan kamera / area scanning</p>
                         </div>
                     </div>
-                    <p class="surface-note" style="margin-top:1rem;">Halaman ini akan menjadi tempat scan QR Code untuk mencari aset secara cepat.</p>
+                    <p class="surface-note mt-1">Halaman ini akan menjadi tempat scan QR Code untuk mencari aset secara cepat.</p>
                 </div>
             </div>
 
-            <div style="max-width:540px; width:100%;">
+            <div class="content-width-medium">
                 <div class="card-surface__header">
                     <strong>Hasil Scan</strong>
                 </div>
                 <div class="card-surface__body">
-                    <div class="component-grid component-grid--full" style="gap:1rem;">
+                    <div class="component-grid component-grid--full component-grid--compact">
                         <div><strong>Kode Aset:</strong> AST-001</div>
                         <div><strong>Nama Aset:</strong> Laptop Operasional</div>
                         <div><strong>Kondisi:</strong> <span class="badge-ui badge-baik">Baik</span></div>
@@ -45,7 +45,7 @@
                         <div><strong>PIC:</strong> Andi Saputra</div>
                         <div><strong>Jenis:</strong> Laptop</div>
                     </div>
-                    <p class="surface-note" style="margin-top:1rem;">Logika scan belum terhubung ke kamera atau API. Halaman ini berfungsi sebagai mockup awal.</p>
+                    <p class="surface-note mt-1">Logika scan belum terhubung ke kamera atau API. Halaman ini berfungsi sebagai mockup awal.</p>
                 </div>
             </div>
         </div>

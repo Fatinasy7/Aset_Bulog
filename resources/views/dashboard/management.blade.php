@@ -14,7 +14,7 @@
     </div>
 </section>
 
-<section class="component-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+<section class="component-grid component-grid--management">
     <article class="card-surface">
         <div class="card-surface__body">
             <strong>Total Aset</strong>

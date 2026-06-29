@@ -43,11 +43,11 @@
             <strong>Grafik Kondisi Aset</strong>
         </div>
         <div class="card-surface__body">
-            <div style="height: 260px; display:grid; place-items:center; border:1px dashed var(--color-border); border-radius: 16px; background: linear-gradient(180deg, rgba(31,94,154,0.03), rgba(215,38,56,0.02));">
-                <div style="text-align:center; color: var(--color-muted);">
-                    <div style="font-size:3rem; line-height:1;">◔</div>
+            <div class="placeholder-box placeholder-box--chart">
+                <div class="text-center-muted">
+                    <div class="placeholder-icon">◔</div>
                     <strong>Distribusi Kondisi Aset</strong>
-                    <div style="display:grid; gap:0.35rem; margin-top:0.75rem;">
+                    <div class="grid-small-gap">
                         @forelse ($conditionCounts as $condition => $count)
                             <span>{{ $condition }}: {{ $count }}</span>
                         @empty
@@ -64,11 +64,11 @@
             <strong>Grafik Jenis Aset</strong>
         </div>
         <div class="card-surface__body">
-            <div style="height: 260px; display:grid; place-items:center; border:1px dashed var(--color-border); border-radius: 16px; background: linear-gradient(180deg, rgba(31,94,154,0.03), rgba(215,38,56,0.02));">
-                <div style="text-align:center; color: var(--color-muted);">
-                    <div style="font-size:3rem; line-height:1;">▤</div>
+            <div class="placeholder-box placeholder-box--chart">
+                <div class="text-center-muted">
+                    <div class="placeholder-icon">▤</div>
                     <strong>Komposisi Jenis Aset</strong>
-                    <div style="display:grid; gap:0.35rem; margin-top:0.75rem;">
+                    <div class="grid-small-gap">
                         <span>Laptop: {{ $typeCounts['laptop'] ?? 0 }}</span>
                         <span>Printer: {{ $typeCounts['printer'] ?? 0 }}</span>
                     </div>

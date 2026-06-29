@@ -144,6 +144,16 @@ a {
 	padding: 1.5rem;
 }
 
+/* Specific grid presets for pages that require custom column layouts */
+.component-grid--assets {
+	grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+.component-grid--reports {
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.component-grid--management {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .page-grid {
 	display: grid;
 	gap: 1.25rem;
@@ -281,9 +291,9 @@ a {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.35rem;
-	padding: 0.4rem 0.7rem;
+	padding: 0.5rem 0.9rem;
 	border-radius: 999px;
-	font-size: 0.82rem;
+	font-size: 0.875rem;
 	font-weight: 700;
 	line-height: 1;
 }
@@ -294,25 +304,11 @@ a {
 .badge-dalam-perbaikan { background: rgba(59, 130, 246, 0.16); color: #1d4ed8; }
 .badge-tidak-aktif { background: rgba(107, 114, 128, 0.16); color: #4b5563; }
 
-.table-ui {
-	width: 100%;
-	border-collapse: collapse;
-	overflow: hidden;
-	border-radius: var(--radius-md);
-}
-
-.table-ui th,
-.table-ui td {
-	padding: 0.9rem 1rem;
-	border-bottom: 1px solid var(--color-border);
-	vertical-align: middle;
-}
-
 .table-ui thead th {
 	background: var(--color-surface-2);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	font-size: 0.78rem;
+	font-size: 0.875rem;
 	color: var(--color-muted);
 }
 
@@ -361,6 +357,11 @@ a {
 	gap: 1rem;
 }
 
+.stack--centered {
+	align-items: center;
+	gap: 1.5rem;
+}
+
 .component-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -371,9 +372,67 @@ a {
 	grid-template-columns: 1fr;
 }
 
-.surface-note {
-	margin: 0;
+.action-row,
+.button-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.action-row--compact {
+	gap: 0.5rem;
+}
+
+.card-surface__body--no-top {
+	padding-top: 0;
+}
+
+.inline-form {
+	display: inline;
+}
+
+.placeholder-box {
+	display: grid;
+	place-items: center;
+	border-radius: 18px;
+	border: 2px dashed var(--color-border);
+	background: #fff;
 	color: var(--color-muted);
+	text-align: center;
+	padding: 1rem;
+}
+
+.placeholder-box--chart {
+	height: 260px;
+	border-radius: 16px;
+	background: linear-gradient(180deg, rgba(31,94,154,0.03), rgba(215,38,56,0.02));
+}
+
+.placeholder-box--qr {
+	width: 100%;
+	max-width: 220px;
+	aspect-ratio: 1 / 1;
+	background: #f9fafb;
+}
+
+.placeholder-icon {
+	font-size: 3rem;
+	line-height: 1;
+}
+
+.card-surface__body--centered {
+	display: grid;
+	place-items: center;
+	min-height: 320px;
+}
+
+.component-grid--compact {
+	gap: 0.75rem;
+}
+
+.list-unstyled {
+	margin: 0;
+	padding-left: 1.25rem;
 	font-size: 0.92rem;
 }
 
@@ -415,5 +474,14 @@ a {
 
 	.page-header {
 		align-items: flex-start;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
 	}
 }

@@ -24,7 +24,7 @@
 
             @if ($errors->any())
                 <div class="alert-ui alert-danger">
-                    <ul style="margin:0; padding-left:1.25rem;">
+                    <ul class="list-unstyled">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -53,7 +53,7 @@
                 </div>
             </div>
 
-            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <div class="button-group">
                 <button class="btn-ui btn-primary-ui" type="submit">Simpan</button>
                 <button class="btn-ui btn-secondary-ui" type="reset">Batal</button>
             </div>

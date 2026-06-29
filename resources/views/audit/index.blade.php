@@ -9,8 +9,8 @@
         <h1 class="page-title">Audit Trail</h1>
         <p class="page-lead">Halaman riwayat perubahan digunakan untuk menampilkan log perubahan data aset, field yang diubah, dan pengguna yang melakukannya.</p>
     </div>
-    <div>
-        <input class="form-control-ui" type="search" placeholder="Cari aset atau pengguna" style="min-width: 280px;">
+    <div class="content-width-medium">
+        <input class="form-control-ui" type="search" placeholder="Cari aset atau pengguna">
     </div>
 </section>
 

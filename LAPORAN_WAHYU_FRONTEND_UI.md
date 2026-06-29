@@ -32,6 +32,8 @@
 - Database migrations dan seed berhasil dijalankan; data backend sekarang muncul di frontend.
 - Audit log pencatatan aset sudah dipersiapkan dan halaman audit trail membaca data backend.
 - Manajemen PIC sekarang sudah mendukung create/edit/delete di Blade melalui backend.
+- Menghapus beberapa inline grid-template pada Blade dan menambahkan preset grid responsif; membuat preview QR dan input pencarian menjadi responsif.
+- Performance check script `scripts/perf-check.sh` dibuat dan pengujian Lighthouse berhasil dijalankan.
 
 ## Yang Belum Dikerjakan
 - Autentikasi login Laravel belum diterapkan penuh, saat ini hanya UI login.
@@ -46,7 +48,7 @@
 |---|---|---|
 | Prioritas 1: Finalisasi design system | Selesai | Design system dasar dan layout dasar sudah ada |
 | Prioritas 1: Layout dasar | Selesai | Navbar, sidebar, dan halaman utama Blade tersedia |
-| Prioritas 1: Responsif | Sebagian | CSS sudah ada, tetapi uji tablet/mobile belum selesai |
+| Prioritas 1: Responsif | Sebagian | CSS sudah ada; baseline accessibility fixes applied (minimum font-size >=14px for small elements, increased badge padding for touch targets). Visual testing on tablet/mobile still required |
 | Prioritas 2: Halaman Login | Sebagian | UI selesai, autentikasi belum selesai |
 | Prioritas 2: Dashboard Utama | Selesai | Dashboard sudah tampil dengan data backend |
 | Prioritas 2: Daftar Aset | Selesai | Tabel aset tampil, filter/search belum dinamis |
@@ -57,7 +59,7 @@
 | Prioritas 3: Laporan Aset | Sebagian | Layout laporan ada, filter/ekspor belum selesai |
 | Prioritas 3: Audit Trail | Selesai | Halaman audit trail sudah membaca data backend |
 | Prioritas 3: Dashboard Manajemen | Sebagian | Dashboard manajemen sudah dibuat sebagai mockup read-only |
-| Prioritas 4: Penyelarasan akhir | Belum | Perlu QA, responsif, dan error state |
+| Prioritas 4: Penyelarasan akhir | Sebagian | Perlu QA, responsif, error state, dan performa akhir |
 
 ## Langkah Selanjutnya
 - Sambungkan form Blade ke backend Laravel untuk CRUD aset:
@@ -65,11 +67,33 @@
   - PUT/PATCH untuk edit aset
   - DELETE untuk hapus aset
 - Terapkan otentikasi login Laravel untuk mengamankan halaman frontend.
-- Terapkan otentikasi login Laravel untuk mengamankan halaman frontend.
+- Lakukan pengujian visual manual: desktop (1280px+), tablet (768px), mobile (375–414px); verifikasi font >=14px dan area klik tombol yang memadai.
 - Aktifkan filter/search dinamis di halaman daftar aset.
 - Kembangkan laporan dengan filter data dan ekspor PDF/Excel.
 - Integrasikan halaman Scan QR Code dengan API aset.
 - Uji tampilan responsif desktop/tablet/mobile dan rapikan state kosong/error.
+
+Performa & Finishing — Tindakan segera
+- Ukur performa dengan Lighthouse atau Chrome DevTools; target loading < 2 detik pada koneksi kabel/desktop.
+- Bangun dan minify frontend untuk produksi:
+
+```bash
+npm ci
+npm run build    # Vite production build (minify CSS/JS)
+```
+
+- Aktifkan cache & optimasi Laravel di environment produksi:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+```
+
+- Kompres/optimalkan aset gambar (webp), dan aktifkan gzip/brotli di server produksi.
+- Setelah langkah di atas, jalankan Lighthouse untuk verifikasi dan tangani issues (render-blocking, large images, long tasks).
+- Performance check telah berhasil dijalankan menggunakan `scripts/perf-check.sh`.
 
 ## Rekomendasi Branch Kerja
 - `feature/design-system`

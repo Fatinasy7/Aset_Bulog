@@ -16,7 +16,7 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <div class="component-grid" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
+        <div class="component-grid component-grid--assets">
             <input class="form-control-ui" type="search" placeholder="Cari kode, nama aset, atau PIC">
             <select class="form-select-ui">
                 <option>Semua Kondisi</option>
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    <div class="card-surface__body" style="padding-top: 0;">
+    <div class="card-surface__body card-surface__body--no-top">
         <table class="table-ui">
             <thead>
                 <tr>
@@ -63,10 +63,10 @@
                         <td>{{ $asset->pic_name ?? '-' }}</td>
                         <td>{{ $asset->lokasi }}</td>
                         <td>
-                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <div class="action-row action-row--compact">
                             <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.show', $asset) }}">Detail</a>
                             <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit</a>
-                            <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" style="display:inline;">
+                            <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" class="inline-form">
                                 @csrf
                                 @method('DELETE')
                                 <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus</button>
