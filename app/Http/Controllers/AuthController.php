@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,6 +11,8 @@ use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
+    use ApiResponseFormatter;
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -29,8 +32,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => $this->formatUserPayload($user),
             'token' => $token,
+            'auth_token' => $token,
+            'token_type' => 'Bearer',
         ], Response::HTTP_CREATED);
     }
 
@@ -52,8 +57,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
+            'user' => $this->formatUserPayload($user),
             'token' => $token,
+            'auth_token' => $token,
+            'token_type' => 'Bearer',
         ], Response::HTTP_OK);
     }
 

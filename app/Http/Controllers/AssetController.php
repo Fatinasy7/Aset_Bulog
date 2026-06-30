@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Mail\DamageReportMail;
 use App\Models\Asset;
 use App\Models\AssetHistory;
@@ -16,23 +17,15 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AssetController extends Controller
 {
+    use ApiResponseFormatter;
+
     public function index(Request $request)
     {
-        $query = Asset::query()->orderBy('created_at', 'desc');
+        $query = $this->buildAssetQuery($request);
 
-        if ($request->filled('kondisi')) {
-            $query->where('kondisi', $request->kondisi);
-        }
-
-        if ($request->filled('jenis')) {
-            $query->where('jenis', $request->jenis);
-        }
-
-        if ($request->filled('lokasi')) {
-            $query->where('lokasi', 'like', '%' . $request->lokasi . '%');
-        }
-
-        return $query->get();
+        return $query->get()->map(function (Asset $asset) {
+            return $this->formatAssetPayload($asset);
+        });
     }
 
     public function store(Request $request)
@@ -76,12 +69,14 @@ class AssetController extends Controller
             'new_value' => json_encode($asset->toArray()),
         ]);
 
-        return response()->json($asset, Response::HTTP_CREATED);
+        return response()->json($this->formatAssetPayload($asset), Response::HTTP_CREATED);
     }
 
     public function show(Asset $asset)
     {
-        return $asset;
+        $asset->load('pic:id,nama,jabatan,email');
+
+        return $this->formatAssetPayload($asset);
     }
 
     public function update(Request $request, Asset $asset)
@@ -143,7 +138,7 @@ class AssetController extends Controller
             }
         }
 
-        return response()->json($asset);
+        return response()->json($this->formatAssetPayload($asset));
     }
 
     public function destroy(Asset $asset)
@@ -231,8 +226,8 @@ class AssetController extends Controller
 
         return response()->json([
             'message' => 'Scan berhasil, lokasi aset diperbarui.',
-            'asset' => $asset->fresh(),
-            'scanned_at' => $scannedAt,
+            'asset' => $this->formatAssetPayload($asset->fresh()),
+            'scannedAt' => $scannedAt,
         ]);
     }
 
@@ -240,15 +235,34 @@ class AssetController extends Controller
     {
         $lastScan = $asset->histories()
             ->where('field_changed', 'scan')
-            ->orderBy('created_at', 'desc')
+            ->latest('created_at')
             ->first();
 
         return response()->json([
-            'asset_id' => $asset->id,
+            'assetId' => $asset->id,
             'lokasi' => $asset->lokasi,
             'latitude' => $asset->koordinat_lat,
             'longitude' => $asset->koordinat_lng,
-            'last_scan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+            'lastScan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
         ]);
+    }
+
+    protected function buildAssetQuery(Request $request)
+    {
+        $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');
+
+        if ($request->filled('kondisi')) {
+            $query->where('kondisi', $request->kondisi);
+        }
+
+        if ($request->filled('jenis')) {
+            $query->where('jenis', $request->jenis);
+        }
+
+        if ($request->filled('lokasi')) {
+            $query->where('lokasi', 'like', '%' . $request->lokasi . '%');
+        }
+
+        return $query;
     }
 }

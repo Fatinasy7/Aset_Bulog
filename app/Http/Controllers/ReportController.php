@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\AssetsExport;
+use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\Asset;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -10,9 +11,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
+    use ApiResponseFormatter;
+
     public function index(Request $request)
     {
-        $query = Asset::query()->orderBy('created_at', 'desc');
+        $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');
 
         if ($request->filled('kondisi')) {
             $query->where('kondisi', $request->kondisi);
@@ -45,6 +48,6 @@ class ReportController extends Controller
             return $pdf->download('aset-report.pdf');
         }
 
-        return response()->json($assets);
+        return response()->json($assets->map(fn (Asset $asset) => $this->formatAssetPayload($asset)));
     }
 }

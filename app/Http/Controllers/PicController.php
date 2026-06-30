@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pic;
+use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\Asset;
+use App\Models\Pic;
 use App\Models\PicHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -11,9 +12,13 @@ use Illuminate\Support\Facades\Auth;
 
 class PicController extends Controller
 {
+    use ApiResponseFormatter;
+
     public function index()
     {
-        return Pic::orderBy('created_at', 'desc')->get();
+        return Pic::orderBy('created_at', 'desc')->get()->map(function (Pic $pic) {
+            return $this->formatPicPayload($pic);
+        });
     }
 
     public function store(Request $request)
@@ -27,7 +32,7 @@ class PicController extends Controller
 
         $pic = Pic::create($validated);
 
-        return response()->json($pic, Response::HTTP_CREATED);
+        return response()->json($this->formatPicPayload($pic), Response::HTTP_CREATED);
     }
 
     public function update(Request $request, Pic $pic)
@@ -41,7 +46,7 @@ class PicController extends Controller
 
         $pic->update($validated);
 
-        return response()->json($pic);
+        return response()->json($this->formatPicPayload($pic));
     }
 
     public function destroy(Pic $pic)
@@ -67,6 +72,7 @@ class PicController extends Controller
         $oldPicId = $asset->pic_id;
         $asset->pic_id = $validated['pic_id'];
         $asset->save();
+        $asset->load('pic:id,nama,jabatan,email');
 
         PicHistory::create([
             'asset_id' => $asset->id,
@@ -75,6 +81,6 @@ class PicController extends Controller
             'alasan' => $validated['alasan'] ?? null,
         ]);
 
-        return response()->json($asset);
+        return response()->json($this->formatAssetPayload($asset));
     }
 }

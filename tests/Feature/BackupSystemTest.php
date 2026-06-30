@@ -36,28 +36,29 @@ PHP);
 
     public function test_it_can_verify_database_integrity_for_existing_tables(): void
     {
-        if (! extension_loaded('pdo_sqlite')) {
-            $this->markTestSkipped('PDO SQLite driver is not available.');
+        if (extension_loaded('pdo_sqlite')) {
+            config()->set('database.default', 'sqlite');
+            config()->set('database.connections.sqlite', [
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
+            ]);
+
+            DB::purge('sqlite');
+            $connection = DB::connection('sqlite');
+        } else {
+            $connection = DB::connection();
         }
 
-        config()->set('database.default', 'sqlite');
-        config()->set('database.connections.sqlite', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
+        $schema = $connection->getSchemaBuilder();
 
-        DB::purge('sqlite');
-        $connection = DB::connection('sqlite');
-        $connection->getSchemaBuilder()->create('users', function ($table): void {
-            $table->id();
-        });
-        $connection->getSchemaBuilder()->create('assets', function ($table): void {
-            $table->id();
-        });
-        $connection->getSchemaBuilder()->create('pics', function ($table): void {
-            $table->id();
-        });
+        foreach (['users', 'assets', 'pics'] as $table) {
+            if (! $schema->hasTable($table)) {
+                $schema->create($table, function ($table): void {
+                    $table->id();
+                });
+            }
+        }
 
         $service = app(DatabaseBackupService::class);
         $result = $service->verifyIntegrity();
