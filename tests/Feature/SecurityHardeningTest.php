@@ -26,7 +26,7 @@ class SecurityHardeningTest extends TestCase
             return response()->json(['ok' => true]);
         })->middleware('csrf');
 
-        Route::get('/test-security-headers', function () {
+        Route::get('/api/test-security-headers', function () {
             return response()->json(['ok' => true]);
         })->middleware('security.headers');
 
@@ -54,9 +54,18 @@ class SecurityHardeningTest extends TestCase
 
     public function test_cors_configuration_uses_configured_origins(): void
     {
-        config()->set('cors.allowed_origins', ['http://localhost:5173']);
+        config()->set('cors.allowed_origins', ['*']);
 
-        $this->assertSame(['http://localhost:5173'], config('cors.allowed_origins'));
+        $this->assertSame(['*'], config('cors.allowed_origins'));
+    }
+
+    public function test_cors_allows_cross_origin_requests(): void
+    {
+        $response = $this->withHeaders(['Origin' => 'http://example.com'])
+            ->get('/api/test-security-headers');
+
+        $response->assertOk();
+        $response->assertHeader('Access-Control-Allow-Origin', '*');
     }
 
     public function test_json_api_middleware_rejects_non_json_mutation_requests(): void
@@ -78,7 +87,7 @@ class SecurityHardeningTest extends TestCase
 
     public function test_security_headers_are_included_in_responses(): void
     {
-        $response = $this->get('/test-security-headers');
+        $response = $this->get('/api/test-security-headers');
 
         $response->assertOk();
         $response->assertHeader('X-Content-Type-Options', 'nosniff');

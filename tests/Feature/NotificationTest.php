@@ -62,7 +62,7 @@ class NotificationTest extends TestCase
             ->patchJson("/api/notifications/{$notification->id}/read");
 
         $response->assertStatus(200)
-            ->assertJson(['is_read' => true]);
+            ->assertJson(['isRead' => true]);
 
         $this->assertTrue($notification->fresh()->is_read);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Mail\DamageReportMail;
 use App\Models\Asset;
 use App\Models\AssetHistory;
@@ -16,6 +17,8 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AssetController extends Controller
 {
+    use ApiResponseFormatter;
+
     public function index(Request $request)
     {
         $query = $this->buildAssetQuery($request);
@@ -66,7 +69,7 @@ class AssetController extends Controller
             'new_value' => json_encode($asset->toArray()),
         ]);
 
-        return response()->json($asset, Response::HTTP_CREATED);
+        return response()->json($this->formatAssetPayload($asset), Response::HTTP_CREATED);
     }
 
     public function show(Asset $asset)
@@ -135,7 +138,7 @@ class AssetController extends Controller
             }
         }
 
-        return response()->json($asset);
+        return response()->json($this->formatAssetPayload($asset));
     }
 
     public function destroy(Asset $asset)
@@ -223,8 +226,8 @@ class AssetController extends Controller
 
         return response()->json([
             'message' => 'Scan berhasil, lokasi aset diperbarui.',
-            'asset' => $asset->fresh(),
-            'scanned_at' => $scannedAt,
+            'asset' => $this->formatAssetPayload($asset->fresh()),
+            'scannedAt' => $scannedAt,
         ]);
     }
 
@@ -236,11 +239,11 @@ class AssetController extends Controller
             ->first();
 
         return response()->json([
-            'asset_id' => $asset->id,
+            'assetId' => $asset->id,
             'lokasi' => $asset->lokasi,
             'latitude' => $asset->koordinat_lat,
             'longitude' => $asset->koordinat_lng,
-            'last_scan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+            'lastScan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
         ]);
     }
 
@@ -261,16 +264,5 @@ class AssetController extends Controller
         }
 
         return $query;
-    }
-
-    protected function formatAssetPayload(Asset $asset): array
-    {
-        return array_merge($asset->toArray(), [
-            'pic' => $asset->pic ? [
-                'id' => $asset->pic->id,
-                'nama' => $asset->pic->nama,
-                'jabatan' => $asset->pic->jabatan,
-            ] : null,
-        ]);
     }
 }

@@ -45,13 +45,15 @@ class AssetScanTest extends TestCase
                 'message',
                 'asset' => [
                     'id',
-                    'kode_aset',
-                    'nama_aset',
+                    'kodeAset',
+                    'namaAset',
                     'lokasi',
-                    'koordinat_lat',
-                    'koordinat_lng',
+                    'koordinat' => [
+                        'lat',
+                        'lng',
+                    ],
                 ],
-                'scanned_at',
+                'scannedAt',
             ]);
 
         $this->assertDatabaseHas('assets', [
@@ -134,7 +136,7 @@ class AssetScanTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'scanned_at' => $customTime,
+                'scannedAt' => $customTime,
             ]);
     }
 
@@ -153,14 +155,14 @@ class AssetScanTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'asset_id',
+                'assetId',
                 'lokasi',
                 'latitude',
                 'longitude',
-                'last_scan',
+                'lastScan',
             ])
             ->assertJson([
-                'asset_id' => $this->asset->id,
+                'assetId' => $this->asset->id,
                 'lokasi' => 'Gudang',
                 'latitude' => -6.200000,
                 'longitude' => 106.816666,
@@ -204,8 +206,8 @@ class AssetScanTest extends TestCase
             ->getJson("/api/assets/{$this->asset->id}/location");
 
         $response->assertStatus(200)
-            ->assertJsonPath('last_scan.latitude', -6.200000)
-            ->assertJsonPath('last_scan.longitude', 106.816666);
+            ->assertJsonPath('lastScan.latitude', -6.200000)
+            ->assertJsonPath('lastScan.longitude', 106.816666);
     }
 
     /**

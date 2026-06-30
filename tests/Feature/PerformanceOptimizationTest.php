@@ -43,7 +43,7 @@ class PerformanceOptimizationTest extends TestCase
         $response->assertJsonStructure([
             '*' => [
                 'id',
-                'kode_aset',
+                'kodeAset',
                 'pic' => ['id', 'nama'],
             ],
         ]);

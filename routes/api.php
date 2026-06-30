@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\ReportController;
@@ -28,7 +29,15 @@ Route::middleware(['sanitize', 'json.api', 'security.headers', 'throttle:10,1'])
 Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'createdAt' => $user->created_at ? $user->created_at->toISOString() : null,
+            'updatedAt' => $user->updated_at ? $user->updated_at->toISOString() : null,
+        ]);
     });
 
     Route::get('assets', [AssetController::class, 'index']);
@@ -59,4 +68,6 @@ Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])-
         Route::get('backups', [BackupController::class, 'index']);
         Route::get('backups/verify', [BackupController::class, 'verify']);
     });
+
+    Route::get('dashboard/summary', [DashboardController::class, 'summary']);
 });
