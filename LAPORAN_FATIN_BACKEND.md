@@ -1,10 +1,10 @@
 # Laporan Pengerjaan Backend — Fatin Asyifa Nurrizky JenPutri
 
 ## Ringkasan
-- Periode pengerjaan: 22 Juni 2026
-- Branch utama: `feature/auth-sanctum` dan `feature/asset-crud`
-- Fokus: Fondasi Keamanan, Autentikasi, dan Penguatan CRUD Aset
-- Status: Selesai untuk langkah pertama dan dua (autentikasi, role-based access, asset CRUD, soft delete, audit trail)
+- Periode pengerjaan: 22 Juni 2026 s.d. 29 Juni 2026
+- Branch utama: `feature/auth-sanctum`, `feature/asset-crud`, dan `feature/backup-system`
+- Fokus: Fondasi Keamanan, Autentikasi, Penguatan CRUD Aset, serta Backup Database
+- Status: Selesai untuk langkah autentikasi, CRUD aset, dan fitur backup database
 
 ## Fitur yang Diselesaikan
 | Fitur | File / Area | Keterangan |
@@ -28,6 +28,7 @@
 v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/migrations/2026_06_22_040000_add_qr_code_path_to_assets_table.php` | Menyimpan path QR SVG di asset, membuat file QR SVG saat asset dibuat, dan endpoint download `GET /api/assets/{asset}/qrcode` |
 | QR geotagging | `app/Http/Controllers/AssetController.php`, `routes/api.php` | Endpoint `POST /api/assets/{asset}/scan` untuk scan QR + simpan lokasi, `GET /api/assets/{asset}/location` untuk lokasi terakhir aset |
 | Report export | `app/Http/Controllers/ReportController.php`, `app/Exports/AssetsExport.php`, `resources/views/reports/assets.blade.php` | Ekspor aset ke format PDF dan Excel via `GET /api/reports/assets?format=pdf|excel` |
+| Backup database | `app/Services/DatabaseBackupService.php`, `app/Console/Commands/CreateDatabaseBackup.php`, `app/Console/Commands/VerifyDatabaseIntegrity.php`, `app/Http/Controllers/BackupController.php`, `config/backup.php` | Membuat backup manual, jadwal harian otomatis via scheduler, endpoint backup dan verifikasi integritas database |
 
 ## Implementasi Keamanan
 - Semua route sensitif sekarang berada di dalam middleware `auth:sanctum`
@@ -37,8 +38,9 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 
 ## Catatan Tambahan
 - Saat ini fitur CRUD aset masih menggunakan controller `AssetController` dan hanya dapat dimodifikasi oleh `admin_it`
-- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, dan Report Engine (PDF/Excel export) sudah dikerjakan
+- Fitur lanjutannya seperti PIC management, QR code generator, QR geotagging, Report Engine (PDF/Excel export), dan backup database sudah dikerjakan
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
+- Fitur backup dapat diuji lewat `php artisan app:create-database-backup` dan `php artisan app:verify-database-integrity`
 
 ## 📚 Dokumentasi API Lengkap
 

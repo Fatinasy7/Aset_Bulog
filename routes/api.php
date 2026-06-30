@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\ReportController;
@@ -51,5 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('pics/{pic}', [PicController::class, 'update']);
         Route::delete('pics/{pic}', [PicController::class, 'destroy']);
         Route::post('assets/{asset}/assign-pic', [PicController::class, 'assignPic']);
+
+        Route::post('backups', [BackupController::class, 'store']);
+        Route::get('backups', [BackupController::class, 'index']);
+        Route::get('backups/verify', [BackupController::class, 'verify']);
     });
 });
