@@ -1,4 +1,4 @@
-# ⚡ PANDUAN FRONTEND (CORE LOGIC) — Khansa Mufidah
+#  PANDUAN FRONTEND (CORE LOGIC) — Khansa Mufidah
 
 > **Peran:** Programmer Bidang Frontend — Core Logic & API Integration
 > **Proyek:** Sistem Manajemen Aset BULOG
@@ -6,7 +6,7 @@
 
 ---
 
-## 🚀 CARA MENGGUNAKAN PANDUAN INI
+##  CARA MENGGUNAKAN PANDUAN INI
 
 Gunakan prompt berikut saat membuka VS Code dan memulai sesi kerja:
 
@@ -21,7 +21,7 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 
 ---
 
-## 🎯 Tanggung Jawab Utama
+##  Tanggung Jawab Utama
 
 - Setup **arsitektur frontend** & konfigurasi HTTP Client (Axios/Fetch API)
 - Mengintegrasikan semua **form & halaman dengan API Backend (Fatin)**
@@ -34,7 +34,17 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 
 ---
 
-## 📋 CHECKLIST TUGAS LENGKAP
+## � Catatan Penting untuk Khansa
+
+- Semua request API selain `auth/register` dan `auth/login` wajib memakai header `Authorization: Bearer <token>`.
+- Field respon utama sudah menggunakan format `camelCase`.
+- Request body untuk create/update asset dan PIC tetap memakai field `snake_case` karena controller validasi menerima input database.
+- Endpoint `GET /api/user` sudah disesuaikan agar responsnya juga `camelCase`.
+- Jika diperlukan, berikutnya bisa bantu buat contoh kode axios untuk auth dan panggilan endpoint, atau dokumentasi endpoint dalam bentuk tabel.
+
+---
+
+##  CHECKLIST TUGAS LENGKAP
 
 ### 🔷 MINGGU 1 — Setup Arsitektur & Autentikasi
 
@@ -126,7 +136,7 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 ### 🔷 MINGGU 2 — TUGAS KRUSIAL: QR Scanner + Geotagging
 
 #### Implementasi QR Code Scanner (FR-15, FR-16 | NFR-03)
-> ⚠️ **Ini adalah fitur paling kritis dalam proyek ini. Target: scan → data tampil dalam < 3 detik.**
+>  **Ini adalah fitur paling kritis dalam proyek ini. Target: scan → data tampil dalam < 3 detik.**
 
 - [ ] Import library HTML5-QRCode via CDN:
   ```html

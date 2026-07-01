@@ -22,6 +22,7 @@ class Asset extends Model
         'harga',
         'keterangan',
         'jenis',
+        'pic_id',
     ];
 
     protected $casts = [
@@ -30,4 +31,9 @@ class Asset extends Model
         'koordinat_lat' => 'double',
         'koordinat_lng' => 'double',
     ];
+
+    public function pic()
+    {
+        return $this->belongsTo(User::class, 'pic_id');
+    }
 }
