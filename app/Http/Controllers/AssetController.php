@@ -59,11 +59,9 @@ class AssetController extends Controller
             'new_value' => json_encode($asset->toArray()),
         ]);
 
+        $this->recordAudit($asset, 'created', null, null, null, 'System');
+
         return response()->json($this->formatAssetPayload($asset), Response::HTTP_CREATED);
-
-        $this->recordAudit($asset, 'created', null, null, 'System');
-
-        return response()->json($asset, Response::HTTP_CREATED);
     }
 
     public function show(Asset $asset)
@@ -134,7 +132,26 @@ class AssetController extends Controller
             }
         }
 
-        return response()->json($this->formatAssetPayload($asset));
+        if (isset($changed['kondisi'])) {
+            $newCondition = strtolower(trim($after['kondisi']));
+            if (str_contains($newCondition, 'rusak')) {
+                $adminUsers = User::where('role', 'admin_it')->get();
+                foreach ($adminUsers as $admin) {
+                    Mail::mailer('log')->to($admin->email)->send(new DamageReportMail($asset, $before['kondisi'] ?? null, $after['kondisi']));
+                    Notification::create([
+                        'user_id' => $admin->id,
+                        'role' => 'admin_it',
+                        'title' => 'Laporan Kerusakan Aset',
+                        'message' => "Aset {$asset->kode_aset} dilaporkan dengan kondisi {$after['kondisi']}.",
+                        'data' => [
+                            'asset_id' => $asset->id,
+                            'old_condition' => $before['kondisi'] ?? null,
+                            'new_condition' => $after['kondisi'],
+                        ],
+                    ]);
+                }
+            }
+        }
 
         foreach ($validated as $field => $newValue) {
             $oldValue = $originalValues[$field] ?? null;
@@ -143,7 +160,7 @@ class AssetController extends Controller
             }
         }
 
-        return response()->json($asset);
+        return response()->json($this->formatAssetPayload($asset));
     }
 
     public function destroy(Asset $asset)
@@ -161,19 +178,6 @@ class AssetController extends Controller
         ]);
 
         return response()->json([ 'message' => 'Asset deleted successfully.' ]);
-    }
-
-    public function assignPic(Request $request, Asset $asset)
-    {
-        $validated = $request->validate([
-            'pic_id' => ['required', 'exists:users,id'],
-            'alasan' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $pic = User::findOrFail($validated['pic_id']);
-        $asset->update(['pic_id' => $pic->id]);
-
-        return response()->json($this->formatAssetPayload($asset->fresh('pic')));
     }
 
     public function qrcode(Asset $asset)
