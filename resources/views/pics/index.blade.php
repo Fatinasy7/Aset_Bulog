@@ -20,18 +20,19 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Nama</th>
-                    <th>Jabatan</th>
-                    <th>Email</th>
-                    <th>Telepon</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Jabatan</th>
+                        <th>Email</th>
+                        <th>Telepon</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @forelse ($pics as $index => $pic)
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -52,7 +53,13 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">Belum ada PIC dari backend.</td>
+                        <td colspan="6">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">👥</div>
+                                <div class="empty-state-card__title">Belum ada PIC tersedia</div>
+                                <div class="empty-state-card__message">Daftar PIC masih kosong. Tambahkan PIC baru untuk mengelola penanggung jawab aset.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

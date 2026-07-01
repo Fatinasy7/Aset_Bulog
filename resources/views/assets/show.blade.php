@@ -55,6 +55,7 @@
                     <p class="surface-note">QR preview untuk {{ $asset->nama_aset }}.</p>
                 </div>
             </div>
+        </div>
     </article>
 </section>
 
@@ -64,26 +65,34 @@
             <strong>Riwayat Singkat</strong>
         </div>
         <div class="card-surface__body">
-            <table class="table-ui">
-                <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Aksi</th>
-                        <th>Oleh</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($logs as $log)
-                        <tr>
-                            <td>{{ $log->created_at->format('Y-m-d') }}</td>
-                            <td>{{ $log->action }}</td>
-                            <td>{{ $log->changed_by }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="3">Belum ada riwayat perubahan untuk aset ini.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+            @if($logs->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table-ui">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                                <th>Oleh</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach ($logs as $log)
+                            <tr>
+                                <td>{{ $log->created_at->format('Y-m-d') }}</td>
+                                <td>{{ $log->action }}</td>
+                                <td>{{ $log->changed_by }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+                <div class="empty-state-card">
+                    <div class="empty-state-card__icon">🕒</div>
+                    <div class="empty-state-card__title">Belum ada riwayat perubahan</div>
+                    <div class="empty-state-card__message">Riwayat perubahan untuk aset ini belum tersedia. Semua perubahan akan dicatat setelah update aset dilakukan.</div>
+                </div>
+            @endif
         </div>
     </article>
 

@@ -100,10 +100,10 @@
                         <text x="60" y="75" text-anchor="middle" font-size="10" fill="var(--color-muted)">Aset</text>
                     </svg>
                 @else
-                    <div class="text-center-muted">
-                        <div class="placeholder-icon">◔</div>
-                        <strong>Distribusi Kondisi Aset</strong>
-                        <div>Tidak ada data aset.</div>
+                    <div class="empty-state-card">
+                        <div class="empty-state-card__icon">◔</div>
+                        <div class="empty-state-card__title">Belum ada data kondisi aset</div>
+                        <div class="empty-state-card__message">Tambahkan aset ke sistem atau periksa kembali filter data untuk menampilkan ringkasan kondisi aset.</div>
                     </div>
                 @endif
 
@@ -118,7 +118,11 @@
                             </div>
                         </div>
                     @empty
-                        <div>Tidak ada data kondisi.</div>
+                        <div class="empty-state-card">
+                            <div class="empty-state-card__icon">⚠️</div>
+                            <div class="empty-state-card__title">Tidak ada legenda kondisi</div>
+                            <div class="empty-state-card__message">Data kondisi masih kosong. Tambahkan aset agar ringkasan kondisi dapat ditampilkan di dashboard.</div>
+                        </div>
                     @endforelse
                 </div>
             </div>
@@ -166,10 +170,10 @@
                     @endforeach
                 </div>
             @else
-                <div class="text-center-muted">
-                    <div class="placeholder-icon">▯</div>
-                    <strong>Distribusi Lokasi</strong>
-                    <div>Tidak ada data lokasi aset.</div>
+                <div class="empty-state-card">
+                    <div class="empty-state-card__icon">▯</div>
+                    <div class="empty-state-card__title">Tidak ada data lokasi aset</div>
+                    <div class="empty-state-card__message">Pastikan data lokasi sudah diinput atau refresh halaman setelah menambahkan aset baru.</div>
                 </div>
             @endif
 

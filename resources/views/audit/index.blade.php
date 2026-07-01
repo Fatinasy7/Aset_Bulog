@@ -20,34 +20,40 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Aset</th>
-                    <th>Field Berubah</th>
-                    <th>Nilai Lama</th>
-                    <th>Nilai Baru</th>
-                    <th>Diubah Oleh</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($logs as $log)
-                    <tr>
-                        <td>{{ $log->created_at->format('Y-m-d') }}</td>
-                        <td>{{ $log->asset_code }}</td>
-                        <td>{{ $log->field_name ?? $log->action }}</td>
-                        <td>{{ $log->old_value ?? '-' }}</td>
-                        <td>{{ $log->new_value ?? '-' }}</td>
-                        <td>{{ $log->changed_by }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6">Belum ada data audit log dari backend.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+        @if ($logs->isEmpty())
+            <div class="empty-state-card">
+                <div class="empty-state-card__icon">📝</div>
+                <div class="empty-state-card__title">Audit log kosong</div>
+                <div class="empty-state-card__message">Belum ada perubahan yang tercatat. Perubahan aset akan muncul setelah ada aktivitas.</div>
+            </div>
+        @else
+            <div class="table-responsive">
+                <table class="table-ui">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Aset</th>
+                            <th>Field Berubah</th>
+                            <th>Nilai Lama</th>
+                            <th>Nilai Baru</th>
+                            <th>Diubah Oleh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($logs as $log)
+                        <tr>
+                            <td>{{ $log->created_at->format('Y-m-d') }}</td>
+                            <td>{{ $log->asset_code }}</td>
+                            <td>{{ $log->field_name ?? $log->action }}</td>
+                            <td>{{ $log->old_value ?? '-' }}</td>
+                            <td>{{ $log->new_value ?? '-' }}</td>
+                            <td>{{ $log->changed_by }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            </div>
+        @endif
     </div>
 </section>
 @endsection

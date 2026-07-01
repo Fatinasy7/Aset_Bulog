@@ -128,6 +128,37 @@
             color: #6b7280;
         }
 
+        .empty-state-card {
+            display: grid;
+            place-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.2rem;
+            border-radius: 0.75rem;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            color: #374151;
+            text-align: center;
+        }
+
+        .empty-state-card__icon {
+            font-size: 1.5rem;
+        }
+
+        .empty-state-card__title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .empty-state-card__message {
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #4b5563;
+            max-width: 24rem;
+        }
+
         @media print {
             body {
                 margin: 0.15in;
@@ -198,7 +229,13 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-right">Tidak ada data aset untuk filter ini.</td>
+                        <td colspan="8">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">⚠️</div>
+                                <div class="empty-state-card__title">Tidak ada data aset untuk filter ini</div>
+                                <div class="empty-state-card__message">Filter yang dipilih tidak menghasilkan data. Ubah filter atau tambahkan aset baru agar laporan PDF menampilkan informasi.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

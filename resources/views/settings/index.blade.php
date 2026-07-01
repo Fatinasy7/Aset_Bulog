@@ -45,21 +45,21 @@
             <div class="component-grid component-grid--full component-grid--compact">
                 <div>
                     <label class="form-label-ui">Nama</label>
-                    <input class="form-control-ui" type="text" name="name" value="{{ old('name', isset($editUser) ? $editUser->name : '') }}" placeholder="Nama lengkap">
+                    <input class="form-control-ui {{ $errors->has('name') ? 'is-invalid' : '' }}" type="text" name="name" value="{{ old('name', isset($editUser) ? $editUser->name : '') }}" placeholder="Nama lengkap" required>
                     @error('name')
                         <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="form-label-ui">Email</label>
-                    <input class="form-control-ui" type="email" name="email" value="{{ old('email', isset($editUser) ? $editUser->email : '') }}" placeholder="Email pengguna">
+                    <input class="form-control-ui {{ $errors->has('email') ? 'is-invalid' : '' }}" type="email" name="email" value="{{ old('email', isset($editUser) ? $editUser->email : '') }}" placeholder="Email pengguna" required>
                     @error('email')
                         <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
                     <label class="form-label-ui">Role</label>
-                    <select class="form-select-ui" name="role">
+                    <select class="form-select-ui {{ $errors->has('role') ? 'is-invalid' : '' }}" name="role" required>
                         <option value="user_pic" {{ old('role', isset($editUser) ? $editUser->role : '') === 'user_pic' ? 'selected' : '' }}>PIC</option>
                         <option value="admin_it" {{ old('role', isset($editUser) ? $editUser->role : '') === 'admin_it' ? 'selected' : '' }}>Admin IT</option>
                         <option value="manajemen" {{ old('role', isset($editUser) ? $editUser->role : '') === 'manajemen' ? 'selected' : '' }}>Manajemen</option>
@@ -70,7 +70,7 @@
                 </div>
                 <div>
                     <label class="form-label-ui">Nomor Telepon</label>
-                    <input class="form-control-ui" type="text" name="phone" value="{{ old('phone', isset($editUser) ? $editUser->phone : '') }}" placeholder="0812xxxxxxx">
+                    <input class="form-control-ui {{ $errors->has('phone') ? 'is-invalid' : '' }}" type="text" name="phone" value="{{ old('phone', isset($editUser) ? $editUser->phone : '') }}" placeholder="0812xxxxxxx">
                     @error('phone')
                         <p class="form-error">{{ $message }}</p>
                     @enderror
@@ -127,7 +127,15 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5">Tidak ada pengguna terdaftar.</td></tr>
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state-card">
+                                    <div class="empty-state-card__icon">👤</div>
+                                    <div class="empty-state-card__title">Belum ada pengguna terdaftar</div>
+                                    <div class="empty-state-card__message">Daftar pengguna kosong. Tambahkan pengguna baru untuk mulai mengelola akses sistem.</div>
+                                </div>
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>

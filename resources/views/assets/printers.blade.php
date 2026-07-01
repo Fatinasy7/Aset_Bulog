@@ -43,17 +43,18 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>Node Name</th>
-                    <th>Status</th>
-                    <th>Ink Levels</th>
-                    <th>Paper Supply</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
+                    <tr>
+                        <th>Node Name</th>
+                        <th>Status</th>
+                        <th>Ink Levels</th>
+                        <th>Paper Supply</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @forelse ($assets as $asset)
                     <tr>
                         <td>{{ $asset->nama_aset }}</td>
@@ -68,11 +69,18 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5">No printer data available.</td>
+                        <td colspan="5">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">🖨️</div>
+                                <div class="empty-state-card__title">Tidak ada data printer</div>
+                                <div class="empty-state-card__message">Inventaris printer kosong. Tambahkan printer baru atau cek kembali sumber data backend.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </section>
 @endsection

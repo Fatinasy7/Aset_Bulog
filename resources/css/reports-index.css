@@ -25,6 +25,13 @@
     padding: 1.25rem;
 }
 
+.chart-panel canvas,
+#report-condition-chart {
+    width: 100%;
+    height: auto;
+    max-height: 420px;
+}
+
 .report-pagination {
     margin-top: 1rem;
     display: flex;
