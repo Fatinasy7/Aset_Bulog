@@ -76,10 +76,12 @@
                     @enderror
                 </div>
             </div>
-            <button class="btn-ui btn-primary-ui mt-1" type="submit">{{ isset($editUser) ? 'Perbarui Pengguna' : 'Tambah Pengguna' }}</button>
-            @if(isset($editUser))
-                <a class="btn-ui btn-secondary-ui mt-1" href="{{ route('frontend.settings') }}">Batal</a>
-            @endif
+            <div class="form-actions">
+                <button class="btn-ui btn-primary-ui" type="submit">{{ isset($editUser) ? 'Perbarui Pengguna' : 'Tambah Pengguna' }}</button>
+                @if(isset($editUser))
+                    <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.settings') }}">Batal</a>
+                @endif
+            </div>
         </form>
     </div>
 </section>
@@ -89,45 +91,47 @@
         <strong>Daftar Pengguna</strong>
     </div>
     <div class="card-surface__body">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Telepon</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($users as $user)
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
                     <tr>
-                        <td>{{ $user->name }}</td>
-                        <td>{{ $user->email }}</td>
-                        <td>
-                            @if($user->role === 'user_pic') PIC
-                            @elseif($user->role === 'admin_it') Admin IT
-                            @elseif($user->role === 'manajemen') Manajemen
-                            @else {{ ucfirst($user->role) }}
-                            @endif
-                        </td>
-                        <td>{{ $user->phone ?? '-' }}</td>
-                        <td>
-                            <div class="action-buttons">
-                            <a class="btn-ui btn-secondary-ui btn-sm-ui" href="{{ route('frontend.settings', ['edit' => $user->id]) }}">Edit</a>
-                            <form method="POST" action="{{ route('frontend.settings.user.destroy', $user) }}" class="inline-form delete-user-form" data-user-name="{{ $user->name }}">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn-ui btn-danger-ui btn-sm-ui delete-user-button" type="button">Hapus</button>
-                            </form>
-                        </div>
-                    </td>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Telepon</th>
+                        <th>Aksi</th>
                     </tr>
-                @empty
-                    <tr><td colspan="5">Tidak ada pengguna terdaftar.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @forelse ($users as $user)
+                        <tr>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>
+                                @if($user->role === 'user_pic') PIC
+                                @elseif($user->role === 'admin_it') Admin IT
+                                @elseif($user->role === 'manajemen') Manajemen
+                                @else {{ ucfirst($user->role) }}
+                                @endif
+                            </td>
+                            <td>{{ $user->phone ?? '-' }}</td>
+                            <td class="table-cell-action">
+                                <div class="action-buttons">
+                                    <a class="btn-ui btn-secondary-ui btn-sm-ui" href="{{ route('frontend.settings', ['edit' => $user->id]) }}">Edit</a>
+                                    <form method="POST" action="{{ route('frontend.settings.user.destroy', $user) }}" class="inline-form delete-user-form" data-user-name="{{ $user->name }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn-ui btn-danger-ui btn-sm-ui delete-user-button" type="button">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5">Tidak ada pengguna terdaftar.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <div class="pagination-container">
             {{ $users->links() }}
