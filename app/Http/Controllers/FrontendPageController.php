@@ -127,40 +127,9 @@ class FrontendPageController extends Controller
 
     public function reportsIndex(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $summaryAssets = (clone $query)->get();
         $assets = $query->latest()->paginate(15)->withQueryString();
@@ -183,40 +152,9 @@ class FrontendPageController extends Controller
 
     public function reportsExport(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $assets = $query->latest()->get();
         $filename = 'laporan-aset-' . now()->format('Ymd-His') . '.csv';
@@ -253,40 +191,9 @@ class FrontendPageController extends Controller
 
     public function reportsDownload(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $assets = $query->latest()->get();
         $summary = [
@@ -302,11 +209,23 @@ class FrontendPageController extends Controller
         return $pdf->download('laporan-aset-' . now()->format('Ymd-His') . '.pdf');
     }
 
-    public function reportsPdf(Request $request)
+    private function validateReportFilters(Request $request): array
     {
-        $query = Asset::query();
+        return $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'condition' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'max:255'],
+            'pic' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+        ]);
+    }
 
-        if ($search = $request->input('search')) {
+    private function applyReportFilters($query, array $filters): void
+    {
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
             $query->where(function ($sub) use ($search) {
                 $sub->where('kode_aset', 'like', "%{$search}%")
                     ->orWhere('nama_aset', 'like', "%{$search}%")
@@ -315,40 +234,29 @@ class FrontendPageController extends Controller
             });
         }
 
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
+        if (! empty($filters['condition'])) {
+            $query->where('kondisi', $filters['condition']);
         }
 
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
+        if (! empty($filters['location'])) {
+            $query->where('lokasi', $filters['location']);
         }
 
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
+        if (! empty($filters['type'])) {
+            $query->where('jenis', $filters['type']);
         }
 
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
+        if (! empty($filters['pic'])) {
+            $query->where('pic_name', $filters['pic']);
         }
 
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('tgl_perolehan', '>=', $filters['date_from']);
         }
 
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('tgl_perolehan', '<=', $filters['date_to']);
         }
-
-        $assets = $query->latest()->get();
-
-        $summary = [
-            'total_asset_value' => $assets->sum('harga'),
-            'active_assets' => $assets->where('kondisi', 'Baik')->count(),
-            'maintenance_required' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
-            'avg_depreciation' => 15.4,
-        ];
-
-        return view('reports.pdf', compact('assets', 'summary'));
     }
 
     public function dataLaptop()
