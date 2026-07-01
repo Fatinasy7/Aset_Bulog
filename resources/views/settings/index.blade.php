@@ -13,64 +13,179 @@
         <h1 class="page-title">Pengaturan</h1>
         <p class="page-lead">Kelola pengguna, lokasi, dan parameter sistem untuk infrastruktur aset perusahaan.</p>
     </div>
-    <div class="button-group">
-        <button class="btn-ui btn-primary-ui" type="button">Tambah Admin</button>
+</section>
+
+@if(session('success'))
+    <div class="alert-ui alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert-ui alert-danger">
+        <strong>Periksa kembali input Anda:</strong>
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+<section class="card-surface">
+    <div class="card-surface__header">
+        <strong>{{ isset($editUser) ? 'Edit Pengguna' : 'Tambah Pengguna Baru' }}</strong>
+    </div>
+    <div class="card-surface__body">
+        <form method="POST" action="{{ isset($editUser) ? route('frontend.settings.user.update', $editUser) : route('frontend.settings.user.store') }}">
+            @csrf
+            @if(isset($editUser))
+                @method('PUT')
+            @endif
+            <div class="component-grid component-grid--full component-grid--compact">
+                <div>
+                    <label class="form-label-ui">Nama</label>
+                    <input class="form-control-ui" type="text" name="name" value="{{ old('name', isset($editUser) ? $editUser->name : '') }}" placeholder="Nama lengkap">
+                    @error('name')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="form-label-ui">Email</label>
+                    <input class="form-control-ui" type="email" name="email" value="{{ old('email', isset($editUser) ? $editUser->email : '') }}" placeholder="Email pengguna">
+                    @error('email')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="form-label-ui">Role</label>
+                    <select class="form-select-ui" name="role">
+                        <option value="user_pic" {{ old('role', isset($editUser) ? $editUser->role : '') === 'user_pic' ? 'selected' : '' }}>PIC</option>
+                        <option value="admin_it" {{ old('role', isset($editUser) ? $editUser->role : '') === 'admin_it' ? 'selected' : '' }}>Admin IT</option>
+                        <option value="manajemen" {{ old('role', isset($editUser) ? $editUser->role : '') === 'manajemen' ? 'selected' : '' }}>Manajemen</option>
+                    </select>
+                    @error('role')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
+                </div>
+                <div>
+                    <label class="form-label-ui">Nomor Telepon</label>
+                    <input class="form-control-ui" type="text" name="phone" value="{{ old('phone', isset($editUser) ? $editUser->phone : '') }}" placeholder="0812xxxxxxx">
+                    @error('phone')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+            <button class="btn-ui btn-primary-ui mt-1" type="submit">{{ isset($editUser) ? 'Perbarui Pengguna' : 'Tambah Pengguna' }}</button>
+            @if(isset($editUser))
+                <a class="btn-ui btn-secondary-ui mt-1" href="{{ route('frontend.settings') }}">Batal</a>
+            @endif
+        </form>
     </div>
 </section>
 
 <section class="card-surface">
     <div class="card-surface__header">
-        <strong>Manajemen Pengguna</strong>
+        <strong>Daftar Pengguna</strong>
     </div>
     <div class="card-surface__body">
         <table class="table-ui">
             <thead>
                 <tr>
-                    <th>Administrator</th>
+                    <th>Nama</th>
+                    <th>Email</th>
                     <th>Role</th>
-                    <th>Last Access</th>
+                    <th>Telepon</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
                     <tr>
-                        <td>{{ $user->name }}<br><span class="surface-note">{{ $user->email }}</span></td>
-                        <td>{{ ucfirst($user->role) }}</td>
-                        <td>2 mins ago</td>
-                        <td><button class="btn-ui btn-secondary-ui" type="button">Detail</button></td>
+                        <td>{{ $user->name }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td>
+                            @if($user->role === 'user_pic') PIC
+                            @elseif($user->role === 'admin_it') Admin IT
+                            @elseif($user->role === 'manajemen') Manajemen
+                            @else {{ ucfirst($user->role) }}
+                            @endif
+                        </td>
+                        <td>{{ $user->phone ?? '-' }}</td>
+                        <td>
+                            <div class="action-buttons">
+                            <a class="btn-ui btn-secondary-ui btn-sm-ui" href="{{ route('frontend.settings', ['edit' => $user->id]) }}">Edit</a>
+                            <form method="POST" action="{{ route('frontend.settings.user.destroy', $user) }}" class="inline-form delete-user-form" data-user-name="{{ $user->name }}">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn-ui btn-danger-ui btn-sm-ui delete-user-button" type="button">Hapus</button>
+                            </form>
+                        </div>
+                    </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4">Tidak ada pengguna terdaftar.</td></tr>
+                    <tr><td colspan="5">Tidak ada pengguna terdaftar.</td></tr>
                 @endforelse
             </tbody>
         </table>
+
+        <div class="pagination-container">
+            {{ $users->links() }}
+        </div>
     </div>
 </section>
 
-<section class="card-surface">
-    <div class="card-surface__header">
-        <strong>Pengaturan Lokasi</strong>
-    </div>
-    <div class="card-surface__body">
-        <div class="component-grid component-grid--full component-grid--compact">
-            <div>
-                <label class="form-label-ui">Nama Kantor Cabang</label>
-                <input class="form-control-ui" type="text" value="Sudirman Central Hub">
-            </div>
-            <div>
-                <label class="form-label-ui">Koordinat Geografis</label>
-                <div class="component-grid component-grid--compact component-grid--full">
-                    <input class="form-control-ui" type="text" value="-6.2247">
-                    <input class="form-control-ui" type="text" value="106.8077">
-                </div>
-            </div>
-            <div>
-                <label class="form-label-ui">Radius Geofence (50km)</label>
-                <input class="form-control-ui" type="range" min="0" max="100" value="50">
-            </div>
+<div id="confirm-delete-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-title">
+        <h2 id="confirm-delete-title">Konfirmasi Hapus Pengguna</h2>
+        <p id="confirm-delete-message" class="modal-message">Apakah Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.</p>
+        <div class="modal-actions">
+            <button type="button" id="cancel-delete" class="btn-ui btn-secondary-ui">Batal</button>
+            <button type="button" id="confirm-delete" class="btn-ui btn-danger-ui">Hapus</button>
         </div>
-        <button class="btn-ui btn-primary-ui mt-1" type="button">Perbarui Data Geospasial</button>
     </div>
-</section>
+</div>
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('confirm-delete-modal');
+            const message = document.getElementById('confirm-delete-message');
+            const cancelButton = document.getElementById('cancel-delete');
+            const confirmButton = document.getElementById('confirm-delete');
+            let selectedForm = null;
+
+            document.querySelectorAll('.delete-user-button').forEach(button => {
+                button.addEventListener('click', function () {
+                    selectedForm = this.closest('form');
+                    const userName = selectedForm.dataset.userName || 'pengguna ini';
+                    message.textContent = `Hapus pengguna ${userName}? Tindakan ini tidak dapat dikembalikan.`;
+                    modal.classList.add('is-active');
+                    modal.setAttribute('aria-hidden', 'false');
+                });
+            });
+
+            cancelButton.addEventListener('click', function () {
+                modal.classList.remove('is-active');
+                modal.setAttribute('aria-hidden', 'true');
+                selectedForm = null;
+            });
+
+            confirmButton.addEventListener('click', function () {
+                if (selectedForm) {
+                    selectedForm.submit();
+                }
+            });
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    modal.classList.remove('is-active');
+                    modal.setAttribute('aria-hidden', 'true');
+                    selectedForm = null;
+                }
+            });
+        });
+    </script>
+@endpush
+
 @endsection

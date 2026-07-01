@@ -46,6 +46,9 @@ Route::controller(FrontendPageController::class)->middleware('auth')->group(func
     Route::get('/frontend/reports/export', 'reportsExport')->name('frontend.reports.export');
     Route::get('/frontend/reports/download', 'reportsDownload')->name('frontend.reports.download');
     Route::get('/frontend/settings', 'settings')->name('frontend.settings');
+    Route::post('/frontend/settings/users', 'saveUserSettings')->name('frontend.settings.user.store');
+    Route::put('/frontend/settings/users/{user}', 'updateUserSettings')->name('frontend.settings.user.update');
+    Route::delete('/frontend/settings/users/{user}', 'deleteUserSettings')->name('frontend.settings.user.destroy');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
     Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
     Route::post('/frontend/scan-qr/lookup', 'scanQrLookup')->name('frontend.scan-qr.lookup');

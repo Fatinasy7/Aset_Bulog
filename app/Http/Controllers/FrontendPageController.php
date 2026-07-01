@@ -285,17 +285,72 @@ class FrontendPageController extends Controller
         return view('assets.printers', compact('assets', 'summary'));
     }
 
-    public function settings()
+    public function settings(Request $request)
     {
-        $users = User::where('role', 'pic')->orderBy('name')->get();
+        $users = User::orderBy('name')->paginate(10)->appends($request->query());
         $assets = Asset::latest()->get();
         $summary = [
             'total_assets' => $assets->count(),
             'total_laptops' => $assets->where('jenis', 'laptop')->count(),
             'total_printers' => $assets->where('jenis', 'printer')->count(),
         ];
+        $editUser = null;
 
-        return view('settings.index', compact('users', 'summary'));
+        if ($request->filled('edit')) {
+            $editUser = User::find($request->query('edit'));
+        }
+
+        return view('settings.index', compact('users', 'summary', 'editUser'));
+    }
+
+    public function saveUserSettings(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'in:admin_it,user_pic,manajemen'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('frontend.settings')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        User::create(array_merge($validator->validated(), [
+            'password' => bcrypt('Password123!'),
+        ]));
+
+        return redirect()->route('frontend.settings')->with('success', 'Pengguna baru berhasil ditambahkan.');
+    }
+
+    public function updateUserSettings(Request $request, User $user)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['required', 'in:admin_it,user_pic,manajemen'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('frontend.settings', ['edit' => $user->id])
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $user->fill($validator->validated());
+        $user->save();
+
+        return redirect()->route('frontend.settings', ['edit' => $user->id])->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    public function deleteUserSettings(User $user)
+    {
+        $user->delete();
+
+        return redirect()->route('frontend.settings')->with('success', 'Pengguna berhasil dihapus.');
     }
 
     public function auditIndex()
