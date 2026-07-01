@@ -61,6 +61,8 @@ Menggantikan pencatatan aset manual (spreadsheet/dokumen fisik) menjadi sistem d
 | 9 | Halaman Riwayat Perubahan (Audit Trail) |
 | 10 | Dashboard Manajemen (read-only untuk pimpinan) |
 
+> Backend menyediakan endpoint `GET /api/dashboard/summary` untuk ringkasan metrik dashboard dan visualisasi kondisi aset.
+
 ---
 
 ## 📋 Fitur & Kode Requirement (SRS §4)

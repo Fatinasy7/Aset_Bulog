@@ -292,7 +292,7 @@ Scenario: User navigates to Daftar Aset
    [ ] Select kondisi filter → table updates
    [ ] Type in search box → waits 300ms → table updates
 
-[ ] ✅ Everything works?
+[ ]  Everything works?
 ```
 
 **If fails:**
@@ -328,7 +328,7 @@ Scenario: User scans asset
    [ ] Shows asset name, kondisi, PIC, etc?
    [ ] Shows geolocation coordinates (if captured)?
 
-[ ] ✅ Everything works?
+[ ] Everything works?
 ```
 
 **If fails:**
@@ -631,7 +631,7 @@ Scenario: Complete workflow test
 
 ---
 
-## ✅ FINAL CHECKLIST - KHANSA
+## FINAL CHECKLIST - KHANSA
 
 **Before saying "DONE":**
 - [ ] Login works with backend
@@ -652,7 +652,7 @@ Scenario: Complete workflow test
 
 ---
 
-## 🤝 Coordination Points
+##  Coordination Points
 
 **When finished, coordinate with Fatin to verify:**
 

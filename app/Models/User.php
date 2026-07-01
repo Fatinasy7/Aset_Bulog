@@ -22,7 +22,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+<<<<<<< HEAD
         'telepon',
+=======
+>>>>>>> 22589e0065f85f8afe27c27718fc715915ec2569
     ];
 
     /**
@@ -44,4 +47,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function hasRole(string ...$roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
 }

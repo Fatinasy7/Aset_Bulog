@@ -10,6 +10,56 @@
 
 Gunakan prompt berikut saat membuka VS Code dan memulai sesi kerja:
 
+##  Ringkasan Backend API untuk Frontend
+- Backend sudah menyediakan `auth`, `assets`, `pics`, `notifications`, `reports`, dan `backups`.
+- Semua route API penting dilindungi oleh `auth:sanctum` kecuali `auth/register` dan `auth/login`.
+- Response utama memakai format `camelCase` untuk output, namun request body create/update asset/pic tetap menggunakan `snake_case`.
+- Endpoint `GET /api/reports/assets` hanya bisa diakses oleh role `admin_it` atau `manajemen`.
+- Pastikan setiap request terautentikasi dengan header `Authorization: Bearer <token>`.
+
+### Contoh ringkas Axios
+```javascript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
+});
+
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+```
+
+### Contoh penggunaan Axios
+```javascript
+// Login
+const loginResponse = await api.post('/auth/login', {
+  email: 'admin-baru-banget@example.com',
+  password: 'Password123!',
+});
+localStorage.setItem('auth_token', loginResponse.data.token);
+
+// Ambil user saat ini
+const userResponse = await api.get('/user');
+console.log(userResponse.data);
+
+// Ambil daftar aset
+const assetsResponse = await api.get('/assets');
+console.log(assetsResponse.data);
+```
+
+Gunakan prompt berikut saat membuka VS Code dan memulai sesi kerja:
+
 ```
 Disini saya mendapati tugas sebagai Frontend (2) (Khansa Mufidah),
 maka dari itu tolong analisa terlebih dahulu agar saya dapat melihat apa saja
@@ -208,7 +258,7 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 ### 🔷 MINGGU 2–3 — Dashboard & Laporan
 
 #### Integrasi Dashboard Utama (FR-21)
-- [ ] Fetch ringkasan data dari `GET /api/dashboard/summary`
+- [x] Fetch ringkasan data dari `GET /api/dashboard/summary`
 - [ ] Render **counter cards** (total aset, laptop, printer, PIC aktif) dinamis
 - [ ] Render **grafik kondisi aset** menggunakan Chart.js:
   ```javascript
