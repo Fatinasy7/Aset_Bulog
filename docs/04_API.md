@@ -2,34 +2,37 @@
 
 ## Ringkasan Endpoint
 
-| Area | Method | URL | Auth |
-| --- | --- | --- | --- |
-| Register | POST | /api/auth/register | No |
-| Login | POST | /api/auth/login | No |
-| Logout | POST | /api/auth/logout | Yes |
-| Current User | GET | /api/user | Yes |
-| List Assets | GET | /api/assets | Yes |
-| Asset Detail | GET | /api/assets/{asset} | Yes |
-| Create Asset | POST | /api/assets | Yes |
-| Update Asset | PUT | /api/assets/{asset} | Yes |
-| Delete Asset | DELETE | /api/assets/{asset} | Yes |
-| Scan Asset | POST | /api/assets/{asset}/scan | Yes |
-| Asset Location | GET | /api/assets/{asset}/location | Yes |
-| QR Code | GET | /api/assets/{asset}/qrcode | Yes |
-| List PICs | GET | /api/pics | Yes |
-| Create PIC | POST | /api/pics | Yes |
-| Update PIC | PUT | /api/pics/{pic} | Yes |
-| Delete PIC | DELETE | /api/pics/{pic} | Yes |
-| Assign PIC | POST | /api/assets/{asset}/assign-pic | Yes |
-| List Notifications | GET | /api/notifications | Yes |
-| Mark Notification Read | PATCH | /api/notifications/{notification}/read | Yes |
-| Preview Report | GET | /api/reports/assets | Yes | 
-| Export Excel | GET | /api/reports/assets?format=excel | Yes |
-| Export PDF | GET | /api/reports/assets?format=pdf | Yes |
-| Create Backup | POST | /api/backups | Yes |
-| List Backups | GET | /api/backups | Yes |
-| Verify Backups | GET | /api/backups/verify | Yes |
-| Dashboard Summary | GET | /api/dashboard/summary | Yes |
+| Area | Method | URL | Auth | Role |
+| --- | --- | --- | --- | --- |
+| Register | POST | /api/auth/register | No | Public |
+| Login | POST | /api/auth/login | No | Public |
+| Logout | POST | /api/auth/logout | Yes | Any authenticated user |
+| Current User | GET | /api/user | Yes | Any authenticated user |
+| List Assets | GET | /api/assets | Yes | Any authenticated user |
+| Asset Detail | GET | /api/assets/{asset} | Yes | Any authenticated user |
+| Create Asset | POST | /api/assets | Yes | admin_it |
+| Update Asset | PUT | /api/assets/{asset} | Yes | admin_it |
+| Delete Asset | DELETE | /api/assets/{asset} | Yes | admin_it |
+| Scan Asset | POST | /api/assets/{asset}/scan | Yes | Any authenticated user |
+| Asset Location | GET | /api/assets/{asset}/location | Yes | Any authenticated user |
+| QR Code | GET | /api/assets/{asset}/qrcode | Yes | Any authenticated user |
+| QR Code Label | GET | /api/assets/{asset}/qrcode/label | Yes | Any authenticated user |
+| QR Code Label PNG | GET | /api/assets/{asset}/qrcode/label.png | Yes | Any authenticated user |
+| QR Code Label Force PNG | GET | /api/assets/{asset}/qrcode/label.force.png | Yes | Any authenticated user |
+| List PICs | GET | /api/pics | Yes | Any authenticated user |
+| Create PIC | POST | /api/pics | Yes | admin_it |
+| Update PIC | PUT | /api/pics/{pic} | Yes | admin_it |
+| Delete PIC | DELETE | /api/pics/{pic} | Yes | admin_it |
+| Assign PIC | POST | /api/assets/{asset}/assign-pic | Yes | admin_it |
+| List Notifications | GET | /api/notifications | Yes | Any authenticated user |
+| Mark Notification Read | PATCH | /api/notifications/{notification}/read | Yes | Any authenticated user |
+| Preview Report | GET | /api/reports/assets | Yes | admin_it, manajemen |
+| Export Excel | GET | /api/reports/assets?format=excel | Yes | admin_it, manajemen |
+| Export PDF | GET | /api/reports/assets?format=pdf | Yes | admin_it, manajemen |
+| Create Backup | POST | /api/backups | Yes | admin_it |
+| List Backups | GET | /api/backups | Yes | admin_it |
+| Verify Backups | GET | /api/backups/verify | Yes | admin_it |
+| Dashboard Summary | GET | /api/dashboard/summary | Yes | Any authenticated user |
 
 ## Authentication
 
@@ -202,6 +205,7 @@
   - `Accept: application/json`
   - `Content-Type: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Body:
 ```json
 {
@@ -228,6 +232,7 @@
   - `Accept: application/json`
   - `Content-Type: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Body: same fields as Create Asset.
 - Response: same asset payload.
 
@@ -237,6 +242,7 @@
 - Headers:
   - `Accept: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Response:
 ```json
 {
@@ -294,6 +300,27 @@
 - Headers:
   - `Authorization: Bearer <token>`
 - Response: download file with `Content-Type: image/svg+xml`
+
+### Asset QR Code Label
+- Method: `GET`
+- URL: `/api/assets/{asset}/qrcode/label`
+- Headers:
+  - `Authorization: Bearer <token>`
+- Response: download file with `Content-Type: image/svg+xml`
+
+### Asset QR Code Label PNG
+- Method: `GET`
+- URL: `/api/assets/{asset}/qrcode/label.png`
+- Headers:
+  - `Authorization: Bearer <token>`
+- Response: download file with `Content-Type: image/png` when environment supports image generation.
+
+### Asset QR Code Label Force PNG
+- Method: `GET`
+- URL: `/api/assets/{asset}/qrcode/label.force.png`
+- Headers:
+  - `Authorization: Bearer <token>`
+- Response: download file with `Content-Type: image/png` when optional `endroid/qr-code` dependency is installed; otherwise returns 501 with an informative JSON message.
 
 ### Dashboard Summary
 - Method: `GET`
@@ -359,6 +386,7 @@
   - `Accept: application/json`
   - `Content-Type: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Body:
 ```json
 {
@@ -377,6 +405,7 @@
   - `Accept: application/json`
   - `Content-Type: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Body: same fields as Create PIC.
 - Response: same PIC payload.
 
@@ -386,6 +415,7 @@
 - Headers:
   - `Accept: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`
 - Response:
 ```json
 {
@@ -463,6 +493,7 @@
 - Headers:
   - `Accept: application/json`
   - `Authorization: Bearer <token>`
+- Role: `admin_it`, `manajemen`
 - Optional query params:
   - `kondisi`
   - `jenis`

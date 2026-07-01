@@ -4,7 +4,7 @@
 - Periode pengerjaan: 22 Juni 2026 s.d. 29 Juni 2026
 - Branch utama: `feature/auth-sanctum`, `feature/asset-crud`, dan `feature/backup-system`
 - Fokus: Fondasi Keamanan, Autentikasi, Penguatan CRUD Aset, serta Backup Database
-- Status: Selesai untuk langkah autentikasi, CRUD aset, dan fitur backup database
+- Status: Selesai untuk langkah autentikasi, CRUD aset, dan fitur backup database; diverifikasi dengan automated feature tests.
 
 ## Fitur yang Diselesaikan
 | Fitur | File / Area | Keterangan |
@@ -47,6 +47,7 @@ v| QR code generator | `app/Http/Controllers/AssetController.php`, `database/mig
 - Untuk pengujian awal, gunakan `php artisan route:list --path=api` dan migrasi + seeder tersedia untuk memulai data admin
 - Fitur backup dapat diuji lewat `php artisan app:create-database-backup` dan `php artisan app:verify-database-integrity`
 - Fitur keamanan dapat diuji lewat `php artisan test --filter=SecurityHardeningTest`
+- Otentikasi, role access, asset endpoint, PIC management, report export, backup, dan notifikasi telah diverifikasi lewat targeted feature tests.
 - Optimasi performa dapat diuji lewat `php artisan test --filter=PerformanceOptimizationTest`
 
 ## 📚 Dokumentasi API Lengkap
