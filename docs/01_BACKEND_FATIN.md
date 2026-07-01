@@ -211,6 +211,11 @@ storage/
 | GET | `/api/reports/assets` | Generate laporan | Admin IT / Manajemen |
 | GET | `/api/dashboard/summary` | Data ringkasan dashboard | Auth |
 
+### Dashboard Summary
+- Endpoint: `GET /api/dashboard/summary`
+- Deskripsi: Menyediakan metrik ringkasan dashboard berupa total aset, total laptop, total printer, total PIC, dan distribusi kondisi aset.
+- Digunakan untuk menampilkan Dashboard Utama yang memuat counter cards dan grafik kondisi aset.
+
 ---
 
 ## ⚠️ Aturan Bisnis yang Wajib Divalidasi di Backend
