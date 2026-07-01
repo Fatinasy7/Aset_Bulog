@@ -254,12 +254,18 @@ class AssetController extends Controller
             ->latest('created_at')
             ->first();
 
+        $lastScanPayload = $lastScan ? json_decode($lastScan->new_value, true) : null;
+
         return response()->json([
             'assetId' => $asset->id,
             'lokasi' => $asset->lokasi,
             'latitude' => $asset->koordinat_lat,
             'longitude' => $asset->koordinat_lng,
-            'lastScan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+            'lastScan' => [
+                'latitude' => $lastScanPayload['latitude'] ?? $asset->koordinat_lat,
+                'longitude' => $lastScanPayload['longitude'] ?? $asset->koordinat_lng,
+                'scanned_at' => $lastScanPayload['scanned_at'] ?? null,
+            ],
         ]);
     }
 

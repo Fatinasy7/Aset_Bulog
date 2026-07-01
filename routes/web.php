@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PicFrontendController;
+use App\Http\Controllers\AssetFrontendController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,4 +21,10 @@ Route::get('/', function () {
 
 Route::get('/app', function () {
     return response()->file(public_path('index.html'));
+});
+
+Route::get('/pics', [PicFrontendController::class, 'index'])->name('pics.index');
+Route::get('/assets', [AssetFrontendController::class, 'index'])->name('assets.index');
+
+Route::middleware(['auth', 'role:admin_it'])->group(function () {
 });

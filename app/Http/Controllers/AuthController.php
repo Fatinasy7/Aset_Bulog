@@ -32,6 +32,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
+            'message' => 'Registrasi berhasil.',
             'user' => $this->formatUserPayload($user),
             'token' => $token,
             'auth_token' => $token,
@@ -57,6 +58,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
+            'message' => 'Login berhasil.',
             'user' => $this->formatUserPayload($user),
             'token' => $token,
             'auth_token' => $token,

@@ -10,9 +10,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PicController;
-use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

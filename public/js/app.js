@@ -16,13 +16,22 @@ let kondisiChart = null;
 let lokasiChart = null;
 let locationWatcher = null;
 let currentCoordinates = null;
+let qrScanner = null;
+let qrScannerActive = false;
+
+function getStoredApiToken() {
+    const token = localStorage.getItem('apiToken');
+    if (!token || token === 'null' || token === 'undefined') {
+        return null;
+    }
+    return token;
+}
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
     attachApiDefaults();
     loadUsers();
     loadNotifications();
-    loadAssets();
     checkLogin();
     initSidebar();
     setupEventListeners();
@@ -31,12 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function attachApiDefaults() {
     if (!window.axios) return;
 
-    window.axios.defaults.baseURL = window.__API_BASE_URL__ || 'http://127.0.0.1:8000';
+    const configuredBaseUrl = window.__API_BASE_URL__ || '';
+    window.axios.defaults.baseURL = configuredBaseUrl || window.location.origin;
+
     window.axios.defaults.headers.common['Accept'] = 'application/json';
     window.axios.defaults.headers.common['Content-Type'] = 'application/json';
     window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-    const token = localStorage.getItem('apiToken');
+    const token = getStoredApiToken();
     if (token) {
         window.axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
@@ -80,15 +91,24 @@ function saveUsers() {
 // Check Login Status
 async function checkLogin() {
     const storedUser = localStorage.getItem('currentUser');
-    const apiToken = localStorage.getItem('apiToken');
+    const apiToken = getStoredApiToken();
+
     if (storedUser && apiToken) {
         currentUser = JSON.parse(storedUser);
         attachApiDefaults();
-        await loadProfile();
-        showMainApp();
-    } else {
-        showLoginPage();
+        try {
+            await loadProfile();
+            await loadAssets();
+            showMainApp();
+            return;
+        } catch (error) {
+            console.warn('Autentikasi gagal saat memeriksa profil atau aset:', error);
+        }
     }
+
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('apiToken');
+    showLoginPage();
 }
 
 // Show Login Page
@@ -157,6 +177,7 @@ async function login(email, password) {
     try {
         const response = await window.axios.post('/api/auth/login', { email, password });
         const payload = response.data;
+        console.log('Respon server (login):', payload);
 
         const authToken = payload.auth_token || payload.token || payload.access_token;
         const user = {
@@ -165,18 +186,25 @@ async function login(email, password) {
             role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
         };
 
+        if (!authToken) {
+            throw new Error('Token autentikasi tidak ditemukan dalam response login.');
+        }
+
         currentUser = user;
         localStorage.setItem('currentUser', JSON.stringify(user));
-        if (authToken) {
-            localStorage.setItem('apiToken', authToken);
+        localStorage.setItem('apiToken', authToken);
+        if (window.axios) {
+            window.axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
         }
+        console.log('Login sukses, token disimpan:', authToken);
         attachApiDefaults();
         await loadProfile();
         await loadAssets();
         await loadNotifications();
         showMainApp();
-        showToast('Login berhasil!', 'success');
+        showToast(payload.message || 'Login berhasil!', 'success');
     } catch (error) {
+        console.error('Login gagal:', error.response?.data || error);
         const message = error.response?.data?.message || 'Login gagal. Cek kredensial Anda.';
         showToast(message, 'error');
     }
@@ -192,6 +220,7 @@ async function register(name, email, password, passwordConfirmation, role) {
             role
         });
         const payload = response.data;
+        console.log('Respon server (register):', payload);
         const authToken = payload.auth_token || payload.token || payload.access_token;
         const user = {
             ...payload.user,
@@ -199,17 +228,24 @@ async function register(name, email, password, passwordConfirmation, role) {
             role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
         };
 
+        if (!authToken) {
+            throw new Error('Token autentikasi tidak ditemukan dalam response registrasi.');
+        }
+
         currentUser = user;
         localStorage.setItem('currentUser', JSON.stringify(user));
-        if (authToken) {
-            localStorage.setItem('apiToken', authToken);
+        localStorage.setItem('apiToken', authToken);
+        if (window.axios) {
+            window.axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
         }
+        console.log('Registrasi sukses, token disimpan:', authToken);
         attachApiDefaults();
         await loadProfile();
         await loadAssets();
         showMainApp();
-        showToast('Registrasi berhasil!', 'success');
+        showToast(payload.message || 'Registrasi berhasil!', 'success');
     } catch (error) {
+        console.error('Registrasi gagal:', error.response?.data || error);
         const message = error.response?.data?.message || 'Registrasi gagal.';
         const errors = error.response?.data?.errors;
         const validationMessage = errors ? Object.values(errors).flat().join(' ') : message;
@@ -311,6 +347,13 @@ function initSidebar() {
 
 // Setup Event Listeners
 function setupEventListeners() {
+    const scanPageLink = document.querySelector('.nav-link[data-page="scan"]');
+    if (scanPageLink) {
+        scanPageLink.addEventListener('click', function() {
+            setTimeout(initQrScanner, 300);
+        });
+    }
+
     // Login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
@@ -341,9 +384,9 @@ function setupEventListeners() {
             e.preventDefault();
             const id = document.getElementById('picId').value;
             const payload = {
-                nama: document.getElementById('picNama').value.trim(),
+                name: document.getElementById('picNama').value.trim(),
                 email: document.getElementById('picEmail').value.trim(),
-                jabatan: document.getElementById('picJabatan').value,
+                role: document.getElementById('picJabatan').value,
                 telepon: document.getElementById('picTelepon').value.trim(),
                 password: document.getElementById('picPassword').value,
             };
@@ -355,6 +398,7 @@ function setupEventListeners() {
                     await window.axios.post('/api/pics', payload);
                 }
                 picForm.reset();
+                document.getElementById('picId').value = '';
                 await loadPics();
                 showToast('PIC berhasil disimpan.', 'success');
             } catch (error) {
@@ -423,27 +467,34 @@ function showPage(page) {
 
 // Update Dashboard
 function updateDashboard() {
-    const laptops = assets.filter(a => a.jenis === 'laptop');
-    const printers = assets.filter(a => a.jenis === 'printer');
-    const perluPerbaikan = assets.filter(a => a.kondisi === 'Rusak Ringan' || a.kondisi === 'Rusak Berat' || a.kondisi === 'Dalam Perbaikan');
-    
-    document.getElementById('totalAset').textContent = assets.length;
-    document.getElementById('totalLaptop').textContent = laptops.length;
-    document.getElementById('totalPrinter').textContent = printers.length;
-    document.getElementById('perluPerbaikan').textContent = perluPerbaikan.length;
-    
-    // Update charts
+    const laptops = assets.filter(a => (a.jenis || '').toLowerCase() === 'laptop');
+    const printers = assets.filter(a => (a.jenis || '').toLowerCase() === 'printer');
+    const perluPerbaikan = assets.filter(a => {
+        const kondisi = (a.kondisi || '').toLowerCase();
+        return kondisi.includes('rusak') || kondisi.includes('perbaikan');
+    });
+
+    const totalAsetEl = document.getElementById('totalAset');
+    const totalLaptopEl = document.getElementById('totalLaptop');
+    const totalPrinterEl = document.getElementById('totalPrinter');
+    const perluPerbaikanEl = document.getElementById('perluPerbaikan');
+
+    if (totalAsetEl) totalAsetEl.textContent = assets.length;
+    if (totalLaptopEl) totalLaptopEl.textContent = laptops.length;
+    if (totalPrinterEl) totalPrinterEl.textContent = printers.length;
+    if (perluPerbaikanEl) perluPerbaikanEl.textContent = perluPerbaikan.length;
+
     updateCharts();
 }
 
 // Update Charts
 function updateCharts() {
-    // Kondisi Chart
     const kondisiCounts = {};
     assets.forEach(a => {
-        kondisiCounts[a.kondisi] = (kondisiCounts[a.kondisi] || 0) + 1;
+        const kondisi = (a.kondisi || 'Tidak Diketahui').toString();
+        kondisiCounts[kondisi] = (kondisiCounts[kondisi] || 0) + 1;
     });
-    
+
     const kondisiCtx = document.getElementById('kondisiChart');
     if (kondisiCtx) {
         if (kondisiChart) kondisiChart.destroy();
@@ -453,7 +504,7 @@ function updateCharts() {
                 labels: Object.keys(kondisiCounts),
                 datasets: [{
                     data: Object.values(kondisiCounts),
-                    backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#9b59b6']
+                    backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#3498db']
                 }]
             },
             options: {
@@ -462,13 +513,13 @@ function updateCharts() {
             }
         });
     }
-    
-    // Lokasi Chart
+
     const lokasiCounts = {};
     assets.forEach(a => {
-        lokasiCounts[a.lokasi] = (lokasiCounts[a.lokasi] || 0) + 1;
+        const lokasi = (a.lokasi || 'Tidak Diketahui').toString();
+        lokasiCounts[lokasi] = (lokasiCounts[lokasi] || 0) + 1;
     });
-    
+
     const lokasiCtx = document.getElementById('lokasiChart');
     if (lokasiCtx) {
         if (lokasiChart) lokasiChart.destroy();
@@ -501,6 +552,15 @@ function renderTable(type) {
     const tbody = document.querySelector('#' + type + 'Table tbody');
     
     if (tbody) {
+        if (!filteredAssets.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">Belum ada data ${type}.</td>
+                </tr>
+            `;
+            return;
+        }
+
         tbody.innerHTML = filteredAssets.map((asset, index) => `
             <tr>
                 <td>${index + 1}</td>
@@ -534,17 +594,26 @@ function renderTable(type) {
 function renderLaporan() {
     const tbody = document.querySelector('#laporanTable tbody');
     if (tbody) {
+        if (!assets.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted">Belum ada data aset.</td>
+                </tr>
+            `;
+            return;
+        }
+
         tbody.innerHTML = assets.map((asset, index) => `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${asset.kodeAset}</strong></td>
-                <td>${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'}</td>
-                <td>${asset.namaAset}</td>
-                <td>${asset.merkType}</td>
+                <td><strong>${asset.kodeAset || '-'}</strong></td>
+                <td>${(asset.jenis || '').toLowerCase() === 'laptop' ? 'Laptop' : 'Printer'}</td>
+                <td>${asset.namaAset || '-'}</td>
+                <td>${asset.merkType || '-'}</td>
                 <td>${asset.serialNumber || '-'}</td>
-                <td>${asset.lokasi}</td>
+                <td>${asset.lokasi || '-'}</td>
                 <td>${asset.koordinat ? `<small>${asset.koordinat.lat.toFixed(4)}, ${asset.koordinat.lng.toFixed(4)}</small>` : '-'}</td>
-                <td><span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span></td>
+                <td><span class="badge badge-${(asset.kondisi || 'baik').toLowerCase().replace(' ', '-')}">${asset.kondisi || '-'}</span></td>
                 <td>${asset.tglPerolehan ? formatDate(asset.tglPerolehan) : '-'}</td>
             </tr>
         `).join('');
@@ -703,9 +772,9 @@ async function saveAsset() {
     try {
         let response;
         if (editingId) {
-            response = await axios.put(`/api/assets/${editingId}`, payload);
+            response = await window.axios.put(`/api/assets/${editingId}`, payload);
         } else {
-            response = await axios.post('/api/assets', payload);
+            response = await window.axios.post('/api/assets', payload);
         }
 
         const savedAsset = response.data?.data || response.data;
@@ -806,7 +875,7 @@ async function deleteAsset(id) {
     if (!confirm('Apakah Anda yakin ingin menghapus aset ini?')) return;
 
     try {
-        await axios.delete(`/api/assets/${id}`);
+        await window.axios.delete(`/api/assets/${id}`);
         assets = assets.filter(a => a.id !== id);
         saveAssets();
         if (currentUser && currentUser.role === 'pic' && asset) {
@@ -876,6 +945,88 @@ function printQRCode() {
     printWindow.document.close();
 }
 
+async function initQrScanner() {
+    const container = document.getElementById('qr-reader');
+    if (!container) return;
+
+    if (qrScannerActive) return;
+
+    if (typeof window.Html5Qrcode === 'undefined') {
+        container.innerHTML = '<div class="alert alert-warning">Library scanner tidak tersedia di browser ini.</div>';
+        return;
+    }
+
+    container.innerHTML = '<div class="text-muted">Memulai kamera...</div>';
+    qrScanner = new window.Html5Qrcode('qr-reader');
+    qrScannerActive = true;
+
+    try {
+        await qrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            async (decodedText) => {
+                const normalized = decodedText.trim();
+                if (!normalized) return;
+
+                try {
+                    await qrScanner.stop();
+                    qrScannerActive = false;
+                } catch (error) {
+                    console.warn('Tidak bisa menghentikan scanner:', error);
+                }
+
+                await processScannedCode(normalized);
+            },
+            () => {}
+        );
+    } catch (error) {
+        console.warn('Gagal menginisialisasi scanner:', error);
+        container.innerHTML = '<div class="alert alert-warning">Kamera tidak tersedia atau izin diblokir. Anda tetap bisa memakai pencarian manual.</div>';
+        qrScannerActive = false;
+    }
+}
+
+async function processScannedCode(code) {
+    const normalizedCode = code.trim();
+    if (!normalizedCode) {
+        showToast('Kode QR tidak valid.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await window.axios.get('/api/assets');
+        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        const asset = payload.find(item => {
+            const candidate = item.kode_aset || item.kodeAset || '';
+            const idCandidate = item.id?.toString();
+            return candidate.toString() === normalizedCode || idCandidate === normalizedCode;
+        });
+
+        if (!asset) {
+            throw new Error('Aset tidak ditemukan');
+        }
+
+        const normalized = normalizeAsset(asset);
+        const scanResult = await sendScanData(normalized.id);
+        const scannedAsset = scanResult?.asset ? normalizeAsset(scanResult.asset) : normalized;
+
+        if (scannedAsset?.id) {
+            assets = assets.map(item => item.id === scannedAsset.id ? scannedAsset : item);
+            saveAssets();
+        }
+
+        displayScanResult(scannedAsset);
+        showToast(scanResult?.message || 'Scan berhasil.', 'success');
+    } catch (error) {
+        console.warn('Scan process failed:', error);
+        document.getElementById('scanResult').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${normalizedCode}" tidak ditemukan atau server tidak merespons.
+            </div>
+        `;
+    }
+}
+
 // Manual Scan
 async function manualScan() {
     const code = document.getElementById('manualCodeInput').value.trim();
@@ -885,9 +1036,14 @@ async function manualScan() {
     }
 
     try {
-        const response = await axios.get('/api/assets');
+        const response = await window.axios.get('/api/assets');
         const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
-        const asset = payload.find(item => (item.kode_aset || item.kodeAset || '').toString() === code || item.id.toString() === code);
+        const asset = payload.find(item => {
+            const candidate = item.kode_aset || item.kodeAset || '';
+            const idCandidate = item.id?.toString();
+            return candidate.toString() === code || idCandidate === code;
+        });
+
         if (asset) {
             const normalized = normalizeAsset(asset);
             const scanResult = await sendScanData(normalized.id);
@@ -904,6 +1060,7 @@ async function manualScan() {
             throw new Error('Aset tidak ditemukan');
         }
     } catch (error) {
+        console.warn('Manual scan failed:', error);
         document.getElementById('scanResult').innerHTML = `
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${code}" tidak ditemukan atau server tidak merespons.
@@ -921,13 +1078,23 @@ async function sendScanData(assetId) {
     };
 
     try {
-        const response = await axios.post(`/api/assets/${assetId}/scan`, payload);
+        const response = await window.axios.post(`/api/assets/${assetId}/scan`, payload);
         return response.data;
     } catch (error) {
         console.warn('Scan API error:', error);
         showToast('Pencatatan scan gagal, tetapi data aset tetap ditampilkan.', 'warning');
         return null;
     }
+}
+
+function stopQrScanner() {
+    if (!qrScanner || !qrScannerActive) return;
+
+    qrScanner.stop().then(() => {
+        qrScannerActive = false;
+    }).catch(() => {
+        qrScannerActive = false;
+    });
 }
 
 // Display Scan Result
@@ -966,13 +1133,15 @@ function displayScanResult(asset) {
 // Export Excel
 async function exportExcel() {
     try {
-        const response = await axios.get('/api/reports/assets', { params: { format: 'excel' } });
+        const response = await window.axios.get('/api/reports/assets', { params: { format: 'excel' } });
         const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        const reportData = data.length ? data : assets;
         let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
 
-        data.forEach((asset, index) => {
-            const koordinat = asset.koordinat_lat != null && asset.koordinat_lng != null ? `${asset.koordinat_lat}, ${asset.koordinat_lng}` : '';
-            csv += `${index + 1},${asset.kode_aset || asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.nama_aset || asset.namaAset},"${asset.merk_type || asset.merkType}",${asset.serial_number || asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tgl_perolehan || asset.tglPerolehan || ''},${asset.harga || 0}\n`;
+        reportData.forEach((asset, index) => {
+            const normalized = normalizeAsset(asset);
+            const koordinat = normalized.koordinat ? `${normalized.koordinat.lat}, ${normalized.koordinat.lng}` : '';
+            csv += `${index + 1},${normalized.kodeAset || ''},${(normalized.jenis || '').toLowerCase() === 'laptop' ? 'Laptop' : 'Printer'},${normalized.namaAset || ''},"${normalized.merkType || ''}",${normalized.serialNumber || ''},${normalized.lokasi || ''},${koordinat},${normalized.kondisi || ''},${normalized.tglPerolehan || ''},${normalized.harga || 0}\n`;
         });
 
         downloadFile(csv, 'laporan_aset.csv', 'text/csv');
@@ -985,8 +1154,7 @@ async function exportExcel() {
 // Export PDF
 async function exportPDF() {
     try {
-        const response = await axios.get('/api/reports/assets', { params: { format: 'pdf' } });
-        console.log(response.data);
+        await window.axios.get('/api/reports/assets', { params: { format: 'pdf' } });
         showToast('Export PDF sedang disiapkan.', 'info');
     } catch (error) {
         showToast('Gagal mengambil data laporan PDF.', 'error');
@@ -1310,14 +1478,32 @@ function initDefaultNotifications() {
     });
 }
 
+function normalizePicRoleForForm(role) {
+    if (!role) return 'user_pic';
+    const normalized = role.toLowerCase();
+    if (normalized === 'pic' || normalized === 'user_pic') return 'user_pic';
+    if (normalized === 'admin' || normalized === 'admin_it') return 'admin_it';
+    if (normalized === 'manajemen' || normalized === 'manager') return 'manajemen';
+    return 'user_pic';
+}
+
 async function loadPics() {
     try {
         const response = await window.axios.get('/api/pics');
         const payload = response.data;
         pics = Array.isArray(payload) ? payload : (payload?.data || []);
+        pics = pics.map((pic) => ({
+            id: pic.id,
+            nama: pic.name || pic.nama || '',
+            email: pic.email || '',
+            jabatan: pic.role || pic.jabatan || 'user_pic',
+            telepon: pic.telepon || '',
+        }));
         renderPicsPage();
     } catch (error) {
         console.warn('PIC fetch failed:', error);
+        pics = [];
+        renderPicsPage();
     }
 }
 
@@ -1325,25 +1511,36 @@ function renderPicsPage() {
     const tbody = document.querySelector('#picsTable tbody');
     if (!tbody) return;
 
+    if (!pics.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">Belum ada data PIC.</td>
+            </tr>
+        `;
+        return;
+    }
+
     tbody.innerHTML = pics.map((pic) => `
         <tr>
-            <td>${pic.nama}</td>
-            <td>${pic.email}</td>
-            <td>${pic.jabatan}</td>
+            <td>${pic.nama || '-'}</td>
+            <td>${pic.email || '-'}</td>
+            <td>${pic.jabatan || '-'}</td>
             <td>${pic.telepon || '-'}</td>
             <td>
-                <button class="btn btn-sm btn-outline-secondary" onclick="editPic(${JSON.stringify(pic).replace(/"/g, '&quot;')})">Edit</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deletePic(${pic.id})">Hapus</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editPic('${pic.id}')">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePic('${pic.id}')">Hapus</button>
             </td>
         </tr>
     `).join('');
 }
 
-function editPic(pic) {
+function editPic(picId) {
+    const pic = pics.find(p => p.id.toString() === picId.toString());
+    if (!pic) return;
     document.getElementById('picId').value = pic.id;
     document.getElementById('picNama').value = pic.nama || '';
     document.getElementById('picEmail').value = pic.email || '';
-    document.getElementById('picJabatan').value = pic.jabatan || 'user_pic';
+    document.getElementById('picJabatan').value = normalizePicRoleForForm(pic.jabatan);
     document.getElementById('picTelepon').value = pic.telepon || '';
     document.getElementById('picPassword').value = '';
 }
@@ -1398,7 +1595,7 @@ async function loadAssets() {
     }
 
     try {
-        const response = await axios.get('/api/assets');
+        const response = await window.axios.get('/api/assets');
         const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
         assets = payload.map(normalizeAsset);
         saveAssets();
@@ -1410,6 +1607,14 @@ async function loadAssets() {
 
     initDefaultNotifications();
     updateDashboard();
+
+    if (currentPage === 'laptop' || currentPage === 'printer') {
+        renderTable(currentPage);
+    } else if (currentPage === 'laporan') {
+        renderLaporan();
+    } else if (currentPage === 'notifikasi') {
+        renderNotifications();
+    }
 }
 
 // Save Assets to LocalStorage
@@ -1425,6 +1630,9 @@ window.editAsset = editAsset;
 window.deleteAsset = deleteAsset;
 window.showQRCode = showQRCode;
 window.printQRCode = printQRCode;
+window.loadPics = loadPics;
+window.editPic = editPic;
+window.deletePic = deletePic;
 window.manualScan = manualScan;
 window.exportExcel = exportExcel;
 window.exportPDF = exportPDF;
