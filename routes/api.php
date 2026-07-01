@@ -68,6 +68,7 @@ Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])-
     Route::get('assets', [AssetController::class, 'index']);
     Route::get('assets/{asset}', [AssetController::class, 'show']);
     Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
+    Route::get('assets/{asset}/qrcode/label', [AssetController::class, 'qrcodeLabel']);
     Route::post('assets/{asset}/scan', [AssetController::class, 'scan']);
     Route::get('assets/{asset}/location', [AssetController::class, 'location']);
 

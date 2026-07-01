@@ -52,6 +52,93 @@ class SecurityHardeningTest extends TestCase
         $response->assertUnauthorized();
     }
 
+    public function test_api_assets_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/assets');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_user_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/user');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_assets_post_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->postJson('/api/assets', [
+            'kode_aset' => 'AST-999',
+            'nama_aset' => 'Unauthorized test',
+            'merk_type' => 'Test',
+            'lokasi' => 'Test Location',
+            'kondisi' => 'baik',
+            'jenis' => 'laptop',
+        ]);
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_asset_detail_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/assets/1');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_auth_logout_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->postJson('/api/auth/logout');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_pics_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/pics');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_notifications_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/notifications');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
+    public function test_api_reports_endpoint_without_login_returns_unauthenticated_json(): void
+    {
+        $response = $this->getJson('/api/reports/assets');
+
+        $response->assertStatus(401);
+        $response->assertJson([
+            'message' => 'Unauthenticated.',
+        ]);
+    }
+
     public function test_cors_configuration_uses_configured_origins(): void
     {
         config()->set('cors.allowed_origins', ['*']);

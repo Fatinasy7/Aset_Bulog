@@ -49,22 +49,7 @@ class AssetController extends Controller
 
         $asset = Asset::create($validated);
         $qrCodePath = $this->generateQrCode($asset);
-
-        $payload = $this->formatAssetPayload($asset, $qrCodePath);
-
-        $payload = json_encode([
-            'id' => $asset->id,
-            'kode_aset' => $asset->kode_aset,
-            'jenis' => $asset->jenis,
-            'nama_aset' => $asset->nama_aset,
-        ]);
-
-        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
-        $path = 'qrcodes/' . $filename;
-        $svg = QrCode::format('svg')->size(400)->generate($payload);
-        Storage::disk('local')->put($path, $svg);
-
-        $asset->update(['qr_code_path' => $path]);
+        $asset->update(['qr_code_path' => $qrCodePath]);
 
         AssetHistory::create([
             'asset_id' => $asset->id,
@@ -83,7 +68,7 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        $asset->load('pic:id,nama,jabatan,email');
+        $asset->load('pic:id,name,role,email,telepon');
 
         return $this->formatAssetPayload($asset);
     }
@@ -224,6 +209,28 @@ class AssetController extends Controller
         ]);
     }
 
+    public function qrcodeLabel(Asset $asset)
+    {
+        return $this->qrcode($asset);
+    }
+
+    private function generateQrCode(Asset $asset): string
+    {
+        $payload = json_encode([
+            'id' => $asset->id,
+            'kode_aset' => $asset->kode_aset,
+            'jenis' => $asset->jenis,
+            'nama_aset' => $asset->nama_aset,
+        ]);
+
+        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
+        $path = 'qrcodes/' . $filename;
+        $svg = QrCode::format('svg')->size(400)->generate($payload);
+        Storage::disk('local')->put($path, $svg);
+
+        return $path;
+    }
+
     public function scan(Request $request, Asset $asset)
     {
         $validated = $request->validate([
@@ -277,13 +284,17 @@ class AssetController extends Controller
             'lokasi' => $asset->lokasi,
             'latitude' => $asset->koordinat_lat,
             'longitude' => $asset->koordinat_lng,
-            'lastScan' => $lastScan ? json_decode($lastScan->new_value, true) : null,
+            'lastScan' => $lastScan ? json_decode($lastScan->new_value, true) : [
+                'latitude' => null,
+                'longitude' => null,
+                'scanned_at' => null,
+            ],
         ]);
     }
 
     protected function buildAssetQuery(Request $request)
     {
-        $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');
+        $query = Asset::query()->with('pic:id,name,role,email,telepon')->orderBy('created_at', 'desc');
 
         if ($request->filled('kondisi')) {
             $query->where('kondisi', $request->kondisi);

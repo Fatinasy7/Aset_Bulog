@@ -2,28 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class AuthController extends Controller
-{
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->intended(route('frontend.dashboard'));
-        }
-
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->withInput();
-=======
 use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -84,18 +62,10 @@ class AuthController extends Controller
             'auth_token' => $token,
             'token_type' => 'Bearer',
         ], Response::HTTP_OK);
->>>>>>> origin/main
     }
 
     public function logout(Request $request)
     {
-<<<<<<< HEAD
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('frontend.login');
-=======
         if ($request->user()) {
             $request->user()->currentAccessToken()->delete();
         }
@@ -103,6 +73,5 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Logout berhasil.'
         ], Response::HTTP_OK);
->>>>>>> origin/main
     }
 }

@@ -106,4 +106,65 @@ class AssetPicEndpointTest extends TestCase
                 ],
             ]);
     }
+
+    public function test_assign_same_pic_returns_asset_unmodified_message(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_it']);
+        $pic = User::factory()->create(['role' => 'user_pic']);
+
+        $asset = Asset::create([
+            'kode_aset' => 'AST-400',
+            'nama_aset' => 'Printer Test',
+            'merk_type' => 'Canon',
+            'serial_number' => 'SN004',
+            'lokasi' => 'Gudang B',
+            'koordinat_lat' => -6.3,
+            'koordinat_lng' => 106.8,
+            'kondisi' => 'baik',
+            'tgl_perolehan' => '2024-04-01',
+            'harga' => 7000000,
+            'keterangan' => 'Test assignment',
+            'jenis' => 'printer',
+            'pic_id' => $pic->id,
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')
+            ->postJson("/api/assets/{$asset->id}/assign-pic", [
+                'pic_id' => $pic->id,
+                'alasan' => 'Tetap di PIC yang sama',
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('message', 'PIC sudah ditugaskan pada aset ini.');
+        $response->assertJsonPath('asset.id', $asset->id);
+        $response->assertJsonPath('asset.picId', $pic->id);
+    }
+
+    public function test_asset_qrcode_label_route_returns_svg_download(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_it']);
+
+        $asset = Asset::create([
+            'kode_aset' => 'AST-500',
+            'nama_aset' => 'Laptop Label',
+            'merk_type' => 'Lenovo',
+            'serial_number' => 'SN005',
+            'lokasi' => 'Gudang C',
+            'koordinat_lat' => -6.4,
+            'koordinat_lng' => 106.9,
+            'kondisi' => 'baik',
+            'tgl_perolehan' => '2024-05-01',
+            'harga' => 14000000,
+            'keterangan' => 'Test label asset',
+            'jenis' => 'laptop',
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')->get("/api/assets/{$asset->id}/qrcode/label");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'image/svg+xml');
+        $response->assertHeader('content-disposition', function ($value) {
+            return str_contains($value, 'attachment; filename=asset-') && str_contains($value, '.svg');
+        });
+    }
 }
