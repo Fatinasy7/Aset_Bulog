@@ -17,7 +17,7 @@ class PicController extends Controller
 
     public function index()
     {
-        $pics = User::whereIn('role', ['user_pic', 'admin_it', 'manajemen'])
+        $pics = User::where('role', 'user_pic')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role', 'telepon', 'created_at', 'updated_at']);
 
@@ -102,10 +102,19 @@ class PicController extends Controller
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        if ($asset->pic_id === $validated['pic_id']) {
+            $asset->load('pic:id,name,role,email,telepon');
+
+            return response()->json([
+                'message' => 'PIC sudah ditugaskan pada aset ini.',
+                'asset' => $this->formatAssetPayload($asset),
+            ]);
+        }
+
         $oldPicId = $asset->pic_id;
         $asset->pic_id = $validated['pic_id'];
         $asset->save();
-        $asset->load('pic:id,nama,jabatan,email');
+        $asset->load('pic:id,name,role,email,telepon');
 
         PicHistory::create([
             'asset_id' => $asset->id,

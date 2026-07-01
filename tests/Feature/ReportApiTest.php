@@ -88,8 +88,6 @@ class ReportApiTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')->get('/api/reports/assets?format=excel');
 
         $response->assertOk();
-        $response->assertHeader('content-disposition', function ($value) {
-            return str_contains($value, 'attachment; filename=asset-report-') && str_contains($value, '.xlsx');
-        });
+        $response->assertHeader('content-disposition', 'attachment; filename=aset-report.xlsx');
     }
 }

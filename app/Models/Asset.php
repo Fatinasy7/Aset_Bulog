@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\AssetHistory;
-use App\Models\Pic;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -44,6 +44,6 @@ class Asset extends Model
 
     public function pic()
     {
-        return $this->belongsTo(Pic::class);
+        return $this->belongsTo(User::class, 'pic_id');
     }
 }

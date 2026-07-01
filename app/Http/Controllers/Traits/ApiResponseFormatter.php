@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Traits;
 
 use App\Models\Asset;
-use App\Models\Pic;
 use App\Models\User;
 
 trait ApiResponseFormatter
@@ -30,17 +29,27 @@ trait ApiResponseFormatter
         return $result;
     }
 
-    protected function formatPicPayload(Pic $pic): array
+    protected function formatPicPayload(User $pic): array
     {
         return [
             'id' => $pic->id,
-            'nama' => $pic->nama,
-            'jabatan' => $pic->jabatan,
+            'nama' => $pic->name,
+            'jabatan' => $this->mapRoleToJabatan($pic->role),
             'email' => $pic->email,
             'telepon' => $pic->telepon,
             'createdAt' => $pic->created_at instanceof \DateTimeInterface ? $pic->created_at->format(\DateTimeInterface::ATOM) : null,
             'updatedAt' => $pic->updated_at instanceof \DateTimeInterface ? $pic->updated_at->format(\DateTimeInterface::ATOM) : null,
         ];
+    }
+
+    protected function mapRoleToJabatan(string $role): string
+    {
+        return match (strtolower($role)) {
+            'admin_it', 'admin' => 'Admin',
+            'user_pic', 'pic' => 'PIC',
+            'manajemen', 'manager' => 'Manajemen',
+            default => $role,
+        };
     }
 
     protected function formatUserPayload(User $user): array
