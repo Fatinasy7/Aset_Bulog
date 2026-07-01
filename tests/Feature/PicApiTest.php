@@ -24,6 +24,7 @@ class PicApiTest extends TestCase
             'role' => 'user_pic',
         ]);
 
+        $this->withoutExceptionHandling();
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/pics');
 
         $response->assertOk();

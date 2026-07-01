@@ -12,7 +12,9 @@
         "laravel/tinker": "^2.8",
         "simplesoftwareio/simple-qrcode": "*",
         "maatwebsite/excel": "^3.1",
-        "barryvdh/laravel-dompdf": "^2.0"
+        "barryvdh/laravel-dompdf": "^2.0",
+        "endroid/qr-code": "^5.0",
+        "ext-gd": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "*",

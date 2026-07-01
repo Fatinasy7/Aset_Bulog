@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,6 +17,15 @@ class NotificationApiTest extends TestCase
             'name' => 'PIC Test',
             'email' => 'pic-notification@example.com',
             'role' => 'user_pic',
+        ]);
+
+        Notification::create([
+            'user_id' => null,
+            'role' => 'user_pic',
+            'title' => 'PIC Note',
+            'message' => 'PIC notification',
+            'data' => null,
+            'is_read' => false,
         ]);
 
         $response = $this->actingAs($user, 'sanctum')->getJson('/api/notifications');
@@ -50,7 +60,16 @@ class NotificationApiTest extends TestCase
             'role' => 'user_pic',
         ]);
 
-        $response = $this->actingAs($user, 'sanctum')->patchJson('/api/notifications/1/read');
+        $notification = Notification::create([
+            'user_id' => null,
+            'role' => 'user_pic',
+            'title' => 'PIC Note',
+            'message' => 'PIC notification',
+            'data' => null,
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->patchJson("/api/notifications/{$notification->id}/read");
 
         $response->assertOk();
         $response->assertJsonStructure([

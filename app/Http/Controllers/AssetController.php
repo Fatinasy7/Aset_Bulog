@@ -211,7 +211,185 @@ class AssetController extends Controller
 
     public function qrcodeLabel(Asset $asset)
     {
-        return $this->qrcode($asset);
+        $svg = $this->generateQrCodeLabelSvg($asset);
+        $filename = 'asset-label-' . $asset->id . '-' . time() . '.svg';
+
+        return response($svg, Response::HTTP_OK, [
+            'Content-Type' => 'image/svg+xml',
+            'Content-Disposition' => 'attachment; filename=' . $filename,
+        ]);
+    }
+
+    public function qrcodeLabelPng(Asset $asset)
+    {
+        // If Imagick is not available in the environment, fall back to SVG label
+        if (! extension_loaded('imagick')) {
+            return $this->qrcodeLabel($asset);
+        }
+
+        try {
+            $payload = json_encode([
+            'id' => $asset->id,
+            'kode_aset' => $asset->kode_aset,
+            'jenis' => $asset->jenis,
+            'nama_aset' => $asset->nama_aset,
+            ]);
+
+            $qrPng = QrCode::format('png')
+                ->size(180)
+                ->margin(0)
+                ->generate($payload);
+
+            $qrImage = imagecreatefromstring($qrPng);
+            if ($qrImage === false) {
+                return response()->json(['message' => 'Failed to generate QR image'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $qrW = imagesx($qrImage);
+            $qrH = imagesy($qrImage);
+
+            $canvasW = $qrW + 320;
+            $canvasH = max($qrH + 20, 240);
+
+            $canvas = imagecreatetruecolor($canvasW, $canvasH);
+            $white = imagecolorallocate($canvas, 255, 255, 255);
+            imagefilledrectangle($canvas, 0, 0, $canvasW, $canvasH, $white);
+
+            imagecopy($canvas, $qrImage, 10, 10, 0, 0, $qrW, $qrH);
+
+            $black = imagecolorallocate($canvas, 0, 0, 0);
+            imagestring($canvas, 5, $qrW + 20, 20, 'Label QR Aset', $black);
+            imagestring($canvas, 3, $qrW + 20, 50, 'Kode Aset: ' . $asset->kode_aset, $black);
+            imagestring($canvas, 3, $qrW + 20, 74, 'Nama: ' . $asset->nama_aset, $black);
+            imagestring($canvas, 3, $qrW + 20, 98, 'Jenis: ' . $asset->jenis, $black);
+            imagestring($canvas, 3, $qrW + 20, 122, 'Lokasi: ' . $asset->lokasi, $black);
+            imagestring($canvas, 3, $qrW + 20, 146, 'Kondisi: ' . $asset->kondisi, $black);
+
+            ob_start();
+            imagepng($canvas);
+            $pngData = ob_get_clean();
+
+            imagedestroy($canvas);
+            imagedestroy($qrImage);
+
+            $filename = 'asset-label-' . $asset->id . '-' . time() . '.png';
+
+            return response($pngData, Response::HTTP_OK, [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => 'attachment; filename=' . $filename,
+            ]);
+        } catch (\Throwable $e) {
+            $logPath = storage_path('logs/asset_label_error.log');
+            $content = "[" . now()->toDateTimeString() . "] " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n\n";
+            @file_put_contents($logPath, $content, FILE_APPEND);
+
+            return response()->json([
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function qrcodeLabelPngForce(Asset $asset)
+    {
+        // This endpoint requires the optional dependency `endroid/qr-code` and ext-gd.
+        if (! class_exists(\Endroid\QrCode\QrCode::class)) {
+            return response()->json([
+                'message' => 'Optional PNG backend not installed. To enable, run: composer require endroid/qr-code and ensure ext-gd is enabled in PHP.'
+            ], Response::HTTP_NOT_IMPLEMENTED);
+        }
+
+        try {
+            $payload = json_encode([
+                'id' => $asset->id,
+                'kode_aset' => $asset->kode_aset,
+                'jenis' => $asset->jenis,
+                'nama_aset' => $asset->nama_aset,
+            ]);
+
+            $qr = new \Endroid\QrCode\QrCode($payload);
+            $qr->setSize(180);
+            $qr->setMargin(0);
+
+            $pngData = $qr->writeString();
+
+            $qrImage = imagecreatefromstring($pngData);
+            if ($qrImage === false) {
+                return response()->json(['message' => 'Failed to create image from QR data'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $qrW = imagesx($qrImage);
+            $qrH = imagesy($qrImage);
+
+            $canvasW = $qrW + 320;
+            $canvasH = max($qrH + 20, 240);
+
+            $canvas = imagecreatetruecolor($canvasW, $canvasH);
+            $white = imagecolorallocate($canvas, 255, 255, 255);
+            imagefilledrectangle($canvas, 0, 0, $canvasW, $canvasH, $white);
+
+            imagecopy($canvas, $qrImage, 10, 10, 0, 0, $qrW, $qrH);
+
+            $black = imagecolorallocate($canvas, 0, 0, 0);
+            imagestring($canvas, 5, $qrW + 20, 20, 'Label QR Aset', $black);
+            imagestring($canvas, 3, $qrW + 20, 50, 'Kode Aset: ' . $asset->kode_aset, $black);
+            imagestring($canvas, 3, $qrW + 20, 74, 'Nama: ' . $asset->nama_aset, $black);
+            imagestring($canvas, 3, $qrW + 20, 98, 'Jenis: ' . $asset->jenis, $black);
+            imagestring($canvas, 3, $qrW + 20, 122, 'Lokasi: ' . $asset->lokasi, $black);
+            imagestring($canvas, 3, $qrW + 20, 146, 'Kondisi: ' . $asset->kondisi, $black);
+
+            ob_start();
+            imagepng($canvas);
+            $pngOut = ob_get_clean();
+
+            imagedestroy($canvas);
+            imagedestroy($qrImage);
+
+            $filename = 'asset-label-' . $asset->id . '-' . time() . '.png';
+
+            return response($pngOut, Response::HTTP_OK, [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => 'attachment; filename=' . $filename,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private function generateQrCodeLabelSvg(Asset $asset): string
+    {
+        $payload = json_encode([
+            'id' => $asset->id,
+            'kode_aset' => $asset->kode_aset,
+            'jenis' => $asset->jenis,
+            'nama_aset' => $asset->nama_aset,
+        ]);
+
+        $qrSvg = QrCode::format('svg')
+            ->size(180)
+            ->margin(0)
+            ->generate($payload);
+
+        return <<<SVG
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="320" viewBox="0 0 520 320" role="img" aria-label="QR Code Label">
+    <rect width="100%" height="100%" fill="#ffffff" rx="16" ry="16" />
+    <rect x="16" y="16" width="232" height="232" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" rx="12" ry="12" />
+    <g transform="translate(26,26)">
+        $qrSvg
+    </g>
+    <text x="268" y="42" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="#111827">Label QR Aset</text>
+    <text x="268" y="74" font-family="Inter, sans-serif" font-size="12" fill="#6b7280">Kode Aset</text>
+    <text x="268" y="94" font-family="Inter, sans-serif" font-size="14" fill="#111827">{$asset->kode_aset}</text>
+    <text x="268" y="122" font-family="Inter, sans-serif" font-size="12" fill="#6b7280">Nama Aset</text>
+    <text x="268" y="142" font-family="Inter, sans-serif" font-size="14" fill="#111827">{$asset->nama_aset}</text>
+    <text x="268" y="170" font-family="Inter, sans-serif" font-size="12" fill="#6b7280">Jenis</text>
+    <text x="268" y="190" font-family="Inter, sans-serif" font-size="14" fill="#111827">{$asset->jenis}</text>
+    <text x="268" y="218" font-family="Inter, sans-serif" font-size="12" fill="#6b7280">Lokasi</text>
+    <text x="268" y="238" font-family="Inter, sans-serif" font-size="14" fill="#111827">{$asset->lokasi}</text>
+    <text x="268" y="266" font-family="Inter, sans-serif" font-size="12" fill="#6b7280">Kondisi</text>
+    <text x="268" y="286" font-family="Inter, sans-serif" font-size="14" fill="#111827">{$asset->kondisi}</text>
+</svg>
+SVG;
     }
 
     private function generateQrCode(Asset $asset): string

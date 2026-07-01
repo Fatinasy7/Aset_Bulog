@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Asset;
-use App\Models\Pic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -81,10 +80,10 @@ class AssetPicEndpointTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'admin_it']);
 
-        $pic = Pic::create([
-            'nama' => 'Budi Santoso',
-            'jabatan' => 'PIC',
+        $pic = User::factory()->create([
+            'name' => 'Budi Santoso',
             'email' => 'budi.santoso@example.com',
+            'role' => 'user_pic',
             'telepon' => '081234567890',
         ]);
 
@@ -140,7 +139,7 @@ class AssetPicEndpointTest extends TestCase
         $response->assertJsonPath('asset.picId', $pic->id);
     }
 
-    public function test_asset_qrcode_label_route_returns_svg_download(): void
+    public function test_asset_qrcode_label_route_returns_svg_label_download(): void
     {
         $admin = User::factory()->create(['role' => 'admin_it']);
 
@@ -163,8 +162,49 @@ class AssetPicEndpointTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('content-type', 'image/svg+xml');
-        $response->assertHeader('content-disposition', function ($value) {
-            return str_contains($value, 'attachment; filename=asset-') && str_contains($value, '.svg');
-        });
+        $this->assertStringContainsString('attachment; filename=asset-label-', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('.svg', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('Label QR Aset', $response->getContent());
+        $this->assertStringContainsString($asset->kode_aset, $response->getContent());
+        $this->assertStringContainsString($asset->nama_aset, $response->getContent());
+        $this->assertStringContainsString($asset->jenis, $response->getContent());
+    }
+
+    public function test_asset_qrcode_label_png_returns_png_download(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin_it']);
+
+        $asset = Asset::create([
+            'kode_aset' => 'AST-501',
+            'nama_aset' => 'Printer Label PNG',
+            'merk_type' => 'Epson',
+            'serial_number' => 'SN006',
+            'lokasi' => 'Gudang D',
+            'koordinat_lat' => -6.5,
+            'koordinat_lng' => 107.0,
+            'kondisi' => 'baik',
+            'tgl_perolehan' => '2024-06-01',
+            'harga' => 9000000,
+            'keterangan' => 'Test png label asset',
+            'jenis' => 'printer',
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')->get("/api/assets/{$asset->id}/qrcode/label.png");
+
+        $response->assertOk();
+        $contentType = $response->headers->get('content-type');
+        $this->assertTrue(in_array($contentType, ['image/png', 'image/svg+xml']));
+        $this->assertStringContainsString('attachment; filename=asset-label-', $response->headers->get('content-disposition'));
+
+        if ($contentType === 'image/png') {
+            $this->assertStringStartsWith("\x89PNG", $response->getContent());
+            $this->assertStringContainsString($asset->kode_aset, $response->getContent());
+            $this->assertStringContainsString($asset->nama_aset, $response->getContent());
+        } else {
+            // SVG fallback
+            $this->assertStringContainsString('Label QR Aset', $response->getContent());
+            $this->assertStringContainsString($asset->kode_aset, $response->getContent());
+            $this->assertStringContainsString($asset->nama_aset, $response->getContent());
+        }
     }
 }

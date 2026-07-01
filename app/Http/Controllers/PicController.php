@@ -17,7 +17,7 @@ class PicController extends Controller
 
     public function index()
     {
-        $pics = User::whereIn('role', ['user_pic', 'admin_it', 'manajemen'])
+        $pics = User::where('role', 'user_pic')
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role', 'telepon', 'created_at', 'updated_at']);
 
