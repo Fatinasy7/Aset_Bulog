@@ -27,8 +27,9 @@
             @endif
 
             @if ($errors->any())
-                <div class="alert-ui alert-danger">
-                    <ul class="list-unstyled">
+                <div class="alert-ui alert-danger mb-4">
+                    <strong>Periksa kembali input Anda:</strong>
+                    <ul class="list-unstyled mt-2">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
@@ -39,21 +40,33 @@
             <div class="component-grid">
                 <div>
                     <label class="form-label-ui" for="name">Nama</label>
-                    <input class="form-control-ui" name="name" id="name" type="text" value="{{ old('name', isset($pic) ? $pic->name : '') }}" placeholder="Nama PIC" required>
+                    <input class="form-control-ui {{ $errors->has('name') ? 'is-invalid' : '' }}" name="name" id="name" type="text" value="{{ old('name', isset($pic) ? $pic->name : '') }}" placeholder="Nama PIC" required>
+                    @error('name')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="form-label-ui" for="email">Email</label>
-                    <input class="form-control-ui" name="email" id="email" type="email" value="{{ old('email', isset($pic) ? $pic->email : '') }}" placeholder="nama@bulog.co.id" required>
+                    <input class="form-control-ui {{ $errors->has('email') ? 'is-invalid' : '' }}" name="email" id="email" type="email" value="{{ old('email', isset($pic) ? $pic->email : '') }}" placeholder="nama@bulog.co.id" required>
+                    @error('email')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="form-label-ui" for="phone">Nomor Telepon</label>
-                    <input class="form-control-ui" name="phone" id="phone" type="tel" value="{{ old('phone', isset($pic) ? $pic->phone : '') }}" placeholder="08xx-xxxx-xxxx">
+                    <input class="form-control-ui {{ $errors->has('phone') ? 'is-invalid' : '' }}" name="phone" id="phone" type="tel" value="{{ old('phone', isset($pic) ? $pic->phone : '') }}" placeholder="08xx-xxxx-xxxx">
+                    @error('phone')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="form-label-ui" for="role">Role</label>
-                    <select class="form-select-ui" name="role" id="role" required>
+                    <select class="form-select-ui {{ $errors->has('role') ? 'is-invalid' : '' }}" name="role" id="role" required>
                         <option value="pic"{{ old('role', isset($pic) ? $pic->role : 'pic') == 'pic' ? ' selected' : '' }}>PIC</option>
                     </select>
+                    @error('role')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 

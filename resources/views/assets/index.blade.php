@@ -43,20 +43,21 @@
     </div>
 
     <div class="card-surface__body card-surface__body--no-top">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Kode Aset</th>
-                    <th>Jenis</th>
-                    <th>Merek</th>
-                    <th>Kondisi</th>
-                    <th>PIC</th>
-                    <th>Lokasi</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kode Aset</th>
+                        <th>Jenis</th>
+                        <th>Merek</th>
+                        <th>Kondisi</th>
+                        <th>PIC</th>
+                        <th>Lokasi</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @forelse ($assets as $index => $asset)
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -80,7 +81,13 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">Belum ada data aset dari backend.</td>
+                        <td colspan="8">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">📦</div>
+                                <div class="empty-state-card__title">Tidak ada data aset</div>
+                                <div class="empty-state-card__message">Daftar aset saat ini kosong. Tambahkan aset baru atau perbarui filter untuk menampilkan data.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

@@ -50,41 +50,72 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <form id="filter-form" method="GET" action="{{ route('frontend.reports.index') }}" class="component-grid component-grid--reports">
-            <input class="form-control-ui" type="search" name="search" value="{{ request('search') }}" placeholder="Cari kode, nama, merk, atau serial">
+        @if ($errors->any())
+            <div class="alert-ui alert-danger mb-4">
+                <strong>Periksa kembali filter laporan:</strong>
+                <ul class="list-unstyled mt-2 mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            <select class="form-select-ui" name="condition">
+        <form id="filter-form" method="GET" action="{{ route('frontend.reports.index') }}" class="component-grid component-grid--reports" novalidate>
+            <input class="form-control-ui {{ $errors->has('search') ? 'is-invalid' : '' }}" type="search" name="search" value="{{ request('search') }}" placeholder="Cari kode, nama, merk, atau serial">
+            @error('search')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
+
+            <select class="form-select-ui {{ $errors->has('condition') ? 'is-invalid' : '' }}" name="condition">
                 <option value="">Semua Kondisi</option>
                 @foreach($conditions as $condition)
                     <option value="{{ $condition }}" {{ request('condition') === $condition ? 'selected' : '' }}>{{ $condition }}</option>
                 @endforeach
             </select>
+            @error('condition')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
 
-            <select class="form-select-ui" name="location">
+            <select class="form-select-ui {{ $errors->has('location') ? 'is-invalid' : '' }}" name="location">
                 <option value="">Semua Lokasi</option>
                 @foreach($locations as $location)
                     <option value="{{ $location }}" {{ request('location') === $location ? 'selected' : '' }}>{{ $location }}</option>
                 @endforeach
             </select>
+            @error('location')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
 
-            <select class="form-select-ui" name="type">
+            <select class="form-select-ui {{ $errors->has('type') ? 'is-invalid' : '' }}" name="type">
                 <option value="">Semua Jenis</option>
                 @foreach($types as $type)
                     <option value="{{ $type }}" {{ request('type') === $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
                 @endforeach
             </select>
+            @error('type')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
 
-            <select class="form-select-ui" name="pic">
+            <select class="form-select-ui {{ $errors->has('pic') ? 'is-invalid' : '' }}" name="pic">
                 <option value="">Semua PIC</option>
                 @foreach($pics as $pic)
                     <option value="{{ $pic }}" {{ request('pic') === $pic ? 'selected' : '' }}>{{ $pic }}</option>
                 @endforeach
             </select>
+            @error('pic')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
 
             <div class="component-grid component-grid--date-range">
-                <input class="form-control-ui" type="date" name="date_from" value="{{ request('date_from') }}">
-                <input class="form-control-ui" type="date" name="date_to" value="{{ request('date_to') }}">
+                <input class="form-control-ui {{ $errors->has('date_from') ? 'is-invalid' : '' }}" type="date" name="date_from" value="{{ request('date_from') }}">
+                <input class="form-control-ui {{ $errors->has('date_to') ? 'is-invalid' : '' }}" type="date" name="date_to" value="{{ request('date_to') }}">
             </div>
+            @error('date_from')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
+            @error('date_to')
+                <p class="form-error">{{ $message }}</p>
 
             <button class="btn-ui btn-primary-ui" type="submit">Tampilkan Laporan</button>
         </form>
@@ -97,20 +128,21 @@
         <div class="surface-note">Data aset sesuai filter laporan saat ini</div>
     </div>
     <div class="card-surface__body card-surface__body--no-top">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Kode Aset</th>
-                    <th>Jenis</th>
-                    <th>Nama Aset</th>
-                    <th>Kondisi</th>
-                    <th>PIC</th>
-                    <th>Lokasi</th>
-                    <th>Tanggal Perolehan</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kode Aset</th>
+                        <th>Jenis</th>
+                        <th>Nama Aset</th>
+                        <th>Kondisi</th>
+                        <th>PIC</th>
+                        <th>Lokasi</th>
+                        <th>Tanggal Perolehan</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @forelse ($assets as $index => $asset)
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -124,11 +156,18 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8">Tidak ada data aset untuk filter ini.</td>
+                        <td colspan="8">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">📄</div>
+                                <div class="empty-state-card__title">Tidak ada data aset untuk filter ini</div>
+                                <div class="empty-state-card__message">Filter yang dipilih tidak menghasilkan hasil. Sesuaikan filter atau tambahkan lebih banyak aset untuk melihat data di laporan.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
 
         <div class="report-pagination">
             {{ $assets->links() }}

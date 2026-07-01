@@ -43,11 +43,27 @@
         </div>
 
         <div class="card-surface__body">
-            <form id="qr-lookup-form" action="{{ route('frontend.scan-qr.lookup') }}" class="component-grid component-grid--full component-grid--compact">
+            <form id="qr-lookup-form" action="{{ route('frontend.scan-qr.lookup') }}" method="POST" class="component-grid component-grid--full component-grid--compact" novalidate>
                 @csrf
+
+                @if ($errors->any())
+                    <div class="alert-ui alert-danger mb-4">
+                        <strong>Periksa kembali input QR:</strong>
+                        <ul class="list-unstyled mt-2 mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div>
                     <label class="form-label-ui" for="qr_input">Kode QR / Kode Aset</label>
-                    <input id="qr_input" class="form-control-ui" type="text" name="qr_text" placeholder="Masukkan kode aset atau hasil scan QR" autocomplete="off">
+                    <input id="qr_input" class="form-control-ui {{ $errors->has('qr_text') ? 'is-invalid' : '' }}" type="text" name="qr_text" value="{{ old('qr_text') }}" placeholder="Masukkan kode aset atau hasil scan QR" autocomplete="off">
+                    @error('qr_text')
+                        <p class="form-error">{{ $message }}</p>
+                    @enderror
+                    <p id="qr_error" class="form-error visually-hidden"></p>
                 </div>
                 <div class="qr-buttons">
                     <button id="submit-qr" class="btn-ui btn-primary-ui" type="submit">Cari Aset</button>

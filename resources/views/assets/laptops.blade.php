@@ -43,18 +43,19 @@
 
 <section class="card-surface">
     <div class="card-surface__body">
-        <table class="table-ui">
-            <thead>
-                <tr>
-                    <th>Asset ID</th>
-                    <th>Model</th>
-                    <th>Specs</th>
-                    <th>Assigned To</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive">
+            <table class="table-ui">
+                <thead>
+                    <tr>
+                        <th>Asset ID</th>
+                        <th>Model</th>
+                        <th>Specs</th>
+                        <th>Assigned To</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
                 @forelse ($assets as $asset)
                     <tr>
                         <td>{{ $asset->kode_aset }}</td>
@@ -71,7 +72,13 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">No laptop data available.</td>
+                        <td colspan="6">
+                            <div class="empty-state-card">
+                                <div class="empty-state-card__icon">💻</div>
+                                <div class="empty-state-card__title">Tidak ada data laptop</div>
+                                <div class="empty-state-card__message">Tidak ditemukan laptop dalam inventaris. Tambahkan aset laptop baru atau periksa kembali filter yang digunakan.</div>
+                            </div>
+                        </td>
                     </tr>
                 @endforelse
             </tbody>

@@ -10,6 +10,32 @@
         th, td { border: 1px solid #333; padding: 8px; text-align: left; }
         th { background: #f0f0f0; }
         caption { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+        .empty-state-card {
+            display: grid;
+            place-items: center;
+            gap: 0.35rem;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            color: #334155;
+            text-align: center;
+            font-size: 12px;
+        }
+        .empty-state-card__icon {
+            font-size: 1.15rem;
+        }
+        .empty-state-card__title {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .empty-state-card__message {
+            margin: 0;
+            line-height: 1.4;
+            color: #475569;
+        }
     </style>
 </head>
 <body>
@@ -45,7 +71,13 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9">Tidak ada aset untuk ditampilkan.</td>
+                    <td colspan="9">
+                        <div class="empty-state-card">
+                            <div class="empty-state-card__icon">📦</div>
+                            <div class="empty-state-card__title">Tidak ada aset untuk ditampilkan</div>
+                            <div class="empty-state-card__message">Data aset kosong. Tambahkan aset atau periksa kembali filter dan parameter laporan.</div>
+                        </div>
+                    </td>
                 </tr>
             @endforelse
         </tbody>

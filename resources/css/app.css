@@ -31,6 +31,8 @@ body {
 	margin: 0;
 	min-height: 100vh;
 	font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	font-size: 16px;
+	line-height: 1.6;
 	color: var(--color-text);
 	background:
 		radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 26%),
@@ -354,12 +356,20 @@ a {
 	margin: 0;
 	font-size: clamp(1.4rem, 1.1rem + 1vw, 2rem);
 	font-weight: 800;
+	line-height: 1.2;
 }
 
 .page-lead {
 	margin: 0.35rem 0 0;
 	color: var(--color-muted);
 	max-width: 60ch;
+	line-height: 1.75;
+}
+
+.card-surface__body p,
+.surface-note,
+.empty-state-card__message {
+	line-height: 1.75;
 }
 
 .card-surface {
@@ -463,6 +473,76 @@ a {
 	box-shadow: 0 0 0 4px rgba(31, 94, 154, 0.12);
 }
 
+.form-control-ui.is-invalid,
+.form-select-ui.is-invalid,
+.form-control-ui:invalid,
+.form-select-ui:invalid,
+textarea.form-control-ui:invalid {
+	border-color: #dc2626;
+	box-shadow: 0 0 0 4px rgba(254, 202, 202, 0.35);
+}
+
+.form-error,
+.invalid-feedback {
+	margin-top: 0.45rem;
+	color: #dc2626;
+	font-size: 0.92rem;
+}
+
+.btn-ui:disabled,
+.btn-ui.is-loading {
+	opacity: 0.66;
+	cursor: progress;
+	transform: none;
+	pointer-events: none;
+}
+
+.btn-spinner {
+	display: inline-block;
+	width: 1rem;
+	height: 1rem;
+	border: 2px solid rgba(255, 255, 255, 0.6);
+	border-top-color: #fff;
+	border-radius: 50%;
+	animation: spinner 0.8s linear infinite;
+	vertical-align: middle;
+	margin-right: 0.5rem;
+}
+
+@keyframes spinner {
+	to { transform: rotate(360deg); }
+}
+
+.form-control-ui:disabled,
+.form-select-ui:disabled,
+textarea.form-control-ui:disabled {
+	background: #f8fafc;
+}
+
+.alert-ui.alert-danger {
+	background: rgba(248, 113, 113, 0.08);
+	border-color: rgba(248, 113, 113, 0.18);
+	color: #b91c1c;
+}
+
+.alert-ui.alert-success {
+	background: rgba(34, 197, 94, 0.08);
+	border-color: rgba(34, 197, 94, 0.18);
+	color: #15803d;
+}
+
+.alert-ui.alert-warning {
+	background: rgba(249, 115, 22, 0.08);
+	border-color: rgba(249, 115, 22, 0.18);
+	color: #b45309;
+}
+
+.alert-ui.alert-info {
+	background: rgba(59, 130, 246, 0.08);
+	border-color: rgba(59, 130, 246, 0.18);
+	color: #1d4ed8;
+}
+
 .form-label-ui {
 	display: inline-block;
 	margin-bottom: 0.45rem;
@@ -503,16 +583,40 @@ a {
 .badge-dalam-perbaikan { background: rgba(59, 130, 246, 0.16); color: #1d4ed8; }
 .badge-tidak-aktif { background: rgba(107, 114, 128, 0.16); color: #4b5563; }
 
+.table-ui {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 100%;
+}
+
 .table-ui thead th {
 	background: var(--color-surface-2);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 	font-size: 0.875rem;
 	color: var(--color-muted);
+	padding: 1rem 1rem;
+}
+
+.table-ui tbody td {
+	padding: 1rem 1rem;
 }
 
 .table-ui tbody tr:hover {
 	background: rgba(31, 94, 154, 0.03);
+}
+
+.table-responsive {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	width: 100%;
+}
+
+.empty-state td {
+	padding: 1.25rem;
+	text-align: center;
+	color: var(--color-muted);
+	background: rgba(15, 23, 42, 0.03);
 }
 
 .alert-ui {
@@ -937,6 +1041,33 @@ body {
 	line-height: 1;
 }
 
+.empty-state-card {
+	display: grid;
+	place-items: center;
+	gap: 0.85rem;
+	padding: 2rem 1.5rem;
+	border-radius: 1.5rem;
+	background: rgba(15, 23, 42, 0.04);
+	border: 1px dashed rgba(148, 163, 184, 0.45);
+	color: var(--color-muted);
+	text-align: center;
+}
+
+.empty-state-card__icon {
+	font-size: 2.5rem;
+}
+
+.empty-state-card__title {
+	font-weight: 700;
+	font-size: 1rem;
+	color: var(--color-text);
+}
+
+.empty-state-card__message {
+	max-width: 28rem;
+	line-height: 1.6;
+}
+
 .card-surface__body--centered {
 	display: grid;
 	place-items: center;
@@ -985,20 +1116,34 @@ body {
 		padding-right: 1rem;
 	}
 
-	.stat-grid {
+	.stat-grid,
+	.dashboard-card-grid,
+	.dashboard-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.page-actions {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.page-actions input,
+	.button-group,
+	.button-group .btn-ui {
+		width: 100%;
 	}
 
 	.page-header {
 		align-items: flex-start;
 	}
-}
 
-@media (prefers-reduced-motion: reduce) {
-	* {
-		animation-duration: 0.001ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.001ms !important;
-		scroll-behavior: auto !important;
+	.table-responsive {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
+
+	.table-ui th,
+	.table-ui td {
+		white-space: normal;
 	}
 }

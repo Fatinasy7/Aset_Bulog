@@ -13,10 +13,26 @@
             </div>
         </div>
 
-        <form class="auth-form" action="{{ route('frontend.dashboard') }}" method="get">
+        <form class="auth-form" action="{{ route('frontend.login.submit') }}" method="POST" novalidate>
+            @csrf
+
+            @if ($errors->any())
+                <div class="alert-ui alert-danger">
+                    <strong>Login gagal.</strong>
+                    <ul class="list-unstyled mt-2 mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="field">
                 <label class="form-label-ui" for="email">@ Work Email</label>
-                <input class="form-control-ui auth-input" type="email" id="email" name="email" placeholder="name@company.com" required>
+                <input class="form-control-ui auth-input {{ $errors->has('email') ? 'is-invalid' : '' }}" type="email" id="email" name="email" value="{{ old('email') }}" placeholder="name@company.com" required autofocus>
+                @error('email')
+                    <p class="form-error">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="field">
@@ -24,7 +40,10 @@
                     <label class="form-label-ui" for="password">🔒 Password</label>
                     <a class="link-button" href="#">Forgot?</a>
                 </div>
-                <input class="form-control-ui auth-input" type="password" id="password" name="password" placeholder="••••••••" required>
+                <input class="form-control-ui auth-input {{ $errors->has('password') ? 'is-invalid' : '' }}" type="password" id="password" name="password" placeholder="••••••••" required>
+                @error('password')
+                    <p class="form-error">{{ $message }}</p>
+                @enderror
             </div>
 
             <label class="checkbox-ui">

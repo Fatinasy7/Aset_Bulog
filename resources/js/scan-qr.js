@@ -20,6 +20,7 @@ const resultDetailLink = document.getElementById('result-detail-link');
 const lookupForm = document.getElementById('qr-lookup-form');
 const resetButton = document.getElementById('reset-qr');
 const cameraPreview = document.getElementById('camera-preview');
+const qrError = document.getElementById('qr_error');
 
 let mediaStream = null;
 let barcodeDetector = null;
@@ -48,6 +49,20 @@ const showResult = (asset, query) => {
     resultDetailLink.href = asset.detail_url;
     qrResult.classList.remove('visually-hidden');
     showPreview(asset);
+};
+
+const hideQrError = () => {
+    if (qrError) {
+        qrError.classList.add('visually-hidden');
+        qrError.textContent = '';
+    }
+};
+
+const showQrError = (message) => {
+    if (qrError) {
+        qrError.textContent = message;
+        qrError.classList.remove('visually-hidden');
+    }
 };
 
 const showPreview = (asset) => {
@@ -156,9 +171,11 @@ const startCamera = async () => {
 const submitLookup = async (query) => {
     if (!query) {
         showStatus('Masukkan kode aset atau hasil scan QR terlebih dahulu.', 'error');
+        showQrError('Kode QR atau kode aset wajib diisi.');
         return;
     }
 
+    hideQrError();
     const payload = new FormData();
     payload.append('qr_text', query);
     payload.append('_token', getCsrfToken());
@@ -175,6 +192,7 @@ const submitLookup = async (query) => {
         if (!response.ok) {
             const error = await response.json();
             showStatus(error.message || 'Aset tidak ditemukan.', 'error');
+            showQrError(error.message || 'Aset tidak ditemukan.');
             hideResult();
             return;
         }
@@ -189,6 +207,7 @@ const submitLookup = async (query) => {
         }
     } catch (error) {
         showStatus('Gagal mencari aset. Periksa koneksi dan coba lagi.', 'error');
+        showQrError('Terjadi kesalahan koneksi saat mencari aset.');
         hideResult();
     }
 };
