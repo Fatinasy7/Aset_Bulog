@@ -6,9 +6,10 @@ use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\Asset;
 use App\Models\Pic;
 use App\Models\PicHistory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class PicController extends Controller
 {
@@ -16,40 +17,72 @@ class PicController extends Controller
 
     public function index()
     {
-        return Pic::orderBy('created_at', 'desc')->get()->map(function (Pic $pic) {
-            return $this->formatPicPayload($pic);
-        });
+        $pics = User::whereIn('role', ['user_pic', 'admin_it', 'manajemen'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'telepon', 'created_at', 'updated_at']);
+
+        return response()->json($pics->map(function (User $pic) {
+            return [
+                'id' => $pic->id,
+                'nama' => $pic->name,
+                'jabatan' => $this->mapRole($pic->role),
+                'email' => $pic->email,
+                'telepon' => $pic->telepon,
+                'createdAt' => $pic->created_at?->toISOString(),
+                'updatedAt' => $pic->updated_at?->toISOString(),
+            ];
+        })->values());
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'jabatan' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:pics,email',
-            'telepon' => 'nullable|string|max:20',
+            'nama' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'jabatan' => ['required', 'string', 'max:50'],
+            'telepon' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $pic = Pic::create($validated);
+        $user = User::create([
+            'name' => $validated['nama'],
+            'email' => strtolower($validated['email']),
+            'password' => Hash::make($validated['password'] ?? 'Password123!'),
+            'role' => $this->normalizeRole($validated['jabatan']),
+            'telepon' => $validated['telepon'] ?? null,
+        ]);
 
-        return response()->json($this->formatPicPayload($pic), Response::HTTP_CREATED);
+        return response()->json($this->mapPic($user), Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, Pic $pic)
+    public function update(Request $request, User $pic)
     {
         $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'jabatan' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:pics,email,' . $pic->id,
-            'telepon' => 'nullable|string|max:20',
+            'nama' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email,' . $pic->id],
+            'password' => ['nullable', 'string', 'min:6'],
+            'jabatan' => ['required', 'string', 'max:50'],
+            'telepon' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $pic->update($validated);
+        $data = [
+            'name' => $validated['nama'],
+            'email' => strtolower($validated['email']),
+            'role' => $this->normalizeRole($validated['jabatan']),
+            'telepon' => $validated['telepon'] ?? $pic->telepon,
+        ];
 
-        return response()->json($this->formatPicPayload($pic));
+        if (! empty($validated['password'])) {
+            $data['password'] = Hash::make($validated['password']);
+        }
+
+        $pic->fill($data);
+        $pic->save();
+
+        return response()->json($this->mapPic($pic));
     }
 
-    public function destroy(Pic $pic)
+    public function destroy(User $pic)
     {
         $pic->delete();
 
@@ -59,7 +92,7 @@ class PicController extends Controller
     public function assignPic(Request $request, Asset $asset)
     {
         $validated = $request->validate([
-            'pic_id' => 'required|exists:pics,id',
+            'pic_id' => 'required|exists:users,id',
             'alasan' => 'nullable|string',
         ]);
 
@@ -82,38 +115,6 @@ class PicController extends Controller
         ]);
 
         return response()->json($this->formatAssetPayload($asset));
-    }
-}
-
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-
-class PicController extends Controller
-{
-    public function index()
-    {
-        $pics = User::whereIn('role', ['user_pic', 'admin_it', 'manajemen'])
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role', 'telepon', 'created_at', 'updated_at']);
-
-        $mappedPics = $pics->map(function ($pic) {
-            return [
-                'id' => $pic->id,
-                'nama' => $pic->name,
-                'jabatan' => $this->mapRole($pic->role),
-                'email' => $pic->email,
-                'telepon' => $pic->telepon,
-                'createdAt' => $pic->created_at?->toISOString(),
-                'updatedAt' => $pic->updated_at?->toISOString(),
-            ];
-        })->values();
-
-        return response()->json($mappedPics);
     }
 
     protected function mapRole(string $role): string
@@ -147,60 +148,5 @@ class PicController extends Controller
             'createdAt' => $user->created_at?->toISOString(),
             'updatedAt' => $user->updated_at?->toISOString(),
         ];
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['nullable', 'string', 'min:6'],
-            'jabatan' => ['required', 'string', 'max:50'],
-            'telepon' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $user = User::create([
-            'name' => $validated['nama'],
-            'email' => strtolower($validated['email']),
-            'password' => Hash::make($validated['password'] ?? 'Password123!'),
-            'role' => $this->normalizeRole($validated['jabatan']),
-            'telepon' => $validated['telepon'] ?? null,
-        ]);
-
-        return response()->json($this->mapPic($user), 201);
-    }
-
-    public function update(Request $request, User $pic)
-    {
-        $validated = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email,' . $pic->id],
-            'password' => ['nullable', 'string', 'min:6'],
-            'jabatan' => ['required', 'string', 'max:50'],
-            'telepon' => ['nullable', 'string', 'max:20'],
-        ]);
-
-        $data = [
-            'name' => $validated['nama'],
-            'email' => strtolower($validated['email']),
-            'role' => $this->normalizeRole($validated['jabatan']),
-            'telepon' => $validated['telepon'] ?? $pic->telepon,
-        ];
-
-        if (!empty($validated['password'])) {
-            $data['password'] = Hash::make($validated['password']);
-        }
-
-        $pic->fill($data);
-        $pic->save();
-
-        return response()->json($this->mapPic($pic));
-    }
-
-    public function destroy(User $pic)
-    {
-        $pic->delete();
-
-        return response()->json(['message' => 'PIC deleted successfully.']);
     }
 }

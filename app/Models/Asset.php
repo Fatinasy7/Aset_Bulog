@@ -25,10 +25,7 @@ class Asset extends Model
         'harga',
         'keterangan',
         'jenis',
-<<<<<<< HEAD
-=======
         'qr_code_path',
->>>>>>> 22589e0065f85f8afe27c27718fc715915ec2569
         'pic_id',
     ];
 
@@ -39,11 +36,6 @@ class Asset extends Model
         'koordinat_lng' => 'double',
     ];
 
-<<<<<<< HEAD
-    public function pic()
-    {
-        return $this->belongsTo(User::class, 'pic_id');
-=======
     public function histories()
     {
         return $this->hasMany(AssetHistory::class);
@@ -52,6 +44,5 @@ class Asset extends Model
     public function pic()
     {
         return $this->belongsTo(Pic::class);
->>>>>>> 22589e0065f85f8afe27c27718fc715915ec2569
     }
 }

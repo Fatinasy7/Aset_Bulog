@@ -2,17 +2,14 @@
 
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BackupController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PicController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScanController;
-use App\Http\Controllers\BackupController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PicController;
-use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -81,6 +78,8 @@ Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])-
     Route::middleware('role:admin_it,manajemen')->group(function () {
         Route::get('reports/assets', [ReportController::class, 'index']);
         Route::get('reports/assets/download', [ReportController::class, 'downloadPdf']);
+        Route::get('reports/assets/export', [ReportController::class, 'reportsDownload']);
+        Route::get('reports/assets/pdf', [ReportController::class, 'reportsPdf']);
     });
 
     Route::middleware('role:admin_it')->group(function () {

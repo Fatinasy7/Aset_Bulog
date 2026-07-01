@@ -67,4 +67,15 @@ class ReportExportTest extends TestCase
         $response->assertHeader('content-disposition');
         $this->assertStringContainsString('.pdf', $response->headers->get('content-disposition'));
     }
+
+    public function test_can_download_pdf_report_with_frontend_filters(): void
+    {
+        Asset::factory()->count(2)->create();
+
+        $response = $this->actingAs($this->adminUser, 'sanctum')
+            ->get('/api/reports/assets/download?search=AST&condition=baik&location=Gudang&type=laptop&pic=Test&date_from=2024-01-01&date_to=2024-12-31');
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-disposition');
+    }
 }
