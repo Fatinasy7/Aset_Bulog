@@ -468,6 +468,13 @@
   - `jenis`
   - `lokasi`
   - `pic_id`
+  - `search`
+  - `condition`
+  - `location`
+  - `type`
+  - `pic`
+  - `date_from`
+  - `date_to`
 - Response: array of asset payloads.
 
 ### Download Excel Report
@@ -483,6 +490,32 @@
 - Headers:
   - `Authorization: Bearer <token>`
 - Response: file download `aset-report.pdf`
+
+### Frontend-Friendly PDF Download
+- Method: `GET`
+- URL: `/api/reports/assets/download`
+- Headers:
+  - `Authorization: Bearer <token>`
+- Optional query params:
+  - `search`
+  - `condition`
+  - `location`
+  - `type`
+  - `pic`
+  - `date_from`
+  - `date_to`
+- Example:
+```text
+/api/reports/assets/download?search=AST&condition=baik&location=Gudang&type=laptop&pic=Budi&date_from=2024-01-01&date_to=2024-12-31
+```
+- Response: direct file download in PDF format.
+
+### Frontend-Friendly Excel Download Alias
+- Method: `GET`
+- URL: `/api/reports/assets/export`
+- Headers:
+  - `Authorization: Bearer <token>`
+- Response: direct file download in Excel format.
 
 > Note: Report endpoint `/api/reports/assets` is protected by role middleware and should be accessed only by users with role `admin_it` or `manajemen`.
 

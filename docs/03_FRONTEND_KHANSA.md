@@ -17,45 +17,6 @@ Gunakan prompt berikut saat membuka VS Code dan memulai sesi kerja:
 - Endpoint `GET /api/reports/assets` hanya bisa diakses oleh role `admin_it` atau `manajemen`.
 - Pastikan setiap request terautentikasi dengan header `Authorization: Bearer <token>`.
 
-### Contoh ringkas Axios
-```javascript
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  },
-});
-
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export default api;
-```
-
-### Contoh penggunaan Axios
-```javascript
-// Login
-const loginResponse = await api.post('/auth/login', {
-  email: 'admin-baru-banget@example.com',
-  password: 'Password123!',
-});
-localStorage.setItem('auth_token', loginResponse.data.token);
-
-// Ambil user saat ini
-const userResponse = await api.get('/user');
-console.log(userResponse.data);
-
-// Ambil daftar aset
-const assetsResponse = await api.get('/assets');
-console.log(assetsResponse.data);
 ```
 
 Gunakan prompt berikut saat membuka VS Code dan memulai sesi kerja:
