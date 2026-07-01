@@ -1,0 +1,18 @@
+:root {
+    --laptops-bg: #eef8ff;
+    --laptops-accent: #0ea5e9;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(14,165,233,0.08), rgba(255,255,255,0));
+}
+
+.stat-card {
+    background: rgba(14,165,233,0.08);
+    border-color: rgba(14,165,233,0.18);
+}
+
+.badge-ui {
+    background: rgba(14,165,233,0.12);
+    color: #0369a1;
+}

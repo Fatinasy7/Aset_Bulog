@@ -1,0 +1,21 @@
+:root {
+    --assets-index-bg: #f7f9fc;
+    --assets-index-card: #ffffff;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(30, 64, 175, 0.08), rgba(255,255,255,0));
+}
+
+.component-grid--assets {
+    gap: 1rem;
+}
+
+.table-ui th {
+    background: rgba(30, 64, 175, 0.08);
+}
+
+.badge-ui {
+    background: rgba(30, 64, 175, 0.12);
+    color: #1d4ed8;
+}

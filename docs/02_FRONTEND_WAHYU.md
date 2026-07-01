@@ -32,7 +32,86 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 
 ---
 
-## 📋 CHECKLIST TUGAS LENGKAP
+## ✅ FINAL SCOPE PENGERJAAN
+
+Bagian ini adalah urutan kerja yang dipakai sampai selesai. Fokusnya dibuat bertahap supaya implementasi tidak lompat-lompat antar halaman.
+
+### Prioritas 1 - Pondasi Visual
+- [ ] Finalisasi design system: warna, font, badge status, tombol, card, tabel, alert, modal
+- [ ] Siapkan layout dasar yang dipakai semua halaman: navbar, sidebar, konten utama, footer
+- [ ] Pastikan semua komponen responsif untuk desktop dan mobile
+
+### Prioritas 2 - Halaman Inti Operasional
+- [ ] Halaman Login
+- [ ] Dashboard Utama
+- [ ] Daftar Aset
+- [ ] Form Tambah/Edit Aset
+- [ ] Detail Aset
+
+### Prioritas 3 - Halaman Pendukung Operasional
+- [ ] Halaman Scan QR Code
+- [ ] Halaman Manajemen PIC
+- [ ] Halaman Laporan Aset
+- [ ] Halaman Riwayat Perubahan / Audit Trail
+- [ ] Dashboard Manajemen read-only
+
+### Prioritas 4 - Penyelarasan Akhir
+- [ ] Konsistensi spacing, warna, dan tipografi
+- [ ] Uji tampilan desktop, tablet, dan mobile
+- [ ] Rapikan state kosong, error state, dan tombol aksi
+- [ ] Finalisasi laporan untuk PM
+
+### Urutan Kerja yang Disarankan
+1. Design system
+2. Layout dasar
+3. Login
+4. Dashboard utama
+5. Daftar aset
+6. Form tambah/edit aset
+7. Detail aset
+8. Scan QR Code
+9. Manajemen PIC
+10. Laporan aset
+11. Audit trail
+12. Dashboard manajemen
+13. Final QA dan laporan PM
+
+---
+
+## � STATUS IMPLEMENTASI FRONTEND
+
+### Halaman dan fitur yang sudah terpasang
+- [x] Design System — halaman `ui/design-system.blade.php` dengan `resources/css/design-system.css`.
+- [x] Dashboard Utama — halaman `dashboard/index.blade.php` dengan data summary, kondisi aset, dan ringkasan asset.
+- [x] Dashboard Manajemen — halaman `dashboard/management.blade.php` dengan summary read-only dan tabel kondisi.
+- [x] Daftar Aset — halaman `assets/index.blade.php` dengan tabel aset, filter/search UI, dan data backend.
+- [x] Form Tambah Aset — halaman `assets/create.blade.php` dengan form dan backend `AssetController@storeWeb`.
+- [x] Form Edit Aset — halaman `assets/edit.blade.php` dengan form dan backend `AssetController@updateWeb`.
+- [x] Detail Aset — halaman `assets/show.blade.php` dengan detail aset, QR mock, dan audit log.
+- [x] Manajemen PIC — halaman `pics/index.blade.php` dan `pics/form.blade.php` dengan backend CRUD PIC.
+- [x] Audit Trail — halaman `audit/index.blade.php` yang memuat data dari model `AuditLog`.
+- [x] Data Laptop — halaman `assets/laptops.blade.php` dengan daftar laptop dan ringkasan.
+- [x] Data Printer — halaman `assets/printers.blade.php` dengan daftar printer dan ringkasan.
+- [x] Pengaturan — halaman `settings/index.blade.php` dengan tampilan data pengguna dan kontrol setting.
+- [x] Semua halaman frontend aktif sudah terhubung dengan stylesheet page-specific masing-masing.
+
+### Halaman yang perlu penguatan fungsional
+- [ ] Login — `auth/login.blade.php` sudah UI, tetapi form masih mengarah langsung ke dashboard tanpa autentikasi Laravel nyata.
+- [ ] Scan QR Code — `scan-qr.blade.php` sudah UI mock, tetapi belum ada logika kamera/API scan.
+- [ ] Laporan Aset — `reports/index.blade.php` sudah tampilan laporan, namun tombol filter/export belum terhubung backend ekspor atau filter nyata.
+- [ ] Pengaturan — `settings/index.blade.php` punya UI input dan tabel, namun belum ada aksi simpan/update konfigurasi.
+- [ ] Validasi field & state kosong — beberapa halaman memiliki formulir dan tabel, tapi belum semua state error/empty/tidak ada data diperkuat.
+- [ ] Responsivitas dan QA akhir — perlu verifikasi penuh di desktop/tablet/mobile serta konsistensi spacing dan tipografi.
+### Next Steps
+- [ ] Lengkapi autentikasi login dan sambungkan form ke mekanisme Laravel authentication.
+- [ ] Implementasikan logika scan QR dengan kamera atau API untuk halaman `scan-qr`.
+- [ ] Tambahkan backend filter dan export di `reports/index.blade.php` untuk laporan aktif.
+- [ ] Buat endpoint penyimpanan pengaturan di `settings/index.blade.php` dan tambahkan aksi simpan.
+- [ ] Perkuat validasi UI/UX untuk state kosong, error, dan loading di semua formulir.
+- [ ] Jalankan uji responsivitas dan QA lintas perangkat, lalu perbaiki spacing & tipografi yang belum konsisten.
+---
+
+## �📋 CHECKLIST TUGAS LENGKAP
 
 ### 🔷 MINGGU 1 — Perancangan Visual
 
@@ -145,6 +224,27 @@ berisi laporan yang telah dikerjakan sebagai bentuk laporan kepada PM.
 - [ ] Periksa konsistensi warna, spasi, dan tipografi di semua halaman
 - [ ] Bantu Khansa merapikan bug minor terkait layout saat data real-time dari backend masuk
 - [ ] Pastikan semua transisi/animasi micro berjalan mulus
+
+**Langkah cepat untuk optimasi dan verifikasi performa**
+
+- Local build & minify (Vite):
+
+```bash
+npm ci
+npm run build
+```
+
+- Laravel production caching:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+```
+
+- Run Lighthouse or `npx lighthouse` against the running app and review suggestions.
+- Convert large images to `webp` and enable gzip/brotli on the web server for production.
 
 ---
 

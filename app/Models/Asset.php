@@ -27,6 +27,7 @@ class Asset extends Model
         'jenis',
         'qr_code_path',
         'pic_id',
+        'pic_name',
     ];
 
     protected $casts = [

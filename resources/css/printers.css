@@ -1,0 +1,18 @@
+:root {
+    --printers-bg: #f0f9ff;
+    --printers-accent: #0284c7;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(2,132,199,0.08), rgba(255,255,255,0));
+}
+
+.stat-card {
+    background: rgba(2,132,199,0.08);
+    border-color: rgba(2,132,199,0.18);
+}
+
+.badge-ui {
+    background: rgba(2,132,199,0.12);
+    color: #0c4a6e;
+}

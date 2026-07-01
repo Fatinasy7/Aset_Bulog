@@ -1,0 +1,47 @@
+:root {
+    --design-system-bg: #f4f8ff;
+    --design-system-surface: #ffffff;
+    --design-system-border: rgba(15, 23, 42, 0.08);
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(255,255,255,0));
+}
+
+.preview-banner {
+    border: 1px solid var(--design-system-border);
+    background: rgba(59, 130, 246, 0.06);
+    border-radius: 18px;
+    padding: 1.15rem 1.25rem;
+    margin-top: 1rem;
+}
+
+.stat-grid,
+.component-grid {
+    gap: 1.2rem;
+}
+
+.stat-card,
+.card-surface {
+    background: var(--design-system-surface);
+    border: 1px solid var(--design-system-border);
+}
+
+.stat-label,
+.surface-note {
+    color: #475569;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.card-surface__header {
+    border-bottom: 1px solid var(--design-system-border);
+}
+
+.preview-banner strong {
+    color: #0f172a;
+}

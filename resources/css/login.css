@@ -1,0 +1,16 @@
+:root {
+    --login-bg: #eef2ff;
+    --login-panel: #ffffff;
+}
+
+.auth-shell {
+    background: linear-gradient(180deg, #eef2ff, #ffffff);
+}
+
+.auth-card.auth-card--login {
+    border: 1px solid rgba(59, 130, 246, 0.16);
+}
+
+.auth-submit {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}

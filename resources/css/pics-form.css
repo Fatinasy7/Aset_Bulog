@@ -1,0 +1,17 @@
+:root {
+    --pics-form-bg: #fef2f2;
+    --pics-form-card: #ffffff;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.08), rgba(255,255,255,0));
+}
+
+.form-control-ui,
+.form-select-ui {
+    border: 1px solid rgba(239, 68, 68, 0.16);
+}
+
+.btn-primary-ui {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
