@@ -46,6 +46,9 @@ class AssetController extends Controller
         ]);
 
         $asset = Asset::create($validated);
+        $qrCodePath = $this->generateQrCode($asset);
+
+        $payload = $this->formatAssetPayload($asset, $qrCodePath);
 
         $payload = json_encode([
             'id' => $asset->id,
@@ -155,6 +158,19 @@ class AssetController extends Controller
         ]);
 
         return response()->json([ 'message' => 'Asset deleted successfully.' ]);
+    }
+
+    public function assignPic(Request $request, Asset $asset)
+    {
+        $validated = $request->validate([
+            'pic_id' => ['required', 'exists:users,id'],
+            'alasan' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $pic = User::findOrFail($validated['pic_id']);
+        $asset->update(['pic_id' => $pic->id]);
+
+        return response()->json($this->formatAssetPayload($asset->fresh('pic')));
     }
 
     public function qrcode(Asset $asset)
