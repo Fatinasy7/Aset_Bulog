@@ -3,6 +3,10 @@
 @section('title', 'Detail Aset - Frontend BULOG')
 @section('topbar-meta', 'Informasi lengkap aset, QR code, dan riwayat singkat')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/assets-show.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

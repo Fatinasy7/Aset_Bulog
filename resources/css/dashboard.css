@@ -1,0 +1,27 @@
+:root {
+    --dashboard-bg: #f8fafc;
+    --dashboard-card: #ffffff;
+    --dashboard-border: rgba(96, 165, 250, 0.18);
+    --dashboard-stat: rgba(59, 130, 246, 0.1);
+}
+
+.dashboard-header {
+    background: linear-gradient(180deg, rgba(59,130,246,0.08), rgba(255,255,255,0));
+}
+
+.dashboard-stat-card {
+    background: var(--dashboard-card);
+    border: 1px solid var(--dashboard-border);
+}
+
+.dashboard-grid {
+    gap: 1.5rem;
+}
+
+.asset-condition-chart-wrapper {
+    padding: 1rem 0;
+}
+
+.dashboard-location-row {
+    background: rgba(59, 130, 246, 0.08);
+}

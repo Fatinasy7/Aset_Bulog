@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sistem Manajemen Aset BULOG')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 <body>
     <div class="app-shell">
@@ -13,11 +14,11 @@
             <div class="app-topbar__inner">
                 <div class="brand-block">
                     <div class="brand-mark" aria-hidden="true">
-                        <span>LA</span>
+                        <span>AB</span>
                     </div>
                     <div>
-                        <p class="brand-title">Lumina Asset</p>
-                        <p class="brand-subtitle">Enterprise Management</p>
+                        <p class="brand-title">Aset Bulog</p>
+                        <p class="brand-subtitle">Manajemen Aset Perkantoran</p>
                     </div>
                 </div>
                 <div class="brand-subtitle brand-subtitle--meta">
@@ -61,5 +62,6 @@
             </main>
         </div>
     </div>
+    @stack('scripts')
 </body>
 </html>

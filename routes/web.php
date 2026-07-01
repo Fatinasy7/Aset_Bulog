@@ -16,17 +16,21 @@ use App\Http\Controllers\FrontendPageController;
 */
 
 Route::get('/', function () {
-    return response()->file(public_path('index.html'));
+    return redirect()->route('frontend.dashboard');
 });
 
 Route::get('/app', function () {
-    return response()->file(public_path('index.html'));
+    return redirect()->route('frontend.dashboard');
 });
 
-Route::view('/frontend/login', 'auth.login')->name('frontend.login');
+Route::get('/frontend/login', function () {
+    return view('auth.login');
+})->name('frontend.login')->middleware('guest');
+Route::post('/frontend/login', [App\Http\Controllers\AuthController::class, 'login'])->name('frontend.login.submit');
+Route::post('/frontend/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('frontend.logout');
 Route::view('/frontend/design-system', 'ui.design-system')->name('frontend.design-system');
 
-Route::controller(FrontendPageController::class)->group(function () {
+Route::controller(FrontendPageController::class)->middleware('auth')->group(function () {
     Route::get('/frontend/dashboard', 'dashboard')->name('frontend.dashboard');
     Route::get('/frontend/data-laptop', 'dataLaptop')->name('frontend.assets.laptops');
     Route::get('/frontend/data-printer', 'dataPrinter')->name('frontend.assets.printers');
@@ -39,9 +43,13 @@ Route::controller(FrontendPageController::class)->group(function () {
     Route::get('/frontend/pics/create', 'picsCreate')->name('frontend.pics.create');
     Route::get('/frontend/pics/{pic}/edit', 'picsEdit')->name('frontend.pics.edit');
     Route::get('/frontend/reports', 'reportsIndex')->name('frontend.reports.index');
+    Route::get('/frontend/reports/export', 'reportsExport')->name('frontend.reports.export');
+    Route::get('/frontend/reports/download', 'reportsDownload')->name('frontend.reports.download');
+    Route::get('/frontend/reports/pdf', 'reportsPdf')->name('frontend.reports.pdf');
     Route::get('/frontend/settings', 'settings')->name('frontend.settings');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
     Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
+    Route::post('/frontend/scan-qr/lookup', 'scanQrLookup')->name('frontend.scan-qr.lookup');
     Route::get('/frontend/dashboard-management', 'dashboardManagement')->name('frontend.dashboard.management');
 });
 

@@ -1,0 +1,13 @@
+:root {
+    --frontend-preview-bg: #f8fafc;
+    --frontend-preview-card: #ffffff;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.08), rgba(255,255,255,0));
+}
+
+.link-card {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.16);
+}

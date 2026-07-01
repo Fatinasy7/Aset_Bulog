@@ -3,6 +3,10 @@
 @section('title', 'Scan QR Code - Frontend BULOG')
 @section('topbar-meta', 'Halaman Scan QR Code untuk aset BULOG')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/scan-qr.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>
@@ -19,31 +23,67 @@
         <div class="qr-hero">
             <div class="qr-hero__content">
                 <h2>Asset QR Scanner</h2>
-                <p class="surface-note">Search assets, nodes, or locations with quick QR scanning.</p>
+                <p class="surface-note">Scan kode QR atau ketik kode aset untuk melihat detail aset secara cepat.</p>
             </div>
-            <button class="btn-ui btn-primary-ui">Scan Now</button>
+            <div class="qr-hero__actions">
+                <button id="start-camera" class="btn-ui btn-primary-ui" type="button">Mulai Kamera</button>
+                <button id="stop-camera" class="btn-ui btn-secondary-ui" type="button" disabled>Hentikan Kamera</button>
+            </div>
         </div>
 
-        <div class="card-surface__body card-surface__body--centered">
-            <div class="placeholder-box placeholder-box--qr placeholder-box--wide">
-                <div class="text-center-muted">
-                    <div class="placeholder-icon">▣</div>
-                    <p class="surface-note">Mock QR scanner preview</p>
+        <div id="qr-preview" class="scan-preview visually-hidden card-surface__body">
+            <div class="scan-preview__content">
+                <p class="surface-note">Preview aset setelah scan atau lookup manual</p>
+                <h3 id="preview-nama" class="scan-preview__title"></h3>
+                <div class="scan-preview__details component-grid component-grid--full component-grid--compact">
+                    <div><strong>Kode:</strong> <span id="preview-kode"></span></div>
+                    <div><strong>Jenis:</strong> <span id="preview-jenis"></span></div>
                 </div>
             </div>
         </div>
 
         <div class="card-surface__body">
-            <div class="component-grid component-grid--full component-grid--compact">
-                <div><strong>Kode Aset:</strong> AST-001</div>
-                <div><strong>Nama Aset:</strong> Laptop Operasional</div>
-                <div><strong>Kondisi:</strong> <span class="badge-ui badge-baik">Baik</span></div>
-                <div><strong>Lokasi:</strong> Ruang IT</div>
-                <div><strong>PIC:</strong> Andi Saputra</div>
-                <div><strong>Jenis:</strong> Laptop</div>
+            <form id="qr-lookup-form" action="{{ route('frontend.scan-qr.lookup') }}" class="component-grid component-grid--full component-grid--compact">
+                @csrf
+                <div>
+                    <label class="form-label-ui" for="qr_input">Kode QR / Kode Aset</label>
+                    <input id="qr_input" class="form-control-ui" type="text" name="qr_text" placeholder="Masukkan kode aset atau hasil scan QR" autocomplete="off">
+                </div>
+                <div class="qr-buttons">
+                    <button id="submit-qr" class="btn-ui btn-primary-ui" type="submit">Cari Aset</button>
+                    <button id="reset-qr" class="btn-ui btn-secondary-ui" type="button">Reset</button>
+                </div>
+            </form>
+
+            <div id="qr-status" class="scan-status surface-note mt-1">Gunakan kamera atau masukkan kode aset secara manual.</div>
+
+            <div id="camera-preview" class="scan-camera-preview visually-hidden">
+                <video id="qr-video" autoplay muted playsinline></video>
+                <canvas id="qr-canvas" class="visually-hidden"></canvas>
             </div>
-            <p class="surface-note mt-1">Logika scan belum terhubung ke kamera atau API. Halaman ini berfungsi sebagai mockup awal.</p>
+
+            <div id="qr-result" class="scan-result visually-hidden">
+                <div class="scan-result__header">
+                    <h3>Hasil Scan</h3>
+                    <span id="qr-result-code"></span>
+                </div>
+                <div class="scan-result__body component-grid component-grid--full component-grid--compact">
+                    <div><strong>Kode Aset:</strong> <span id="result-kode"></span></div>
+                    <div><strong>Nama Aset:</strong> <span id="result-nama"></span></div>
+                    <div><strong>Kondisi:</strong> <span id="result-kondisi"></span></div>
+                    <div><strong>Lokasi:</strong> <span id="result-lokasi"></span></div>
+                    <div><strong>PIC:</strong> <span id="result-pic"></span></div>
+                    <div><strong>Jenis:</strong> <span id="result-jenis"></span></div>
+                </div>
+                <div class="scan-result__footer">
+                    <a id="result-detail-link" href="#" class="btn-ui btn-secondary-ui">Lihat Detail Aset</a>
+                </div>
+            </div>
         </div>
     </div>
 </section>
+
+@push('scripts')
+    @vite(['resources/js/scan-qr.js'])
+@endpush
 @endsection

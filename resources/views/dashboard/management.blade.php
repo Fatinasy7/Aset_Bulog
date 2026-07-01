@@ -3,6 +3,10 @@
 @section('title', 'Dashboard Manajemen - Frontend BULOG')
 @section('topbar-meta', 'Dashboard read-only untuk manajemen BULOG')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/management.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

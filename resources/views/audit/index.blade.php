@@ -3,6 +3,10 @@
 @section('title', 'Audit Trail - Frontend BULOG')
 @section('topbar-meta', 'Riwayat perubahan aset dan aktivitas update')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/audit-index.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

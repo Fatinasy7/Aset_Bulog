@@ -3,6 +3,10 @@
 @section('title', 'Preview Semua - Lumina Asset')
 @section('topbar-meta', 'Tampilkan semua halaman frontend dalam satu tampilan')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/frontend-preview.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

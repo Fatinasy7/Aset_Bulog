@@ -1,0 +1,16 @@
+:root {
+    --settings-index-bg: #f8fafc;
+    --settings-index-card: #ffffff;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(255,255,255,0));
+}
+
+.table-ui th {
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.btn-primary-ui {
+    background: linear-gradient(135deg, #10b981, #047857);
+}

@@ -1,12 +1,22 @@
 /* Custom Styles for Sistem Manajemen Aset Perkantoran */
 
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --accent-color: #e74c3c;
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --light-bg: #f8f9fa;
+    --color-bg: #F0F8FF;
+  --color-surface: #FFFFFF;
+  --color-surface-2: #E0F7FA;
+  --color-border: #B2EBF2;
+  
+  --color-text: #003366;
+  --color-muted: #546E7A;
+  
+  --color-primary: #005B96;
+  --color-primary-2: #0077B6;
+  --color-accent: #FFD700;
+  
+  --color-success: #2E7D32;
+  --color-warning: #F9A825;
+  --color-danger: #C62828;
+  --color-info: #0288D1;
     --sidebar-width: 250px;
 }
 

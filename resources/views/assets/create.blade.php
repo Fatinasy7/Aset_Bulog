@@ -3,6 +3,10 @@
 @section('title', 'Form Aset - Frontend BULOG')
 @section('topbar-meta', 'Form tambah dan edit aset operasional')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/assets-form.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

@@ -3,6 +3,10 @@
 @section('title', isset($pic) ? 'Edit PIC - Frontend BULOG' : 'Tambah PIC - Frontend BULOG')
 @section('topbar-meta', isset($pic) ? 'Form edit data PIC' : 'Form tambah data PIC')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/pics-form.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

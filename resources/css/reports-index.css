@@ -1,0 +1,64 @@
+:root {
+    --reports-index-bg: #f7f9fc;
+    --reports-index-card: #ffffff;
+}
+
+.page-header {
+    background: linear-gradient(180deg, rgba(14, 165, 233, 0.08), rgba(255,255,255,0));
+}
+
+.metric-card {
+    border-color: rgba(14, 165, 233, 0.16);
+}
+
+.progress-bar span {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+}
+
+.chart-panel {
+    margin-top: 1.5rem;
+}
+
+.chart-panel .card-surface__body {
+    min-height: 340px;
+    position: relative;
+    padding: 1.25rem;
+}
+
+.report-pagination {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.report-pagination .pagination {
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.report-pagination .page-item {
+    list-style: none;
+}
+
+.report-pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #0f172a;
+    background: #ffffff;
+    text-decoration: none;
+}
+
+.report-pagination .page-item.active .page-link {
+    background: #0ea5e9;
+    color: #ffffff;
+    border-color: #0ea5e9;
+}
+
+.report-pagination .page-link:hover {
+    background: #e2e8f0;
+}

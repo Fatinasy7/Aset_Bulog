@@ -3,6 +3,10 @@
 @section('title', 'Data Laptop - Lumina Asset')
 @section('topbar-meta', 'Inventory dan status laptop asset management')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/laptops.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

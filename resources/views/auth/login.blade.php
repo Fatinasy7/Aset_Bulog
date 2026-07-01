@@ -2,6 +2,10 @@
 
 @section('title', 'Login - Aset Bulog')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/login.css') }}">
+@endpush
+
 @section('content')
 <section class="auth-shell__panel">
     <div class="auth-card auth-card--login">
@@ -14,10 +18,17 @@
         </div>
 
         <div class="auth-card__body">
-            <form class="auth-form" action="{{ route('frontend.dashboard') }}" method="get">
+            <form class="auth-form" action="{{ route('frontend.login.submit') }}" method="post">
+                @csrf
+                @if ($errors->any())
+                    <div class="alert-ui alert-danger">
+                        {{ $errors->first() }}
+                    </div>
+                @endif
+
                 <div class="field">
                     <label class="form-label-ui" for="email">@ Work Email</label>
-                    <input class="form-control-ui auth-input" type="email" id="email" name="email" placeholder="name@company.com" required>
+                    <input class="form-control-ui auth-input" type="email" id="email" name="email" value="{{ old('email') }}" placeholder="name@company.com" required autofocus>
                 </div>
 
                 <div class="field">
@@ -30,7 +41,7 @@
 
                 <div class="auth-form__footer">
                     <label class="checkbox-ui">
-                        <input type="checkbox" name="remember">
+                        <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
                         <span>Remember this terminal for 30 days</span>
                     </label>
 

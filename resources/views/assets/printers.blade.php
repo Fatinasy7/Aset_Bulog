@@ -3,6 +3,10 @@
 @section('title', 'Data Printer - Lumina Asset')
 @section('topbar-meta', 'Printer fleet status and ink monitoring')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/printers.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class FrontendPageController extends Controller
@@ -124,17 +125,230 @@ class FrontendPageController extends Controller
         return redirect()->route('frontend.pics.index')->with('success', 'PIC berhasil dihapus.');
     }
 
-    public function reportsIndex()
+    public function reportsIndex(Request $request)
     {
-        $assets = Asset::latest()->get();
+        $query = Asset::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($sub) use ($search) {
+                $sub->where('kode_aset', 'like', "%{$search}%")
+                    ->orWhere('nama_aset', 'like', "%{$search}%")
+                    ->orWhere('merk_type', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($condition = $request->input('condition')) {
+            $query->where('kondisi', $condition);
+        }
+
+        if ($location = $request->input('location')) {
+            $query->where('lokasi', $location);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('jenis', $type);
+        }
+
+        if ($pic = $request->input('pic')) {
+            $query->where('pic_name', $pic);
+        }
+
+        if ($from = $request->input('date_from')) {
+            $query->whereDate('tgl_perolehan', '>=', $from);
+        }
+
+        if ($to = $request->input('date_to')) {
+            $query->whereDate('tgl_perolehan', '<=', $to);
+        }
+
+        $summaryAssets = (clone $query)->get();
+        $assets = $query->latest()->paginate(15)->withQueryString();
+
         $summary = [
-            'total_assets' => $assets->count(),
-            'total_active' => $assets->where('kondisi', 'Baik')->count(),
-            'total_printers' => $assets->where('jenis', 'printer')->count(),
+            'total_asset_value' => $summaryAssets->sum('harga'),
+            'active_assets' => $summaryAssets->where('kondisi', 'Baik')->count(),
+            'maintenance_required' => $summaryAssets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
             'avg_depreciation' => 15.4,
         ];
 
-        return view('reports.index', compact('assets', 'summary'));
+        $conditionCounts = $summaryAssets->groupBy('kondisi')->map->count()->sortDesc()->toArray();
+        $conditions = Asset::select('kondisi')->distinct()->pluck('kondisi')->sort()->values();
+        $locations = Asset::select('lokasi')->distinct()->pluck('lokasi')->sort()->values();
+        $types = Asset::select('jenis')->distinct()->pluck('jenis')->sort()->values();
+        $pics = Asset::select('pic_name')->whereNotNull('pic_name')->distinct()->pluck('pic_name')->sort()->values();
+
+        return view('reports.index', compact('assets', 'summary', 'conditionCounts', 'conditions', 'locations', 'types', 'pics'));
+    }
+
+    public function reportsExport(Request $request)
+    {
+        $query = Asset::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($sub) use ($search) {
+                $sub->where('kode_aset', 'like', "%{$search}%")
+                    ->orWhere('nama_aset', 'like', "%{$search}%")
+                    ->orWhere('merk_type', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($condition = $request->input('condition')) {
+            $query->where('kondisi', $condition);
+        }
+
+        if ($location = $request->input('location')) {
+            $query->where('lokasi', $location);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('jenis', $type);
+        }
+
+        if ($pic = $request->input('pic')) {
+            $query->where('pic_name', $pic);
+        }
+
+        if ($from = $request->input('date_from')) {
+            $query->whereDate('tgl_perolehan', '>=', $from);
+        }
+
+        if ($to = $request->input('date_to')) {
+            $query->whereDate('tgl_perolehan', '<=', $to);
+        }
+
+        $assets = $query->latest()->get();
+        $filename = 'laporan-aset-' . now()->format('Ymd-His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ];
+
+        $callback = function () use ($assets) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Kode Aset', 'Nama Aset', 'Jenis', 'Merk/Type', 'Serial Number', 'Kondisi', 'PIC', 'Lokasi', 'Tanggal Perolehan', 'Harga']);
+
+            foreach ($assets as $asset) {
+                fputcsv($handle, [
+                    $asset->kode_aset,
+                    $asset->nama_aset,
+                    ucfirst($asset->jenis),
+                    $asset->merk_type,
+                    $asset->serial_number,
+                    $asset->kondisi,
+                    $asset->pic_name ?: '-',
+                    $asset->lokasi,
+                    optional($asset->tgl_perolehan)->format('Y-m-d') ?? '-',
+                    $asset->harga,
+                ]);
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function reportsDownload(Request $request)
+    {
+        $query = Asset::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($sub) use ($search) {
+                $sub->where('kode_aset', 'like', "%{$search}%")
+                    ->orWhere('nama_aset', 'like', "%{$search}%")
+                    ->orWhere('merk_type', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($condition = $request->input('condition')) {
+            $query->where('kondisi', $condition);
+        }
+
+        if ($location = $request->input('location')) {
+            $query->where('lokasi', $location);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('jenis', $type);
+        }
+
+        if ($pic = $request->input('pic')) {
+            $query->where('pic_name', $pic);
+        }
+
+        if ($from = $request->input('date_from')) {
+            $query->whereDate('tgl_perolehan', '>=', $from);
+        }
+
+        if ($to = $request->input('date_to')) {
+            $query->whereDate('tgl_perolehan', '<=', $to);
+        }
+
+        $assets = $query->latest()->get();
+        $summary = [
+            'total_asset_value' => $assets->sum('harga'),
+            'active_assets' => $assets->where('kondisi', 'Baik')->count(),
+            'maintenance_required' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
+            'avg_depreciation' => 15.4,
+        ];
+
+        $pdf = Pdf::loadView('reports.pdf', compact('assets', 'summary'))
+            ->setPaper('a4', 'landscape');
+
+        return $pdf->download('laporan-aset-' . now()->format('Ymd-His') . '.pdf');
+    }
+
+    public function reportsPdf(Request $request)
+    {
+        $query = Asset::query();
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($sub) use ($search) {
+                $sub->where('kode_aset', 'like', "%{$search}%")
+                    ->orWhere('nama_aset', 'like', "%{$search}%")
+                    ->orWhere('merk_type', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%");
+            });
+        }
+
+        if ($condition = $request->input('condition')) {
+            $query->where('kondisi', $condition);
+        }
+
+        if ($location = $request->input('location')) {
+            $query->where('lokasi', $location);
+        }
+
+        if ($type = $request->input('type')) {
+            $query->where('jenis', $type);
+        }
+
+        if ($pic = $request->input('pic')) {
+            $query->where('pic_name', $pic);
+        }
+
+        if ($from = $request->input('date_from')) {
+            $query->whereDate('tgl_perolehan', '>=', $from);
+        }
+
+        if ($to = $request->input('date_to')) {
+            $query->whereDate('tgl_perolehan', '<=', $to);
+        }
+
+        $assets = $query->latest()->get();
+
+        $summary = [
+            'total_asset_value' => $assets->sum('harga'),
+            'active_assets' => $assets->where('kondisi', 'Baik')->count(),
+            'maintenance_required' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
+            'avg_depreciation' => 15.4,
+        ];
+
+        return view('reports.pdf', compact('assets', 'summary'));
     }
 
     public function dataLaptop()
@@ -186,6 +400,37 @@ class FrontendPageController extends Controller
     public function scanQr()
     {
         return view('scan-qr');
+    }
+
+    public function scanQrLookup(Request $request)
+    {
+        $validated = $request->validate([
+            'qr_text' => 'required|string|max:255',
+        ]);
+
+        $query = trim($validated['qr_text']);
+        $asset = Asset::where('kode_aset', $query)
+            ->orWhere('serial_number', $query)
+            ->orWhere('id', $query)
+            ->first();
+
+        if (! $asset) {
+            return response()->json(['found' => false, 'message' => 'Aset tidak ditemukan.'], 404);
+        }
+
+        return response()->json([
+            'found' => true,
+            'asset' => [
+                'id' => $asset->id,
+                'kode_aset' => $asset->kode_aset,
+                'nama_aset' => $asset->nama_aset,
+                'kondisi' => $asset->kondisi,
+                'lokasi' => $asset->lokasi,
+                'pic' => $asset->pic_name ?: '-',
+                'jenis' => ucfirst($asset->jenis),
+                'detail_url' => route('frontend.assets.show', $asset),
+            ],
+        ]);
     }
 
     public function dashboardManagement()

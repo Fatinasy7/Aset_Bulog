@@ -3,6 +3,10 @@
 @section('title', 'Pengaturan - Lumina Asset')
 @section('topbar-meta', 'System configuration dan manajemen pengguna')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/settings-index.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>

@@ -3,6 +3,10 @@
 @section('title', 'Design System - Frontend BULOG')
 @section('topbar-meta', 'Pondasi visual: warna, komponen, dan layout dasar')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ Vite::asset('resources/css/design-system.css') }}">
+@endpush
+
 @section('content')
 <section class="page-header">
     <div>
