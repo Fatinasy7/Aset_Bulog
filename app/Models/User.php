@@ -6,7 +6,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -23,32 +22,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'phone',
         'telepon',
     ];
-
-    public function getPhoneAttribute(): ?string
-    {
-        return $this->attributes['phone'] ?? $this->attributes['telepon'] ?? null;
-    }
-
-    public function setPhoneAttribute($value): void
-    {
-        if (Schema::hasColumn($this->getTable(), 'phone')) {
-            $this->attributes['phone'] = $value;
-        } else {
-            $this->attributes['telepon'] = $value;
-        }
-    }
-
-    public function setTeleponAttribute($value): void
-    {
-        if (Schema::hasColumn($this->getTable(), 'telepon')) {
-            $this->attributes['telepon'] = $value;
-        } else {
-            $this->attributes['phone'] = $value;
-        }
-    }
 
     /**
      * The attributes that should be hidden for serialization.

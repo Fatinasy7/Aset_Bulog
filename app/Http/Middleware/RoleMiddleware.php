@@ -7,16 +7,23 @@ use Illuminate\Http\Request;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string ...$roles)
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @param  string  ...$roles
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, ...$roles)
     {
         $user = $request->user();
 
-        if (! $user) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
-        }
-
-        if (! in_array($user->role, $roles, true)) {
-            return response()->json(['message' => 'Forbidden.'], 403);
+        // Cek jika user tidak ada atau role tidak diizinkan
+        if (!$user || !in_array($user->role, $roles)) {
+            return response()->json([
+                'message' => 'Unauthorized. Role tidak sesuai.'
+            ], 403);
         }
 
         return $next($request);

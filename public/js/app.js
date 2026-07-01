@@ -6,6 +6,7 @@
 // Global Variables
 let assets = [];
 let users = [];
+let pics = [];
 let notifications = [];
 let currentUser = null;
 let currentPage = 'dashboard';
@@ -15,16 +16,57 @@ let kondisiChart = null;
 let lokasiChart = null;
 let locationWatcher = null;
 let currentCoordinates = null;
+let qrScanner = null;
+let qrScannerActive = false;
+
+function getStoredApiToken() {
+    const token = localStorage.getItem('apiToken');
+    if (!token || token === 'null' || token === 'undefined') {
+        return null;
+    }
+    return token;
+}
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
+    attachApiDefaults();
     loadUsers();
     loadNotifications();
-    await loadAssets();
     checkLogin();
     initSidebar();
     setupEventListeners();
 });
+
+function attachApiDefaults() {
+    if (!window.axios) return;
+
+    const configuredBaseUrl = window.__API_BASE_URL__ || '';
+    window.axios.defaults.baseURL = configuredBaseUrl || window.location.origin;
+
+    window.axios.defaults.headers.common['Accept'] = 'application/json';
+    window.axios.defaults.headers.common['Content-Type'] = 'application/json';
+    window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+    const token = getStoredApiToken();
+    if (token) {
+        window.axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+        delete window.axios.defaults.headers.common['Authorization'];
+    }
+
+    window.axios.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401) {
+                localStorage.removeItem('apiToken');
+                localStorage.removeItem('currentUser');
+                delete window.axios.defaults.headers.common['Authorization'];
+                window.location.href = '/';
+            }
+            return Promise.reject(error);
+        }
+    );
+}
 
 // Load Users from LocalStorage
 function loadUsers() {
@@ -47,16 +89,25 @@ function saveUsers() {
 }
 
 // Check Login Status
-function checkLogin() {
-    if (window.auth?.isAuthenticated && window.auth?.getCurrentUser) {
-        const storedUser = window.auth.getCurrentUser();
-        if (window.auth.isAuthenticated() && storedUser) {
-            currentUser = storedUser;
+async function checkLogin() {
+    const storedUser = localStorage.getItem('currentUser');
+    const apiToken = getStoredApiToken();
+
+    if (storedUser && apiToken) {
+        currentUser = JSON.parse(storedUser);
+        attachApiDefaults();
+        try {
+            await loadProfile();
+            await loadAssets();
             showMainApp();
             return;
+        } catch (error) {
+            console.warn('Autentikasi gagal saat memeriksa profil atau aset:', error);
         }
     }
 
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('apiToken');
     showLoginPage();
 }
 
@@ -72,8 +123,8 @@ function showMainApp() {
     document.getElementById('mainApp').classList.remove('d-none');
     
     // Update user info
-    document.getElementById('userName').textContent = currentUser.username;
-    document.getElementById('userRoleDisplay').textContent = currentUser.role === 'admin' ? 'Administrator' : 'PIC';
+    document.getElementById('userName').textContent = currentUser.username || currentUser.name || 'User';
+    document.getElementById('userRoleDisplay').textContent = currentUser.role === 'admin' ? 'Administrator' : currentUser.role === 'pic' ? 'PIC' : 'Manajemen';
     
     // Apply role-based access
     applyRoleAccess();
@@ -91,13 +142,135 @@ function applyRoleAccess() {
     const adminOnlyElements = document.querySelectorAll('.admin-only');
     const picOnlyElements = document.querySelectorAll('.pic-only');
 
-    if (currentUser.role === 'admin') {
+    if (currentUser?.role === 'admin') {
         adminOnlyElements.forEach(el => el.classList.remove('d-none'));
         picOnlyElements.forEach(el => el.classList.add('d-none'));
-    } else {
+    } else if (currentUser?.role === 'pic') {
         adminOnlyElements.forEach(el => el.classList.add('d-none'));
         picOnlyElements.forEach(el => el.classList.remove('d-none'));
+    } else {
+        adminOnlyElements.forEach(el => el.classList.add('d-none'));
+        picOnlyElements.forEach(el => el.classList.add('d-none'));
     }
+}
+
+async function loadProfile() {
+    if (!localStorage.getItem('apiToken')) return;
+
+    try {
+        const response = await window.axios.get('/api/user');
+        const payload = response.data?.data || response.data;
+        const user = {
+            ...payload,
+            username: payload.name,
+            role: payload.role === 'admin_it' ? 'admin' : payload.role === 'user_pic' ? 'pic' : payload.role === 'manajemen' ? 'manager' : payload.role
+        };
+
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+    } catch (error) {
+        console.warn('Profile fetch failed:', error);
+    }
+}
+
+async function login(email, password) {
+    try {
+        const response = await window.axios.post('/api/auth/login', { email, password });
+        const payload = response.data;
+        console.log('Respon server (login):', payload);
+
+        const authToken = payload.auth_token || payload.token || payload.access_token;
+        const user = {
+            ...payload.user,
+            username: payload.user.name,
+            role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
+        };
+
+        if (!authToken) {
+            throw new Error('Token autentikasi tidak ditemukan dalam response login.');
+        }
+
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('apiToken', authToken);
+        if (window.axios) {
+            window.axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+        }
+        console.log('Login sukses, token disimpan:', authToken);
+        attachApiDefaults();
+        await loadProfile();
+        await loadAssets();
+        await loadNotifications();
+        showMainApp();
+        showToast(payload.message || 'Login berhasil!', 'success');
+    } catch (error) {
+        console.error('Login gagal:', error.response?.data || error);
+        const message = error.response?.data?.message || 'Login gagal. Cek kredensial Anda.';
+        showToast(message, 'error');
+    }
+}
+
+async function register(name, email, password, passwordConfirmation, role) {
+    try {
+        const response = await window.axios.post('/api/auth/register', {
+            name,
+            email,
+            password,
+            password_confirmation: passwordConfirmation,
+            role
+        });
+        const payload = response.data;
+        console.log('Respon server (register):', payload);
+        const authToken = payload.auth_token || payload.token || payload.access_token;
+        const user = {
+            ...payload.user,
+            username: payload.user.name,
+            role: payload.user.role === 'admin_it' ? 'admin' : payload.user.role === 'user_pic' ? 'pic' : payload.user.role === 'manajemen' ? 'manager' : payload.user.role
+        };
+
+        if (!authToken) {
+            throw new Error('Token autentikasi tidak ditemukan dalam response registrasi.');
+        }
+
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('apiToken', authToken);
+        if (window.axios) {
+            window.axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+        }
+        console.log('Registrasi sukses, token disimpan:', authToken);
+        attachApiDefaults();
+        await loadProfile();
+        await loadAssets();
+        showMainApp();
+        showToast(payload.message || 'Registrasi berhasil!', 'success');
+    } catch (error) {
+        console.error('Registrasi gagal:', error.response?.data || error);
+        const message = error.response?.data?.message || 'Registrasi gagal.';
+        const errors = error.response?.data?.errors;
+        const validationMessage = errors ? Object.values(errors).flat().join(' ') : message;
+        showToast(validationMessage, 'error');
+    }
+}
+
+// Logout Function
+async function logout() {
+    try {
+        if (localStorage.getItem('apiToken')) {
+            await window.axios.post('/api/auth/logout');
+        }
+    } catch (error) {
+        console.warn('Logout API error:', error);
+    }
+
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('apiToken');
+    delete window.axios.defaults.headers.common['Authorization'];
+    if (locationWatcher) {
+        navigator.geolocation.clearWatch(locationWatcher);
+    }
+    showLoginPage();
 }
 
 // Initialize Location Tracking
@@ -174,6 +347,67 @@ function initSidebar() {
 
 // Setup Event Listeners
 function setupEventListeners() {
+    const scanPageLink = document.querySelector('.nav-link[data-page="scan"]');
+    if (scanPageLink) {
+        scanPageLink.addEventListener('click', function() {
+            setTimeout(initQrScanner, 300);
+        });
+    }
+
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            login(email, password);
+        });
+    }
+
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirmation = document.getElementById('registerPasswordConfirmation').value;
+            const role = document.getElementById('registerRole').value;
+            register(name, email, password, passwordConfirmation, role);
+        });
+    }
+
+    const picForm = document.getElementById('picForm');
+    if (picForm) {
+        picForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('picId').value;
+            const payload = {
+                name: document.getElementById('picNama').value.trim(),
+                email: document.getElementById('picEmail').value.trim(),
+                role: document.getElementById('picJabatan').value,
+                telepon: document.getElementById('picTelepon').value.trim(),
+                password: document.getElementById('picPassword').value,
+            };
+
+            try {
+                if (id) {
+                    await window.axios.put(`/api/pics/${id}`, payload);
+                } else {
+                    await window.axios.post('/api/pics', payload);
+                }
+                picForm.reset();
+                document.getElementById('picId').value = '';
+                await loadPics();
+                showToast('PIC berhasil disimpan.', 'success');
+            } catch (error) {
+                const message = error.response?.data?.message || 'Gagal menyimpan PIC.';
+                showToast(message, 'error');
+            }
+        });
+    }
+    
     // Search input
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -198,11 +432,6 @@ function showPage(page) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.add('d-none'));
     
-    // Guard page access
-    if (window.auth?.guardRoute && !window.auth.guardRoute()) {
-        return;
-    }
-
     // Show selected page
     const pageElement = document.getElementById(page + 'Page');
     if (pageElement) {
@@ -224,11 +453,11 @@ function showPage(page) {
         case 'notifikasi':
             renderNotifications();
             break;
-        case 'scan':
-            initScanPage();
-            break;
         case 'laporan':
             renderLaporan();
+            break;
+        case 'pics':
+            loadPics();
             break;
         case 'pengaturan':
             renderUserTable();
@@ -236,97 +465,36 @@ function showPage(page) {
     }
 }
 
-function initScanPage() {
-    const resultContainer = document.getElementById('scanResult');
-    resultContainer.innerHTML = '<p class="text-muted">Scan QR Code untuk melihat detail aset</p>';
-
-    if (window.qrScanner?.startQrScanner) {
-        window.qrScanner.startQrScanner('qr-reader', onScanSuccess, onScanError, {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-        });
-    } else {
-        resultContainer.innerHTML = '<div class="alert alert-warning">QR scanner tidak tersedia. Pastikan library HTML5-QRCode dimuat.</div>';
-    }
-}
-
-function stopScanPage() {
-    if (window.qrScanner?.stopQrScanner) {
-        window.qrScanner.stopQrScanner();
-    }
-}
-
-function onScanSuccess(decodedText, coords) {
-    const assetId = parseScannedCode(decodedText);
-    if (!assetId) {
-        onScanError(new Error('Kode QR tidak valid'));
-        return;
-    }
-
-    if (window.assetsAPI?.scanAsset) {
-        window.assetsAPI.scanAsset(assetId, coords?.latitude, coords?.longitude)
-            .then(asset => {
-                if (asset) {
-                    displayScanResult(asset);
-                } else {
-                    onScanError(new Error('Aset tidak ditemukan'));
-                }
-            })
-            .catch(err => {
-                console.warn('scanAsset API gagal', err);
-                onScanError(err);
-            });
-    } else {
-        const asset = assets.find(a => a.kodeAset === assetId || a.id === assetId);
-        if (asset) {
-            displayScanResult(asset);
-        } else {
-            onScanError(new Error('Aset tidak ditemukan'));
-        }
-    }
-}
-
-function onScanError(error) {
-    document.getElementById('scanResult').innerHTML = `
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i> ${error.message || 'Gagal memindai QR Code.'}
-        </div>
-    `;
-}
-
-function parseScannedCode(decodedText) {
-    try {
-        const payload = JSON.parse(decodedText);
-        return payload.id || payload.kode || payload.code || payload.asset_id || payload.assetId || null;
-    } catch (e) {
-        return decodedText;
-    }
-}
-
-
 // Update Dashboard
 function updateDashboard() {
-    const laptops = assets.filter(a => a.jenis === 'laptop');
-    const printers = assets.filter(a => a.jenis === 'printer');
-    const perluPerbaikan = assets.filter(a => a.kondisi === 'Rusak Ringan' || a.kondisi === 'Rusak Berat' || a.kondisi === 'Dalam Perbaikan');
-    
-    document.getElementById('totalAset').textContent = assets.length;
-    document.getElementById('totalLaptop').textContent = laptops.length;
-    document.getElementById('totalPrinter').textContent = printers.length;
-    document.getElementById('perluPerbaikan').textContent = perluPerbaikan.length;
-    
-    // Update charts
+    const laptops = assets.filter(a => (a.jenis || '').toLowerCase() === 'laptop');
+    const printers = assets.filter(a => (a.jenis || '').toLowerCase() === 'printer');
+    const perluPerbaikan = assets.filter(a => {
+        const kondisi = (a.kondisi || '').toLowerCase();
+        return kondisi.includes('rusak') || kondisi.includes('perbaikan');
+    });
+
+    const totalAsetEl = document.getElementById('totalAset');
+    const totalLaptopEl = document.getElementById('totalLaptop');
+    const totalPrinterEl = document.getElementById('totalPrinter');
+    const perluPerbaikanEl = document.getElementById('perluPerbaikan');
+
+    if (totalAsetEl) totalAsetEl.textContent = assets.length;
+    if (totalLaptopEl) totalLaptopEl.textContent = laptops.length;
+    if (totalPrinterEl) totalPrinterEl.textContent = printers.length;
+    if (perluPerbaikanEl) perluPerbaikanEl.textContent = perluPerbaikan.length;
+
     updateCharts();
 }
 
 // Update Charts
 function updateCharts() {
-    // Kondisi Chart
     const kondisiCounts = {};
     assets.forEach(a => {
-        kondisiCounts[a.kondisi] = (kondisiCounts[a.kondisi] || 0) + 1;
+        const kondisi = (a.kondisi || 'Tidak Diketahui').toString();
+        kondisiCounts[kondisi] = (kondisiCounts[kondisi] || 0) + 1;
     });
-    
+
     const kondisiCtx = document.getElementById('kondisiChart');
     if (kondisiCtx) {
         if (kondisiChart) kondisiChart.destroy();
@@ -336,7 +504,7 @@ function updateCharts() {
                 labels: Object.keys(kondisiCounts),
                 datasets: [{
                     data: Object.values(kondisiCounts),
-                    backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#9b59b6']
+                    backgroundColor: ['#27ae60', '#f39c12', '#e74c3c', '#9b59b6', '#3498db']
                 }]
             },
             options: {
@@ -345,13 +513,13 @@ function updateCharts() {
             }
         });
     }
-    
-    // Lokasi Chart
+
     const lokasiCounts = {};
     assets.forEach(a => {
-        lokasiCounts[a.lokasi] = (lokasiCounts[a.lokasi] || 0) + 1;
+        const lokasi = (a.lokasi || 'Tidak Diketahui').toString();
+        lokasiCounts[lokasi] = (lokasiCounts[lokasi] || 0) + 1;
     });
-    
+
     const lokasiCtx = document.getElementById('lokasiChart');
     if (lokasiCtx) {
         if (lokasiChart) lokasiChart.destroy();
@@ -384,6 +552,15 @@ function renderTable(type) {
     const tbody = document.querySelector('#' + type + 'Table tbody');
     
     if (tbody) {
+        if (!filteredAssets.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">Belum ada data ${type}.</td>
+                </tr>
+            `;
+            return;
+        }
+
         tbody.innerHTML = filteredAssets.map((asset, index) => `
             <tr>
                 <td>${index + 1}</td>
@@ -417,17 +594,26 @@ function renderTable(type) {
 function renderLaporan() {
     const tbody = document.querySelector('#laporanTable tbody');
     if (tbody) {
+        if (!assets.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted">Belum ada data aset.</td>
+                </tr>
+            `;
+            return;
+        }
+
         tbody.innerHTML = assets.map((asset, index) => `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${asset.kodeAset}</strong></td>
-                <td>${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'}</td>
-                <td>${asset.namaAset}</td>
-                <td>${asset.merkType}</td>
+                <td><strong>${asset.kodeAset || '-'}</strong></td>
+                <td>${(asset.jenis || '').toLowerCase() === 'laptop' ? 'Laptop' : 'Printer'}</td>
+                <td>${asset.namaAset || '-'}</td>
+                <td>${asset.merkType || '-'}</td>
                 <td>${asset.serialNumber || '-'}</td>
-                <td>${asset.lokasi}</td>
+                <td>${asset.lokasi || '-'}</td>
                 <td>${asset.koordinat ? `<small>${asset.koordinat.lat.toFixed(4)}, ${asset.koordinat.lng.toFixed(4)}</small>` : '-'}</td>
-                <td><span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span></td>
+                <td><span class="badge badge-${(asset.kondisi || 'baik').toLowerCase().replace(' ', '-')}">${asset.kondisi || '-'}</span></td>
                 <td>${asset.tglPerolehan ? formatDate(asset.tglPerolehan) : '-'}</td>
             </tr>
         `).join('');
@@ -566,47 +752,49 @@ async function saveAsset() {
         form.reportValidity();
         return;
     }
-    
+
     const assetType = document.getElementById('assetType').value;
-    let assetData = {
-        id: editingId || generateId(),
-        kodeAset: document.getElementById('kodeAset').value,
-        namaAset: document.getElementById('namaAset').value,
-        merkType: document.getElementById('merkType').value,
-        serialNumber: document.getElementById('serialNumber').value,
+    const payload = {
+        kode_aset: document.getElementById('kodeAset').value,
+        nama_aset: document.getElementById('namaAset').value,
+        merk_type: document.getElementById('merkType').value,
+        serial_number: document.getElementById('serialNumber').value,
         lokasi: document.getElementById('lokasi').value,
         kondisi: document.getElementById('kondisi').value,
-        tglPerolehan: document.getElementById('tglPerolehan').value,
+        tgl_perolehan: document.getElementById('tglPerolehan').value,
         harga: parseInt(document.getElementById('harga').value) || 0,
         keterangan: document.getElementById('keterangan').value,
         jenis: assetType,
-        koordinat: currentCoordinates ? { ...currentCoordinates } : null,
-        updatedAt: new Date().toISOString()
+        koordinat_lat: currentCoordinates?.lat ?? null,
+        koordinat_lng: currentCoordinates?.lng ?? null,
     };
-    
+
     try {
-        if (editingId && window.assetsAPI?.updateAsset) {
-            assetData = await window.assetsAPI.updateAsset(editingId, assetData) || assetData;
-        } else if (!editingId && window.assetsAPI?.createAsset) {
-            assetData = await window.assetsAPI.createAsset(assetData) || assetData;
+        let response;
+        if (editingId) {
+            response = await window.axios.put(`/api/assets/${editingId}`, payload);
+        } else {
+            response = await window.axios.post('/api/assets', payload);
         }
+
+        const savedAsset = response.data?.data || response.data;
+        const normalized = normalizeAsset(savedAsset);
+
+        if (editingId) {
+            assets = assets.map(asset => asset.id === editingId ? normalized : asset);
+        } else {
+            assets.unshift(normalized);
+        }
+
+        saveAssets();
+        bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
+        showToast('Data aset berhasil disimpan!', 'success');
+        showPage(assetType);
+        await loadAssets();
     } catch (error) {
-        console.warn('API saveAsset gagal, menggunakan local storage', error);
+        const message = error.response?.data?.message || 'Gagal menyimpan aset.';
+        showToast(message, 'error');
     }
-    
-    if (editingId) {
-        const index = assets.findIndex(a => a.id === editingId);
-        if (index !== -1) assets[index] = { ...assets[index], ...assetData };
-    } else {
-        assetData.createdAt = assetData.createdAt || new Date().toISOString();
-        assets.push(assetData);
-    }
-    
-    saveAssets();
-    handleAssetNotification(assetData, !editingId);
-    bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
-    showToast('Data aset berhasil disimpan!', 'success');
-    showPage(assetType);
 }
 
 // Generate ID
@@ -684,27 +872,24 @@ function editAsset(id) {
 // Delete Asset
 async function deleteAsset(id) {
     const asset = assets.find(a => a.id === id);
-    if (confirm('Apakah Anda yakin ingin menghapus aset ini?')) {
-        try {
-            if (window.assetsAPI?.deleteAsset) {
-                await window.assetsAPI.deleteAsset(id);
-            }
-        } catch (error) {
-            console.warn('API deleteAsset gagal, hapus lokal tetap dilakukan', error);
-        }
+    if (!confirm('Apakah Anda yakin ingin menghapus aset ini?')) return;
 
+    try {
+        await window.axios.delete(`/api/assets/${id}`);
         assets = assets.filter(a => a.id !== id);
         saveAssets();
         if (currentUser && currentUser.role === 'pic' && asset) {
             addNotification(
                 'Aset dihapus',
-                `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`, 
+                `Aset ${asset.kodeAset} (${asset.namaAset}) telah dihapus.`,
                 'warning',
                 'pic'
             );
         }
         showToast('Aset berhasil dihapus!', 'success');
         showPage(currentPage);
+    } catch (error) {
+        showToast('Gagal menghapus aset.', 'error');
     }
 }
 
@@ -760,6 +945,88 @@ function printQRCode() {
     printWindow.document.close();
 }
 
+async function initQrScanner() {
+    const container = document.getElementById('qr-reader');
+    if (!container) return;
+
+    if (qrScannerActive) return;
+
+    if (typeof window.Html5Qrcode === 'undefined') {
+        container.innerHTML = '<div class="alert alert-warning">Library scanner tidak tersedia di browser ini.</div>';
+        return;
+    }
+
+    container.innerHTML = '<div class="text-muted">Memulai kamera...</div>';
+    qrScanner = new window.Html5Qrcode('qr-reader');
+    qrScannerActive = true;
+
+    try {
+        await qrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            async (decodedText) => {
+                const normalized = decodedText.trim();
+                if (!normalized) return;
+
+                try {
+                    await qrScanner.stop();
+                    qrScannerActive = false;
+                } catch (error) {
+                    console.warn('Tidak bisa menghentikan scanner:', error);
+                }
+
+                await processScannedCode(normalized);
+            },
+            () => {}
+        );
+    } catch (error) {
+        console.warn('Gagal menginisialisasi scanner:', error);
+        container.innerHTML = '<div class="alert alert-warning">Kamera tidak tersedia atau izin diblokir. Anda tetap bisa memakai pencarian manual.</div>';
+        qrScannerActive = false;
+    }
+}
+
+async function processScannedCode(code) {
+    const normalizedCode = code.trim();
+    if (!normalizedCode) {
+        showToast('Kode QR tidak valid.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await window.axios.get('/api/assets');
+        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        const asset = payload.find(item => {
+            const candidate = item.kode_aset || item.kodeAset || '';
+            const idCandidate = item.id?.toString();
+            return candidate.toString() === normalizedCode || idCandidate === normalizedCode;
+        });
+
+        if (!asset) {
+            throw new Error('Aset tidak ditemukan');
+        }
+
+        const normalized = normalizeAsset(asset);
+        const scanResult = await sendScanData(normalized.id);
+        const scannedAsset = scanResult?.asset ? normalizeAsset(scanResult.asset) : normalized;
+
+        if (scannedAsset?.id) {
+            assets = assets.map(item => item.id === scannedAsset.id ? scannedAsset : item);
+            saveAssets();
+        }
+
+        displayScanResult(scannedAsset);
+        showToast(scanResult?.message || 'Scan berhasil.', 'success');
+    } catch (error) {
+        console.warn('Scan process failed:', error);
+        document.getElementById('scanResult').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${normalizedCode}" tidak ditemukan atau server tidak merespons.
+            </div>
+        `;
+    }
+}
+
 // Manual Scan
 async function manualScan() {
     const code = document.getElementById('manualCodeInput').value.trim();
@@ -768,43 +1035,92 @@ async function manualScan() {
         return;
     }
 
-    let asset = null;
-    if (window.assetsAPI?.getAsset) {
-        try {
-            asset = await window.assetsAPI.getAsset(code);
-        } catch (e) {
-            console.warn('API manualScan gagal', e);
+    try {
+        const response = await window.axios.get('/api/assets');
+        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        const asset = payload.find(item => {
+            const candidate = item.kode_aset || item.kodeAset || '';
+            const idCandidate = item.id?.toString();
+            return candidate.toString() === code || idCandidate === code;
+        });
+
+        if (asset) {
+            const normalized = normalizeAsset(asset);
+            const scanResult = await sendScanData(normalized.id);
+            const scannedAsset = scanResult?.asset ? normalizeAsset(scanResult.asset) : normalized;
+
+            if (scannedAsset?.id) {
+                assets = assets.map(item => item.id === scannedAsset.id ? scannedAsset : item);
+                saveAssets();
+            }
+
+            displayScanResult(scannedAsset);
+            showToast(scanResult?.message || 'Scan berhasil.', 'success');
+        } else {
+            throw new Error('Aset tidak ditemukan');
         }
-    }
-
-    if (!asset) {
-        asset = assets.find(a => a.kodeAset === code || a.id === code);
-    }
-
-    if (asset) {
-        displayScanResult(asset);
-    } else {
+    } catch (error) {
+        console.warn('Manual scan failed:', error);
         document.getElementById('scanResult').innerHTML = `
             <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${code}" tidak ditemukan!
+                <i class="fas fa-exclamation-triangle"></i> Aset dengan kode "${code}" tidak ditemukan atau server tidak merespons.
             </div>
         `;
     }
 }
 
+async function sendScanData(assetId) {
+    const payload = {
+        latitude: currentCoordinates?.lat ?? null,
+        longitude: currentCoordinates?.lng ?? null,
+        scanned_by: currentUser?.name || currentUser?.username || 'anonymous',
+        scanned_at: new Date().toISOString(),
+    };
+
+    try {
+        const response = await window.axios.post(`/api/assets/${assetId}/scan`, payload);
+        return response.data;
+    } catch (error) {
+        console.warn('Scan API error:', error);
+        showToast('Pencatatan scan gagal, tetapi data aset tetap ditampilkan.', 'warning');
+        return null;
+    }
+}
+
+function stopQrScanner() {
+    if (!qrScanner || !qrScannerActive) return;
+
+    qrScanner.stop().then(() => {
+        qrScannerActive = false;
+    }).catch(() => {
+        qrScannerActive = false;
+    });
+}
+
 // Display Scan Result
 function displayScanResult(asset) {
     const resultDiv = document.getElementById('scanResult');
+    const assetName = asset.nama_aset || asset.namaAset || 'Aset';
+    const assetCode = asset.kode_aset || asset.kodeAset || '-';
+    const assetMerk = asset.merk_type || asset.merkType || '-';
+    const assetLocation = asset.lokasi || '-';
+    const assetCondition = asset.kondisi || '-';
+    const assetCoordinates = asset.koordinat && asset.koordinat.lat != null && asset.koordinat.lng != null
+        ? `${Number(asset.koordinat.lat).toFixed(6)}, ${Number(asset.koordinat.lng).toFixed(6)}`
+        : (asset.koordinat_lat != null && asset.koordinat_lng != null
+            ? `${Number(asset.koordinat_lat).toFixed(6)}, ${Number(asset.koordinat_lng).toFixed(6)}`
+            : '-');
+
     resultDiv.innerHTML = `
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">${asset.namaAset}</h5>
+                <h5 class="card-title">${assetName}</h5>
                 <p class="card-text">
-                    <strong>Kode:</strong> ${asset.kodeAset}<br>
-                    <strong>Merk/Type:</strong> ${asset.merkType}<br>
-                    <strong>Lokasi:</strong> ${asset.lokasi}<br>
-                    <strong>Koordinat:</strong> ${asset.koordinat ? `${asset.koordinat.lat.toFixed(6)}, ${asset.koordinat.lng.toFixed(6)}` : '-'}<br>
-                    <strong>Kondisi:</strong> <span class="badge badge-${asset.kondisi.toLowerCase().replace(' ', '-')}">${asset.kondisi}</span>
+                    <strong>Kode:</strong> ${assetCode}<br>
+                    <strong>Merk/Type:</strong> ${assetMerk}<br>
+                    <strong>Lokasi:</strong> ${assetLocation}<br>
+                    <strong>Koordinat:</strong> ${assetCoordinates}<br>
+                    <strong>Kondisi:</strong> <span class="badge badge-${assetCondition.toLowerCase().replace(' ', '-')}">${assetCondition}</span>
                 </p>
                 <button class="btn btn-primary btn-sm" onclick="viewAsset('${asset.id}')">
                     <i class="fas fa-eye"></i> Lihat Detail
@@ -815,20 +1131,34 @@ function displayScanResult(asset) {
 }
 
 // Export Excel
-function exportExcel() {
-    let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
-    
-    assets.forEach((asset, index) => {
-        const koordinat = asset.koordinat ? `${asset.koordinat.lat}, ${asset.koordinat.lng}` : '';
-        csv += `${index + 1},${asset.kodeAset},${asset.jenis === 'laptop' ? 'Laptop' : 'Printer'},${asset.namaAset},"${asset.merkType}",${asset.serialNumber || ''},${asset.lokasi},${koordinat},${asset.kondisi},${asset.tglPerolehan || ''},${asset.harga || 0}\n`;
-    });
-    
-    downloadFile(csv, 'laporan_aset.csv', 'text/csv');
+async function exportExcel() {
+    try {
+        const response = await window.axios.get('/api/reports/assets', { params: { format: 'excel' } });
+        const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        const reportData = data.length ? data : assets;
+        let csv = 'No,Kode Aset,Jenis,Nama Aset,Merk/Type,Serial Number,Lokasi,Koordinat,Kondisi,Tanggal Perolehan,Harga\n';
+
+        reportData.forEach((asset, index) => {
+            const normalized = normalizeAsset(asset);
+            const koordinat = normalized.koordinat ? `${normalized.koordinat.lat}, ${normalized.koordinat.lng}` : '';
+            csv += `${index + 1},${normalized.kodeAset || ''},${(normalized.jenis || '').toLowerCase() === 'laptop' ? 'Laptop' : 'Printer'},${normalized.namaAset || ''},"${normalized.merkType || ''}",${normalized.serialNumber || ''},${normalized.lokasi || ''},${koordinat},${normalized.kondisi || ''},${normalized.tglPerolehan || ''},${normalized.harga || 0}\n`;
+        });
+
+        downloadFile(csv, 'laporan_aset.csv', 'text/csv');
+        showToast('Laporan Excel diunduh.', 'success');
+    } catch (error) {
+        showToast('Gagal mengambil data laporan dari server.', 'error');
+    }
 }
 
 // Export PDF
-function exportPDF() {
-    showToast('Fitur Export PDF dalam pengembangan!', 'info');
+async function exportPDF() {
+    try {
+        await window.axios.get('/api/reports/assets', { params: { format: 'pdf' } });
+        showToast('Export PDF sedang disiapkan.', 'info');
+    } catch (error) {
+        showToast('Gagal mengambil data laporan PDF.', 'error');
+    }
 }
 
 // Download File
@@ -954,12 +1284,31 @@ function createToastContainer() {
     return container;
 }
 
-function loadNotifications() {
+async function loadNotifications() {
     const stored = localStorage.getItem('notifications');
     if (stored) {
         notifications = JSON.parse(stored);
     } else {
         notifications = [];
+    }
+
+    if (!localStorage.getItem('apiToken')) return;
+
+    try {
+        const response = await window.axios.get('/api/notifications');
+        const payload = response.data?.data || [];
+        notifications = payload.map((item) => ({
+            id: item.id,
+            title: item.title || 'Notifikasi',
+            message: item.message || '',
+            type: 'info',
+            role: 'all',
+            read: Boolean(item.read),
+            createdAt: item.createdAt || new Date().toISOString(),
+        }));
+        saveNotifications();
+    } catch (error) {
+        console.warn('Notifications fetch failed:', error);
     }
 }
 
@@ -1025,7 +1374,13 @@ function handleAssetNotification(asset, isNew = false) {
     }
 }
 
-function markNotificationRead(id) {
+async function markNotificationRead(id) {
+    try {
+        await window.axios.patch(`/api/notifications/${id}/read`);
+    } catch (error) {
+        console.warn('Mark read failed:', error);
+    }
+
     notifications = notifications.map(n => n.id === id ? { ...n, read: true } : n);
     saveNotifications();
     renderNotifications();
@@ -1123,89 +1478,143 @@ function initDefaultNotifications() {
     });
 }
 
-// Load Assets from LocalStorage or API
-async function loadAssets() {
-    if (window.assetsAPI?.fetchAssets) {
-        try {
-            assets = await window.assetsAPI.fetchAssets();
-        } catch (e) {
-            console.warn('Gagal fetch assets dari API, fallback localStorage', e);
-        }
+function normalizePicRoleForForm(role) {
+    if (!role) return 'user_pic';
+    const normalized = role.toLowerCase();
+    if (normalized === 'pic' || normalized === 'user_pic') return 'user_pic';
+    if (normalized === 'admin' || normalized === 'admin_it') return 'admin_it';
+    if (normalized === 'manajemen' || normalized === 'manager') return 'manajemen';
+    return 'user_pic';
+}
+
+async function loadPics() {
+    try {
+        const response = await window.axios.get('/api/pics');
+        const payload = response.data;
+        pics = Array.isArray(payload) ? payload : (payload?.data || []);
+        pics = pics.map((pic) => ({
+            id: pic.id,
+            nama: pic.name || pic.nama || '',
+            email: pic.email || '',
+            jabatan: pic.role || pic.jabatan || 'user_pic',
+            telepon: pic.telepon || '',
+        }));
+        renderPicsPage();
+    } catch (error) {
+        console.warn('PIC fetch failed:', error);
+        pics = [];
+        renderPicsPage();
+    }
+}
+
+function renderPicsPage() {
+    const tbody = document.querySelector('#picsTable tbody');
+    if (!tbody) return;
+
+    if (!pics.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">Belum ada data PIC.</td>
+            </tr>
+        `;
+        return;
     }
 
-    if (!assets || assets.length === 0) {
-        const stored = localStorage.getItem('asetKantor');
-        if (stored) {
-            assets = JSON.parse(stored);
-        } else {
-            assets = [
-                {
-                    id: 'LPT001',
-                    kodeAset: 'LPT-001',
-                    namaAset: 'MacBook Pro 14"',
-                    merkType: 'Apple MacBook Pro M2',
-                    serialNumber: 'C02XG0KDJGH5',
-                    lokasi: 'Ruang Direksi',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2024-01-15',
-                    harga: 25000000,
-                    keterangan: 'Untuk Direktur Utama',
-                    jenis: 'laptop',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'LPT002',
-                    kodeAset: 'LPT-002',
-                    namaAset: 'ThinkPad X1 Carbon',
-                    merkType: 'Lenovo ThinkPad X1 Carbon Gen 11',
-                    serialNumber: 'PF2K4R8J',
-                    lokasi: 'Ruang IT',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2024-02-20',
-                    harga: 18000000,
-                    keterangan: 'Untuk Staff IT',
-                    jenis: 'laptop',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PRT001',
-                    kodeAset: 'PRT-001',
-                    namaAset: 'LaserJet Pro',
-                    merkType: 'HP LaserJet Pro M404n',
-                    serialNumber: 'PHC2345678',
-                    lokasi: 'Ruang Rapat',
-                    kondisi: 'Baik',
-                    tglPerolehan: '2023-06-10',
-                    harga: 4500000,
-                    keterangan: 'Ruang Rapat Lantai 2',
-                    jenis: 'printer',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'PRT002',
-                    kodeAset: 'PRT-002',
-                    namaAset: 'OfficeJet Pro',
-                    merkType: 'HP OfficeJet Pro 9015e',
-                    serialNumber: 'TH53R12345',
-                    lokasi: 'Ruang HRD',
-                    kondisi: 'Rusak Ringan',
-                    tglPerolehan: '2023-08-15',
-                    harga: 5500000,
-                    keterangan: 'Perlu penggantian cartridge',
-                    jenis: 'printer',
-                    koordinat: { lat: -6.200000, lng: 106.816666 },
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            saveAssets();
-        }
+    tbody.innerHTML = pics.map((pic) => `
+        <tr>
+            <td>${pic.nama || '-'}</td>
+            <td>${pic.email || '-'}</td>
+            <td>${pic.jabatan || '-'}</td>
+            <td>${pic.telepon || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editPic('${pic.id}')">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePic('${pic.id}')">Hapus</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function editPic(picId) {
+    const pic = pics.find(p => p.id.toString() === picId.toString());
+    if (!pic) return;
+    document.getElementById('picId').value = pic.id;
+    document.getElementById('picNama').value = pic.nama || '';
+    document.getElementById('picEmail').value = pic.email || '';
+    document.getElementById('picJabatan').value = normalizePicRoleForForm(pic.jabatan);
+    document.getElementById('picTelepon').value = pic.telepon || '';
+    document.getElementById('picPassword').value = '';
+}
+
+async function deletePic(id) {
+    if (!confirm('Hapus PIC ini?')) return;
+
+    try {
+        await window.axios.delete(`/api/pics/${id}`);
+        await loadPics();
+        showToast('PIC berhasil dihapus.', 'success');
+    } catch (error) {
+        showToast('Gagal menghapus PIC.', 'error');
+    }
+}
+
+function normalizeAsset(asset = {}) {
+    const koordinat = asset.koordinat
+        ? { lat: asset.koordinat.lat, lng: asset.koordinat.lng }
+        : (asset.koordinat_lat != null || asset.koordinat_lng != null)
+            ? { lat: asset.koordinat_lat, lng: asset.koordinat_lng }
+            : null;
+
+    return {
+        ...asset,
+        id: asset.id,
+        kodeAset: asset.kode_aset || asset.kodeAset,
+        namaAset: asset.nama_aset || asset.namaAset,
+        merkType: asset.merk_type || asset.merkType,
+        serialNumber: asset.serial_number || asset.serialNumber,
+        lokasi: asset.lokasi,
+        kondisi: asset.kondisi,
+        tglPerolehan: asset.tgl_perolehan || asset.tglPerolehan,
+        harga: asset.harga,
+        keterangan: asset.keterangan,
+        jenis: asset.jenis,
+        koordinat,
+        createdAt: asset.createdAt || asset.created_at,
+        updatedAt: asset.updatedAt || asset.updated_at,
+    };
+}
+
+// Load Assets from API or fallback
+async function loadAssets() {
+    const stored = localStorage.getItem('asetKantor');
+
+    if (stored && !localStorage.getItem('apiToken')) {
+        assets = JSON.parse(stored);
+        initDefaultNotifications();
+        updateDashboard();
+        return;
+    }
+
+    try {
+        const response = await window.axios.get('/api/assets');
+        const payload = Array.isArray(response.data) ? response.data : response.data?.data || [];
+        assets = payload.map(normalizeAsset);
+        saveAssets();
+    } catch (error) {
+        const fallback = JSON.parse(stored || '[]');
+        assets = fallback.length ? fallback : [];
+        showToast('Gagal memuat data aset dari server. Menampilkan data lokal.', 'warning');
     }
 
     initDefaultNotifications();
     updateDashboard();
+
+    if (currentPage === 'laptop' || currentPage === 'printer') {
+        renderTable(currentPage);
+    } else if (currentPage === 'laporan') {
+        renderLaporan();
+    } else if (currentPage === 'notifikasi') {
+        renderNotifications();
+    }
 }
 
 // Save Assets to LocalStorage
@@ -1221,11 +1630,17 @@ window.editAsset = editAsset;
 window.deleteAsset = deleteAsset;
 window.showQRCode = showQRCode;
 window.printQRCode = printQRCode;
+window.loadPics = loadPics;
+window.editPic = editPic;
+window.deletePic = deletePic;
 window.manualScan = manualScan;
 window.exportExcel = exportExcel;
 window.exportPDF = exportPDF;
 window.filterAssets = filterAssets;
+window.logout = logout;
 window.showUserModal = showUserModal;
 window.saveUser = saveUser;
 window.deleteUser = deleteUser;
 window.updateLocationSettings = updateLocationSettings;
+window.editPic = editPic;
+window.deletePic = deletePic;

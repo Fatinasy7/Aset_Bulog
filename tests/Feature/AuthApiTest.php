@@ -32,4 +32,26 @@ class AuthApiTest extends TestCase
             'user' => ['id', 'name', 'email', 'role'],
         ]);
     }
+
+    public function test_authenticated_user_can_be_fetched_with_bearer_token(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'PIC User',
+            'email' => 'pic@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'user_pic',
+        ]);
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/user');
+
+        $response->assertOk();
+        $response->assertJson([
+            'id' => $user->id,
+            'email' => $user->email,
+            'role' => 'user_pic',
+        ]);
+    }
 }

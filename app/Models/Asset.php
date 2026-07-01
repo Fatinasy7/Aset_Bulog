@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\AssetHistory;
-use App\Models\User;
+use App\Models\Pic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -27,7 +27,6 @@ class Asset extends Model
         'jenis',
         'qr_code_path',
         'pic_id',
-        'pic_name',
     ];
 
     protected $casts = [
@@ -44,6 +43,6 @@ class Asset extends Model
 
     public function pic()
     {
-        return $this->belongsTo(User::class, 'pic_id');
+        return $this->belongsTo(Pic::class, 'pic_id');
     }
 }
