@@ -60,7 +60,6 @@ Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])-
         Route::get('reports/assets', [ReportController::class, 'index']);
         Route::get('reports/assets/download', [ReportController::class, 'downloadPdf']);
         Route::get('reports/assets/export', [ReportController::class, 'reportsDownload']);
-        Route::get('reports/assets/pdf', [ReportController::class, 'reportsPdf']);
     });
 
     Route::middleware('role:admin_it')->group(function () {

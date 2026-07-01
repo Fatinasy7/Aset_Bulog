@@ -26,8 +26,8 @@ Route::get('/app', function () {
 Route::get('/frontend/login', function () {
     return view('auth.login');
 })->name('frontend.login')->middleware('guest');
-Route::post('/frontend/login', [App\Http\Controllers\AuthController::class, 'login'])->name('frontend.login.submit');
-Route::post('/frontend/logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('frontend.logout');
+Route::post('/frontend/login', [App\Http\Controllers\AuthController::class, 'loginWeb'])->name('frontend.login.submit');
+Route::post('/frontend/logout', [App\Http\Controllers\AuthController::class, 'logoutWeb'])->name('frontend.logout');
 Route::view('/frontend/design-system', 'ui.design-system')->name('frontend.design-system');
 
 Route::controller(FrontendPageController::class)->middleware('auth')->group(function () {
@@ -45,8 +45,10 @@ Route::controller(FrontendPageController::class)->middleware('auth')->group(func
     Route::get('/frontend/reports', 'reportsIndex')->name('frontend.reports.index');
     Route::get('/frontend/reports/export', 'reportsExport')->name('frontend.reports.export');
     Route::get('/frontend/reports/download', 'reportsDownload')->name('frontend.reports.download');
-    Route::get('/frontend/reports/pdf', 'reportsPdf')->name('frontend.reports.pdf');
     Route::get('/frontend/settings', 'settings')->name('frontend.settings');
+    Route::post('/frontend/settings/users', 'saveUserSettings')->name('frontend.settings.user.store');
+    Route::put('/frontend/settings/users/{user}', 'updateUserSettings')->name('frontend.settings.user.update');
+    Route::delete('/frontend/settings/users/{user}', 'deleteUserSettings')->name('frontend.settings.user.destroy');
     Route::get('/frontend/audit-trail', 'auditIndex')->name('frontend.audit.index');
     Route::get('/frontend/scan-qr', 'scanQr')->name('frontend.scan-qr');
     Route::post('/frontend/scan-qr/lookup', 'scanQrLookup')->name('frontend.scan-qr.lookup');

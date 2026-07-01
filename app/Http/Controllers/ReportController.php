@@ -45,11 +45,6 @@ class ReportController extends Controller
         return $this->downloadPdf($request);
     }
 
-    public function reportsPdf(Request $request)
-    {
-        return $this->downloadPdf($request);
-    }
-
     protected function buildReportQuery(Request $request)
     {
         $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');

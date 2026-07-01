@@ -127,40 +127,9 @@ class FrontendPageController extends Controller
 
     public function reportsIndex(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $summaryAssets = (clone $query)->get();
         $assets = $query->latest()->paginate(15)->withQueryString();
@@ -183,40 +152,9 @@ class FrontendPageController extends Controller
 
     public function reportsExport(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $assets = $query->latest()->get();
         $filename = 'laporan-aset-' . now()->format('Ymd-His') . '.csv';
@@ -253,40 +191,9 @@ class FrontendPageController extends Controller
 
     public function reportsDownload(Request $request)
     {
+        $filters = $this->validateReportFilters($request);
         $query = Asset::query();
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($sub) use ($search) {
-                $sub->where('kode_aset', 'like', "%{$search}%")
-                    ->orWhere('nama_aset', 'like', "%{$search}%")
-                    ->orWhere('merk_type', 'like', "%{$search}%")
-                    ->orWhere('serial_number', 'like', "%{$search}%");
-            });
-        }
-
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
-        }
-
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
-        }
-
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
-        }
-
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
-        }
-
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
-        }
-
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
-        }
+        $this->applyReportFilters($query, $filters);
 
         $assets = $query->latest()->get();
         $summary = [
@@ -302,11 +209,23 @@ class FrontendPageController extends Controller
         return $pdf->download('laporan-aset-' . now()->format('Ymd-His') . '.pdf');
     }
 
-    public function reportsPdf(Request $request)
+    private function validateReportFilters(Request $request): array
     {
-        $query = Asset::query();
+        return $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'condition' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'max:255'],
+            'pic' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date'],
+        ]);
+    }
 
-        if ($search = $request->input('search')) {
+    private function applyReportFilters($query, array $filters): void
+    {
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
             $query->where(function ($sub) use ($search) {
                 $sub->where('kode_aset', 'like', "%{$search}%")
                     ->orWhere('nama_aset', 'like', "%{$search}%")
@@ -315,40 +234,29 @@ class FrontendPageController extends Controller
             });
         }
 
-        if ($condition = $request->input('condition')) {
-            $query->where('kondisi', $condition);
+        if (! empty($filters['condition'])) {
+            $query->where('kondisi', $filters['condition']);
         }
 
-        if ($location = $request->input('location')) {
-            $query->where('lokasi', $location);
+        if (! empty($filters['location'])) {
+            $query->where('lokasi', $filters['location']);
         }
 
-        if ($type = $request->input('type')) {
-            $query->where('jenis', $type);
+        if (! empty($filters['type'])) {
+            $query->where('jenis', $filters['type']);
         }
 
-        if ($pic = $request->input('pic')) {
-            $query->where('pic_name', $pic);
+        if (! empty($filters['pic'])) {
+            $query->where('pic_name', $filters['pic']);
         }
 
-        if ($from = $request->input('date_from')) {
-            $query->whereDate('tgl_perolehan', '>=', $from);
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('tgl_perolehan', '>=', $filters['date_from']);
         }
 
-        if ($to = $request->input('date_to')) {
-            $query->whereDate('tgl_perolehan', '<=', $to);
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('tgl_perolehan', '<=', $filters['date_to']);
         }
-
-        $assets = $query->latest()->get();
-
-        $summary = [
-            'total_asset_value' => $assets->sum('harga'),
-            'active_assets' => $assets->where('kondisi', 'Baik')->count(),
-            'maintenance_required' => $assets->whereIn('kondisi', ['Rusak Ringan', 'Rusak Berat', 'Dalam Perbaikan'])->count(),
-            'avg_depreciation' => 15.4,
-        ];
-
-        return view('reports.pdf', compact('assets', 'summary'));
     }
 
     public function dataLaptop()
@@ -377,17 +285,72 @@ class FrontendPageController extends Controller
         return view('assets.printers', compact('assets', 'summary'));
     }
 
-    public function settings()
+    public function settings(Request $request)
     {
-        $users = User::where('role', 'pic')->orderBy('name')->get();
+        $users = User::orderBy('name')->paginate(10)->appends($request->query());
         $assets = Asset::latest()->get();
         $summary = [
             'total_assets' => $assets->count(),
             'total_laptops' => $assets->where('jenis', 'laptop')->count(),
             'total_printers' => $assets->where('jenis', 'printer')->count(),
         ];
+        $editUser = null;
 
-        return view('settings.index', compact('users', 'summary'));
+        if ($request->filled('edit')) {
+            $editUser = User::find($request->query('edit'));
+        }
+
+        return view('settings.index', compact('users', 'summary', 'editUser'));
+    }
+
+    public function saveUserSettings(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'in:admin_it,user_pic,manajemen'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('frontend.settings')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        User::create(array_merge($validator->validated(), [
+            'password' => bcrypt('Password123!'),
+        ]));
+
+        return redirect()->route('frontend.settings')->with('success', 'Pengguna baru berhasil ditambahkan.');
+    }
+
+    public function updateUserSettings(Request $request, User $user)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['required', 'in:admin_it,user_pic,manajemen'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('frontend.settings', ['edit' => $user->id])
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $user->fill($validator->validated());
+        $user->save();
+
+        return redirect()->route('frontend.settings', ['edit' => $user->id])->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    public function deleteUserSettings(User $user)
+    {
+        $user->delete();
+
+        return redirect()->route('frontend.settings')->with('success', 'Pengguna berhasil dihapus.');
     }
 
     public function auditIndex()

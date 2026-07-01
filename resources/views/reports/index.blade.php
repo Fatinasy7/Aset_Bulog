@@ -11,7 +11,7 @@
 <section class="page-header">
     <div>
         <h1 class="page-title">Laporan Aset</h1>
-        <p class="page-lead">Filter data aset dan ekspor laporan aktif untuk pemantauan inventaris.</p>
+        <p class="page-lead">Filter data aset dan ekspor laporan berdasarkan kondisi saat ini.</p>
     </div>
     <div class="button-group">
         <a href="{{ route('frontend.reports.export', request()->query()) }}" class="btn-ui btn-primary-ui">Export CSV</a>
@@ -155,12 +155,16 @@
             }
 
             if (format === 'pdf') {
-                window.location.href = `/frontend/reports/pdf?${params.toString()}`;
+                window.location.href = `{{ route('frontend.reports.download') }}?${params.toString()}`;
                 return;
             }
 
-            params.append('format', format);
-            window.location.href = `/frontend/reports?${params.toString()}`;
+            if (format === 'csv') {
+                window.location.href = `{{ route('frontend.reports.export') }}?${params.toString()}`;
+                return;
+            }
+
+            window.location.href = `{{ route('frontend.reports.index') }}?${params.toString()}`;
         }
 
         document.addEventListener('DOMContentLoaded', function () {

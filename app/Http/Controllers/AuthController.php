@@ -6,12 +6,37 @@ use App\Http\Controllers\Traits\ApiResponseFormatter;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
 {
     use ApiResponseFormatter;
+
+    public function loginWeb(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if (Auth::attempt($validated)) {
+            $request->session()->regenerate();
+            return redirect()->route('frontend.dashboard')->with('success', 'Login berhasil!');
+        }
+
+        return back()->withErrors(['email' => 'Email atau password salah.'])->onlyInput('email');
+    }
+
+    public function logoutWeb(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('frontend.login')->with('success', 'Logout berhasil!');
+    }
 
     public function register(Request $request)
     {
