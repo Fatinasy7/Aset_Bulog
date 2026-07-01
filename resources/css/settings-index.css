@@ -11,6 +11,85 @@
     background: rgba(16, 185, 129, 0.08);
 }
 
+.table-ui td,
+.table-ui th {
+    padding: 1rem 1.15rem;
+    vertical-align: middle;
+}
+
+.table-ui tbody tr {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.table-ui tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table-ui td {
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.table-ui .action-buttons {
+    display: inline-flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.table-cell-action {
+    min-width: 240px;
+    white-space: nowrap;
+}
+
+.btn-sm-ui {
+    min-height: 2.4rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.92rem;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.55);
+    z-index: 50;
+}
+
+.modal-overlay.is-active {
+    display: flex;
+}
+
+.modal-card {
+    width: min(100%, 420px);
+    background: #ffffff;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.16);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.modal-card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+}
+
+.modal-message {
+    margin: 0 0 1.25rem;
+    line-height: 1.75;
+    color: #475569;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .btn-primary-ui {
     background: linear-gradient(135deg, #10b981, #047857);
 }
