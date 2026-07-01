@@ -52,6 +52,19 @@ class ReportExportTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertHeader('content-disposition');
-        $this->assertStringContainsString('aset-report.pdf', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('aset-report-', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('.pdf', $response->headers->get('content-disposition'));
+    }
+
+    public function test_can_download_pdf_report_via_direct_download_route(): void
+    {
+        Asset::factory()->count(2)->create();
+
+        $response = $this->actingAs($this->adminUser, 'sanctum')
+            ->get('/api/reports/assets/download');
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-disposition');
+        $this->assertStringContainsString('.pdf', $response->headers->get('content-disposition'));
     }
 }
