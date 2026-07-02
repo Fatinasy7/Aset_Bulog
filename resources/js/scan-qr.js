@@ -1,27 +1,54 @@
 import jsQR from 'jsqr';
 
-const startCameraButton = document.getElementById('start-camera');
-const stopCameraButton = document.getElementById('stop-camera');
-const videoElement = document.getElementById('qr-video');
-const canvasElement = document.getElementById('qr-canvas');
-const qrInput = document.getElementById('qr_input');
-const qrStatus = document.getElementById('qr-status');
-const qrPreview = document.getElementById('qr-preview');
-const previewNama = document.getElementById('preview-nama');
-const previewKode = document.getElementById('preview-kode');
-const previewJenis = document.getElementById('preview-jenis');
-const qrResult = document.getElementById('qr-result');
-const resultKode = document.getElementById('result-kode');
-const resultNama = document.getElementById('result-nama');
-const resultKondisi = document.getElementById('result-kondisi');
-const resultLokasi = document.getElementById('result-lokasi');
-const resultPic = document.getElementById('result-pic');
-const resultJenis = document.getElementById('result-jenis');
-const resultCode = document.getElementById('qr-result-code');
-const resultDetailLink = document.getElementById('result-detail-link');
-const lookupForm = document.getElementById('qr-lookup-form');
-const resetButton = document.getElementById('reset-qr');
-const cameraPreview = document.getElementById('camera-preview');
+// Initialize DOM elements - declare with let so they can be assigned later
+let startCameraButton;
+let stopCameraButton;
+let videoElement;
+let canvasElement;
+let qrInput;
+let qrStatus;
+let qrPreview;
+let previewNama;
+let previewKode;
+let previewJenis;
+let qrResult;
+let resultKode;
+let resultNama;
+let resultKondisi;
+let resultLokasi;
+let resultPic;
+let resultJenis;
+let resultCode;
+let resultDetailLink;
+let lookupForm;
+let resetButton;
+let cameraPreview;
+
+// Function to initialize DOM elements
+const initializeDOMElements = () => {
+    startCameraButton = document.getElementById('start-camera');
+    stopCameraButton = document.getElementById('stop-camera');
+    videoElement = document.getElementById('qr-video');
+    canvasElement = document.getElementById('qr-canvas');
+    qrInput = document.getElementById('qr_input');
+    qrStatus = document.getElementById('qr-status');
+    qrPreview = document.getElementById('qr-preview');
+    previewNama = document.getElementById('preview-nama');
+    previewKode = document.getElementById('preview-kode');
+    previewJenis = document.getElementById('preview-jenis');
+    qrResult = document.getElementById('qr-result');
+    resultKode = document.getElementById('result-kode');
+    resultNama = document.getElementById('result-nama');
+    resultKondisi = document.getElementById('result-kondisi');
+    resultLokasi = document.getElementById('result-lokasi');
+    resultPic = document.getElementById('result-pic');
+    resultJenis = document.getElementById('result-jenis');
+    resultCode = document.getElementById('qr-result-code');
+    resultDetailLink = document.getElementById('result-detail-link');
+    lookupForm = document.getElementById('qr-lookup-form');
+    resetButton = document.getElementById('reset-qr');
+    cameraPreview = document.getElementById('camera-preview');
+};
 
 let mediaStream = null;
 let barcodeDetector = null;
@@ -244,17 +271,36 @@ const submitLookup = async (query) => {
     }
 };
 
-if (startCameraButton && stopCameraButton && lookupForm) {
-    startCameraButton.addEventListener('click', startCamera);
-    stopCameraButton.addEventListener('click', stopCamera);
-    if (resetButton) {
-        resetButton.addEventListener('click', resetScan);
-    }
+// Initialize and attach event listeners when DOM is ready
+const attachEventListeners = () => {
+    initializeDOMElements();
+    
+    if (startCameraButton && stopCameraButton && lookupForm) {
+        startCameraButton.addEventListener('click', startCamera);
+        stopCameraButton.addEventListener('click', stopCamera);
+        if (resetButton) {
+            resetButton.addEventListener('click', resetScan);
+        }
 
-    lookupForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const query = qrInput.value.trim();
-        hideResult();
-        await submitLookup(query);
-    });
+        lookupForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const query = qrInput.value.trim();
+            hideResult();
+            await submitLookup(query);
+        });
+    } else {
+        console.warn('Scan QR: Not all required DOM elements found', {
+            startCameraButton: !!startCameraButton,
+            stopCameraButton: !!stopCameraButton,
+            lookupForm: !!lookupForm
+        });
+    }
+};
+
+// Attach listeners when DOM is fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachEventListeners);
+} else {
+    // DOM is already loaded
+    attachEventListeners();
 }
