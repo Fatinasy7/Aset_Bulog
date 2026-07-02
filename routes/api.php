@@ -1,40 +1,9 @@
 <?php
 
 use App\Http\Controllers\AssetController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\PicController;
-use App\Http\Controllers\RegisterController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ScanController;
-use App\Http\Controllers\BackupController;
-use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/register', [RegisterController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-
-    Route::apiResource('assets', AssetController::class);
-    Route::post('assets/{asset}/assign-pic', [AssetController::class, 'assignPic']);
-    Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
-    Route::post('assets/{asset}/scan', [ScanController::class, 'store']);
-    Route::get('assets/{asset}/location', [LocationController::class, 'show']);
-
-    Route::get('/pics', [PicController::class, 'index']);
-    Route::post('/pics', [PicController::class, 'store']);
-    Route::put('/pics/{pic}', [PicController::class, 'update']);
-    Route::delete('/pics/{pic}', [PicController::class, 'destroy']);
-
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
-
-    Route::get('/reports/assets', [ReportController::class, 'assets']);
-});
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -46,53 +15,51 @@ Route::middleware('auth:sanctum')->group(function () {
 |
 */
 
-Route::middleware(['sanitize', 'json.api', 'security.headers', 'throttle:10,1'])->group(function () {
-    Route::post('auth/register', [AuthController::class, 'register']);
-    Route::post('auth/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
 });
 
-Route::middleware(['auth:sanctum', 'sanitize', 'json.api', 'security.headers'])->group(function () {
-    Route::post('auth/logout', [AuthController::class, 'logout']);
-    Route::get('/user', function (Request $request) {
-        $user = $request->user();
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role,
-            'createdAt' => $user->created_at ? $user->created_at->toISOString() : null,
-            'updatedAt' => $user->updated_at ? $user->updated_at->toISOString() : null,
-        ]);
-    });
+Route::post('auth/login', function (Request $request) {
+    $credentials = $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string',
+        'role' => 'required|string|in:admin,pic'
+    ]);
 
-    Route::get('assets', [AssetController::class, 'index']);
-    Route::get('assets/{asset}', [AssetController::class, 'show']);
-    Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
-    Route::post('assets/{asset}/scan', [AssetController::class, 'scan']);
-    Route::get('assets/{asset}/location', [AssetController::class, 'location']);
+    $demoUsers = [
+        'admin' => [
+            'username' => 'admin',
+            'password' => 'admin123',
+            'role' => 'admin',
+            'name' => 'Administrator'
+        ],
+        'pic' => [
+            'username' => 'pic',
+            'password' => 'pic123',
+            'role' => 'pic',
+            'name' => 'PIC'
+        ]
+    ];
 
-    Route::get('pics', [PicController::class, 'index']);
-    Route::get('notifications', [NotificationController::class, 'index']);
-    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead']);
+    $user = $demoUsers[$credentials['username']] ?? null;
+    if (!$user || $user['password'] !== $credentials['password'] || $user['role'] !== $credentials['role']) {
+        return response()->json(['message' => 'Invalid username, password, or role'], 401);
+    }
 
-    Route::middleware('role:admin_it,manajemen')->group(function () {
-        Route::get('reports/assets', [ReportController::class, 'index']);
-    });
-
-    Route::middleware('role:admin_it')->group(function () {
-        Route::post('assets', [AssetController::class, 'store']);
-        Route::put('assets/{asset}', [AssetController::class, 'update']);
-        Route::delete('assets/{asset}', [AssetController::class, 'destroy']);
-
-        Route::post('pics', [PicController::class, 'store']);
-        Route::put('pics/{pic}', [PicController::class, 'update']);
-        Route::delete('pics/{pic}', [PicController::class, 'destroy']);
-        Route::post('assets/{asset}/assign-pic', [PicController::class, 'assignPic']);
-
-        Route::post('backups', [BackupController::class, 'store']);
-        Route::get('backups', [BackupController::class, 'index']);
-        Route::get('backups/verify', [BackupController::class, 'verify']);
-    });
-
-    Route::get('dashboard/summary', [DashboardController::class, 'summary']);
+    return response()->json([
+        'access_token' => base64_encode($user['username'] . ':' . now()->timestamp),
+        'user' => [
+            'username' => $user['username'],
+            'role' => $user['role'],
+            'name' => $user['name']
+        ]
+    ]);
 });
+
+Route::post('auth/logout', function () {
+    return response()->json(['message' => 'Logout successful']);
+});
+
+Route::apiResource('assets', AssetController::class);
+Route::post('assets/{asset}/scan', [AssetController::class, 'scan']);
+Route::get('assets/{asset}/qrcode', [AssetController::class, 'qrcode']);
