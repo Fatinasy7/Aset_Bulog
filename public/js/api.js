@@ -22,9 +22,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('currentUser');
-      window.location.href = '/login';
+      try {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('currentUser');
+      } catch (e) {}
+
+      if (window.auth?.logout) {
+        window.auth.logout();
+      } else if (typeof window.showLoginPage === 'function') {
+        window.showLoginPage();
+      } else {
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }

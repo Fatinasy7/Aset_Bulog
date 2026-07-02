@@ -19,7 +19,7 @@ function redirectToLogin() {
   if (typeof window.showLoginPage === 'function') {
     window.showLoginPage();
   } else {
-    window.location.href = '/login';
+    window.location.reload();
   }
 }
 
@@ -74,7 +74,11 @@ function bindLoginForm() {
 
     login(username, password, role)
       .then(() => {
-        window.location.href = '/';
+        if (typeof window.showMainApp === 'function') {
+          window.location.reload();
+        } else {
+          window.location.href = '/';
+        }
       })
       .catch((err) => {
         const message = err?.response?.data?.message || 'Login gagal';

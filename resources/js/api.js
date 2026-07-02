@@ -26,7 +26,14 @@ api.interceptors.response.use(
         localStorage.removeItem('auth_token');
         localStorage.removeItem('currentUser');
       } catch (e) {}
-      window.location.href = '/login';
+
+      if (window.auth?.logout) {
+        window.auth.logout();
+      } else if (typeof window.showLoginPage === 'function') {
+        window.showLoginPage();
+      } else {
+        window.location.reload();
+      }
     }
     return Promise.reject(error);
   }
