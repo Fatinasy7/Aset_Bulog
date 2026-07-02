@@ -4,20 +4,17 @@
 @section('topbar-meta', 'Printer fleet status and ink monitoring')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/printers.css') }}">
+    @vite(['resources/css/printers.css'])
 @endpush
 
 @section('content')
 <section class="page-header">
     <div>
-        <h1 class="page-title">Printer Fleet Status</h1>
-        <p class="page-lead">Real-time monitoring of Lumina Asset Management's global printing infrastructure.</p>
+        <h1 class="page-title">Aset Printer</h1>
     </div>
     <div class="page-actions">
-        <input class="form-control-ui" type="search" placeholder="Search assets, nodes, or locations...">
-        <div class="button-group">
-            <button class="btn-ui btn-secondary-ui" type="button">Filter</button>
-            <button class="btn-ui btn-primary-ui" type="button">Provision Node</button>
+        <div>
+            <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.create', ['jenis' => 'printer']) }}">Tambah Aset</a>
         </div>
     </div>
 </section>
@@ -46,11 +43,12 @@
         <table class="table-ui">
             <thead>
                 <tr>
-                    <th>Node Name</th>
-                    <th>Status</th>
-                    <th>Ink Levels</th>
-                    <th>Paper Supply</th>
-                    <th>Actions</th>
+                    <th class="col-model">Node Name</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-ink">Ink Levels</th>
+                    <th class="col-paper">Paper Supply</th>
+                    <th class="col-lokasi">Lokasi</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,6 +61,13 @@
                         <td>
                             <div class="action-row action-row--compact">
                                 <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.show', $asset) }}">View</a>
+                                <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit</a>
+                                <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" onsubmit="return confirm('Hapus aset ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="redirect_to" value="{{ route('frontend.assets.printers') }}">
+                                    <button type="submit" class="btn-ui btn-danger-ui">Hapus</button>
+                                </form>
                             </div>
                         </td>
                     </tr>

@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Halaman Scan QR Code untuk aset BULOG')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/scan-qr.css') }}">
+    @vite(['resources/css/scan-qr.css'])
 @endpush
 
 @section('content')

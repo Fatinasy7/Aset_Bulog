@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Daftar PIC dan akses ke form tambah/edit')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/pics-index.css') }}">
+    @vite(['resources/css/pics-index.css'])
 @endpush
 
 @section('content')

@@ -42,8 +42,10 @@ class FrontendPageController extends Controller
     public function assetsCreate()
     {
         $pics = User::where('role', 'pic')->orderBy('name')->get();
+        $jenis = request('jenis', 'laptop');
+        $returnRoute = $jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops';
 
-        return view('assets.create', compact('pics'));
+        return view('assets.create', compact('pics', 'jenis', 'returnRoute'));
     }
 
     public function assetsEdit(Asset $asset)

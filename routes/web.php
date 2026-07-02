@@ -34,7 +34,6 @@ Route::controller(FrontendPageController::class)->middleware('auth')->group(func
     Route::get('/frontend/dashboard', 'dashboard')->name('frontend.dashboard');
     Route::get('/frontend/data-laptop', 'dataLaptop')->name('frontend.assets.laptops');
     Route::get('/frontend/data-printer', 'dataPrinter')->name('frontend.assets.printers');
-    Route::get('/frontend/assets', 'assetsIndex')->name('frontend.assets.index');
     Route::get('/frontend/assets/create', 'assetsCreate')->name('frontend.assets.create');
     Route::get('/frontend/assets/{asset}/edit', 'assetsEdit')->name('frontend.assets.edit');
     Route::get('/frontend/assets/detail/{asset}', 'assetShow')->name('frontend.assets.show');
@@ -55,6 +54,7 @@ Route::controller(FrontendPageController::class)->middleware('auth')->group(func
 Route::post('/frontend/assets', [AssetController::class, 'storeWeb'])->name('frontend.assets.store');
 Route::put('/frontend/assets/{asset}', [AssetController::class, 'updateWeb'])->name('frontend.assets.update');
 Route::delete('/frontend/assets/{asset}', [AssetController::class, 'destroyWeb'])->name('frontend.assets.destroy');
+Route::get('/frontend/assets/{asset}/qrcode', [AssetController::class, 'qrcodePublic'])->name('frontend.assets.qrcode');
 
 Route::post('/frontend/pics', [FrontendPageController::class, 'storePic'])->name('frontend.pics.store');
 Route::put('/frontend/pics/{pic}', [FrontendPageController::class, 'updatePic'])->name('frontend.pics.update');

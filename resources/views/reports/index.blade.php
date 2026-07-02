@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Filter, preview, dan export laporan aset')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/reports-index.css') }}">
+    @vite(['resources/css/reports-index.css'])
 @endpush
 
 @section('content')

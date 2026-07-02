@@ -4,7 +4,7 @@
 @section('topbar-meta', 'System configuration dan manajemen pengguna')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/settings-index.css') }}">
+    @vite(['resources/css/settings-index.css'])
 @endpush
 
 @section('content')

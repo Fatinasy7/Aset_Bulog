@@ -1,3 +1,5 @@
+import jsQR from 'jsqr';
+
 const startCameraButton = document.getElementById('start-camera');
 const stopCameraButton = document.getElementById('stop-camera');
 const videoElement = document.getElementById('qr-video');
@@ -24,6 +26,7 @@ const cameraPreview = document.getElementById('camera-preview');
 let mediaStream = null;
 let barcodeDetector = null;
 let scanFrameId = null;
+let useJsQR = false;
 
 const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -36,6 +39,8 @@ const showStatus = (message, variant = 'note') => {
         qrStatus.classList.add('text-danger');
     }
 };
+
+// jsQR is bundled via npm and imported above; no dynamic loader needed.
 
 const showResult = (asset, query) => {
     resultKode.textContent = asset.kode_aset;
@@ -98,23 +103,64 @@ const decodeFrame = async () => {
     }
 
     const canvas = canvasElement;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     canvas.width = videoElement.videoWidth;
     canvas.height = videoElement.videoHeight;
     context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
     try {
-        const results = await barcodeDetector.detect(canvas);
-        if (results.length > 0) {
-            const qrText = results[0].rawValue.trim();
-            if (qrText) {
-                qrInput.value = qrText;
-                await submitLookup(qrText);
-                stopCamera();
-                return;
+        console.debug('decodeFrame start', { hasVideo: !!videoElement, readyState: videoElement?.readyState, barcodeDetector: !!barcodeDetector, useJsQR });
+        if (barcodeDetector) {
+            const results = await barcodeDetector.detect(canvas);
+            console.debug('BarcodeDetector results', results);
+            if (results.length > 0) {
+                const raw = results[0].rawValue.trim();
+                console.debug('Detected raw (BarcodeDetector):', raw);
+                if (raw) {
+                    let lookupQuery = raw;
+
+                    try {
+                        const parsed = JSON.parse(raw);
+                        if (parsed) {
+                            if (parsed.kode_aset) lookupQuery = parsed.kode_aset;
+                            else if (parsed.id) lookupQuery = String(parsed.id);
+                        }
+                    } catch (e) {}
+
+                    qrInput.value = lookupQuery;
+                    console.debug('Lookup query (BarcodeDetector):', lookupQuery);
+                    await submitLookup(lookupQuery);
+                    stopCamera();
+                    return;
+                }
+            }
+        } else if (useJsQR && typeof jsQR === 'function') {
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            console.debug('jsQR result', code);
+            if (code && code.data) {
+                const raw = code.data.trim();
+                console.debug('Detected raw (jsQR):', raw);
+                if (raw) {
+                    let lookupQuery = raw;
+                    try {
+                        const parsed = JSON.parse(raw);
+                        if (parsed) {
+                            if (parsed.kode_aset) lookupQuery = parsed.kode_aset;
+                            else if (parsed.id) lookupQuery = String(parsed.id);
+                        }
+                    } catch (e) {}
+
+                    qrInput.value = lookupQuery;
+                    console.debug('Lookup query (jsQR):', lookupQuery);
+                    await submitLookup(lookupQuery);
+                    stopCamera();
+                    return;
+                }
             }
         }
     } catch (error) {
+        console.error('decodeFrame error', error);
         showStatus('Gagal mendeteksi QR secara otomatis. Silakan gunakan input manual.', 'error');
         stopCamera();
         return;
@@ -140,12 +186,13 @@ const startCamera = async () => {
 
         if ('BarcodeDetector' in window) {
             barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] });
+            scanFrameId = requestAnimationFrame(decodeFrame);
         } else {
-            showStatus('Browser tidak mendukung deteksi QR otomatis. Gunakan input manual.', 'error');
-            return;
+            // Use bundled jsQR as fallback
+            useJsQR = true;
+            showStatus('Memindai menggunakan fallback JS. Arahkan kamera ke QR code aset.', 'success');
+            scanFrameId = requestAnimationFrame(decodeFrame);
         }
-
-        scanFrameId = requestAnimationFrame(decodeFrame);
     } catch (error) {
         showStatus('Tidak dapat mengakses kamera. Periksa izin browser.', 'error');
         startCameraButton.disabled = false;
@@ -162,6 +209,7 @@ const submitLookup = async (query) => {
     const payload = new FormData();
     payload.append('qr_text', query);
     payload.append('_token', getCsrfToken());
+    console.debug('submitLookup payload', query, lookupForm.action);
 
     try {
         const response = await fetch(lookupForm.action, {
@@ -172,9 +220,12 @@ const submitLookup = async (query) => {
             },
         });
 
+        console.debug('lookup response status', response.status);
         if (!response.ok) {
-            const error = await response.json();
-            showStatus(error.message || 'Aset tidak ditemukan.', 'error');
+            let error = null;
+            try { error = await response.json(); } catch (e) { console.error('Failed parse error json', e); }
+            console.debug('lookup error body', error);
+            showStatus((error && error.message) || 'Aset tidak ditemukan.', 'error');
             hideResult();
             return;
         }

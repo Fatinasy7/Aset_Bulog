@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Daftar aset, filter kondisi, dan aksi cepat')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/assets-index.css') }}">
+    @vite(['resources/css/assets-index.css'])
 @endpush
 
 @section('content')
@@ -73,6 +73,7 @@
                             <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" class="inline-form">
                                 @csrf
                                 @method('DELETE')
+                                <input type="hidden" name="redirect_to" value="{{ route($asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops') }}">
                                 <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus</button>
                             </form>
                         </div>

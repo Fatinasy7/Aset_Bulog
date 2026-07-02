@@ -4,7 +4,7 @@
 @section('topbar-meta', isset($pic) ? 'Form edit data PIC' : 'Form tambah data PIC')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/pics-form.css') }}">
+    @vite(['resources/css/pics-form.css'])
 @endpush
 
 @section('content')

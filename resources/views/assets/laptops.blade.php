@@ -1,42 +1,38 @@
 @extends('layouts.app')
 
 @section('title', 'Data Laptop - Lumina Asset')
-@section('topbar-meta', 'Inventory dan status laptop asset management')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/laptops.css') }}">
+    @vite(['resources/css/laptops.css'])
 @endpush
 
 @section('content')
 <section class="page-header">
     <div>
-        <h1 class="page-title">Hardware Inventory</h1>
-        <p class="page-lead">Managing {{ $assets->count() }} active workstations across 4 hubs.</p>
+        <h1 class="page-title">Aset  Laptop</h1>
     </div>
     <div class="page-actions">
-        <input class="form-control-ui" type="search" placeholder="Search by Serial, Model, or User...">
-        <div class="button-group">
-            <button class="btn-ui btn-secondary-ui" type="button">Filter</button>
-            <button class="btn-ui btn-primary-ui" type="button">Export</button>
+        <div>
+            <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.create', ['jenis' => 'laptop']) }}">Tambah Aset</a>
         </div>
     </div>
 </section>
 
 <section class="stat-grid">
     <article class="stat-card">
-        <p class="stat-label">Total Laptops</p>
+        <p class="stat-label">Total Laptop</p>
         <p class="stat-value">{{ $summary['total_assets'] }}</p>
     </article>
     <article class="stat-card">
-        <p class="stat-label">Operational</p>
+        <p class="stat-label">Siap Pakai</p>
         <p class="stat-value">{{ $summary['total_operational'] }}</p>
     </article>
     <article class="stat-card">
-        <p class="stat-label">In Maintenance</p>
+        <p class="stat-label">Dalam Perbaikan</p>
         <p class="stat-value">{{ $summary['total_maintenance'] }}</p>
     </article>
     <article class="stat-card">
-        <p class="stat-label">Critical Issues</p>
+        <p class="stat-label">Kondisi Parah</p>
         <p class="stat-value">{{ $summary['critical_issues'] }}</p>
     </article>
 </section>
@@ -46,12 +42,13 @@
         <table class="table-ui">
             <thead>
                 <tr>
-                    <th>Asset ID</th>
-                    <th>Model</th>
-                    <th>Specs</th>
-                    <th>Assigned To</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th class="col-asset-id">Asset ID</th>
+                    <th class="col-model">Model</th>
+                    <th class="col-specs">Specs</th>
+                    <th class="col-lokasi">Lokasi</th>
+                    <th class="col-assigned">Assigned To</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,12 +57,19 @@
                         <td>{{ $asset->kode_aset }}</td>
                         <td>{{ $asset->nama_aset }}</td>
                         <td>{{ $asset->merk_type }} / {{ $asset->serial_number ?? '-' }}</td>
+                        <td>{{ $asset->lokasi ?? '-' }}</td>
                         <td>{{ $asset->pic_name ?? 'Unassigned' }}</td>
                         <td><span class="badge-ui badge-{{ str_replace(' ', '-', strtolower($asset->kondisi)) }}">{{ $asset->kondisi }}</span></td>
                         <td>
                             <div class="action-row action-row--compact">
                                 <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.show', $asset) }}">View</a>
                                 <a class="btn-ui btn-secondary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit</a>
+                                <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" onsubmit="return confirm('Hapus aset ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="redirect_to" value="{{ route('frontend.assets.laptops') }}">
+                                    <button type="submit" class="btn-ui btn-danger-ui">Hapus</button>
+                                </form>
                             </div>
                         </td>
                     </tr>

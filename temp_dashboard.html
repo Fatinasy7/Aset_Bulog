@@ -1,9 +1,14 @@
-@extends('layouts.auth')
-
-@section('title', 'Login - Aset Bulog')
-
-@section('content')
-<section class="auth-shell__panel">
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="AK7KIOyVC7i9EzIXhgm2anQMaygmEd3OSg2RAeSq">
+    <title>Login - Aset Bulog</title>
+    <link rel="preload" as="style" href="http://127.0.0.1:8000/build/assets/app-Dtapd10F.css" /><link rel="modulepreload" href="http://127.0.0.1:8000/build/assets/app-BVJYYhZV.js" /><link rel="stylesheet" href="http://127.0.0.1:8000/build/assets/app-Dtapd10F.css" /><script type="module" src="http://127.0.0.1:8000/build/assets/app-BVJYYhZV.js"></script>    </head>
+<body>
+    <main class="auth-shell">
+        <section class="auth-shell__panel">
     <div class="auth-card auth-card--login">
         <div class="auth-card__top">
             <div class="auth-card__icon">&lt;/&gt;</div>
@@ -13,12 +18,11 @@
             </div>
         </div>
 
-        <form class="auth-form" action="{{ route('frontend.login.submit') }}" method="POST">
-            @csrf
-
+        <form class="auth-form" action="http://127.0.0.1:8000/frontend/login" method="POST">
+            <input type="hidden" name="_token" value="AK7KIOyVC7i9EzIXhgm2anQMaygmEd3OSg2RAeSq" autocomplete="off">
             <div class="field">
                 <label class="form-label-ui" for="email">@ Work Email</label>
-                <input class="form-control-ui auth-input" type="email" id="email" name="email" placeholder="name@company.com" value="{{ old('email') }}" required>
+                <input class="form-control-ui auth-input" type="email" id="email" name="email" placeholder="name@company.com" value="" required>
             </div>
 
             <div class="field">
@@ -47,4 +51,6 @@
         <p class="surface-note auth-footer">Authorized access only. <a href="#">Contact Admin</a></p>
     </div>
 </section>
-@endsection
+    </main>
+</body>
+</html>

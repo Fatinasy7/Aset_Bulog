@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Ringkasan aset, kondisi, dan aktivitas operasional')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/dashboard.css') }}">
+    @vite(['resources/css/dashboard.css'])
 @endpush
 
 @section('content')

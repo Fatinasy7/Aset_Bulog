@@ -50,22 +50,6 @@ class AssetController extends Controller
         $asset = Asset::create($validated);
         $qrCodePath = $this->generateQrCode($asset);
 
-        $payload = $this->formatAssetPayload($asset, $qrCodePath);
-
-        $payload = json_encode([
-            'id' => $asset->id,
-            'kode_aset' => $asset->kode_aset,
-            'jenis' => $asset->jenis,
-            'nama_aset' => $asset->nama_aset,
-        ]);
-
-        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
-        $path = 'qrcodes/' . $filename;
-        $svg = QrCode::format('svg')->size(400)->generate($payload);
-        Storage::disk('local')->put($path, $svg);
-
-        $asset->update(['qr_code_path' => $path]);
-
         AssetHistory::create([
             'asset_id' => $asset->id,
             'user_id' => Auth::id(),
@@ -74,11 +58,9 @@ class AssetController extends Controller
             'new_value' => json_encode($asset->toArray()),
         ]);
 
-        return response()->json($this->formatAssetPayload($asset), Response::HTTP_CREATED);
-
         $this->recordAudit($asset, 'created', null, null, 'System');
 
-        return response()->json($asset, Response::HTTP_CREATED);
+        return response()->json($this->formatAssetPayload($asset), Response::HTTP_CREATED);
     }
 
     public function show(Asset $asset)
@@ -224,6 +206,24 @@ class AssetController extends Controller
         ]);
     }
 
+    /**
+     * Public web endpoint to return QR image inline so it can be embedded in <img>.
+     */
+    public function qrcodePublic(Asset $asset)
+    {
+        if (! $asset->qr_code_path || ! Storage::disk('local')->exists($asset->qr_code_path)) {
+            abort(404);
+        }
+
+        $fullPath = storage_path('app/' . $asset->qr_code_path);
+        $filename = basename($asset->qr_code_path);
+        $contentType = str_ends_with($filename, '.svg') ? 'image/svg+xml' : 'image/png';
+
+        return response()->file($fullPath, [
+            'Content-Type' => $contentType,
+        ]);
+    }
+
     public function scan(Request $request, Asset $asset)
     {
         $validated = $request->validate([
@@ -327,9 +327,47 @@ class AssetController extends Controller
         }
 
         $asset = Asset::create($validated);
+        // generate and store QR code for this asset
+        $this->generateQrCode($asset);
         $this->recordAudit($asset, 'created', null, null, null, 'System');
 
-        return redirect()->route('frontend.assets.index')->with('success', 'Aset berhasil ditambahkan.');
+        $redirectRoute = $request->input('redirect_to');
+        $allowedRedirects = [
+            'frontend.assets.laptops',
+            'frontend.assets.printers',
+        ];
+
+        if (! in_array($redirectRoute, $allowedRedirects, true)) {
+            $redirectRoute = $validated['jenis'] === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops';
+        }
+
+        return redirect()->route($redirectRoute)->with('success', 'Aset berhasil ditambahkan.');
+    }
+
+    /**
+     * Generate QR code SVG for an asset and store path on the model.
+     * Returns the storage path.
+     */
+    private function generateQrCode(Asset $asset): string
+    {
+        $payload = json_encode([
+            'id' => $asset->id,
+            'kode_aset' => $asset->kode_aset,
+            'jenis' => $asset->jenis,
+            'nama_aset' => $asset->nama_aset,
+        ]);
+
+        $filename = 'asset-' . $asset->id . '-' . time() . '.svg';
+        $path = 'qrcodes/' . $filename;
+
+        $svg = QrCode::format('svg')
+            ->size(400)
+            ->generate($payload);
+
+        Storage::disk('local')->put($path, $svg);
+        $asset->update(['qr_code_path' => $path]);
+
+        return $path;
     }
 
     public function updateWeb(Request $request, Asset $asset)
@@ -368,15 +406,35 @@ class AssetController extends Controller
             }
         }
 
-        return redirect()->route('frontend.assets.index')->with('success', 'Aset berhasil diperbarui.');
+        $redirectRoute = $request->input('redirect_to');
+        $allowedRedirects = [
+            'frontend.assets.laptops',
+            'frontend.assets.printers',
+        ];
+
+        if (! in_array($redirectRoute, $allowedRedirects, true)) {
+            $redirectRoute = $asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops';
+        }
+
+        return redirect()->route($redirectRoute)->with('success', 'Aset berhasil diperbarui.');
     }
 
-    public function destroyWeb(Asset $asset)
+    public function destroyWeb(Request $request, Asset $asset)
     {
         $this->recordAudit($asset, 'deleted', null, null, null, 'System');
         $asset->delete();
 
-        return redirect()->route('frontend.assets.index')->with('success', 'Aset berhasil dihapus.');
+        $redirectRoute = $request->input('redirect_to');
+        $allowedRedirects = [
+            'frontend.assets.laptops',
+            'frontend.assets.printers',
+        ];
+
+        if (! in_array($redirectRoute, $allowedRedirects, true)) {
+            $redirectRoute = $asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops';
+        }
+
+        return redirect()->route($redirectRoute)->with('success', 'Aset berhasil dihapus.');
     }
 
     private function recordAudit(Asset $asset, string $action, ?string $fieldName, ?string $oldValue, ?string $newValue, string $changedBy = 'System'): void

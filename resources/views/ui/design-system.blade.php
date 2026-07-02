@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Pondasi visual: warna, komponen, dan layout dasar')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/design-system.css') }}">
+    @vite(['resources/css/design-system.css'])
 @endpush
 
 @section('content')

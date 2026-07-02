@@ -4,7 +4,7 @@
 @section('topbar-meta', 'Dashboard read-only untuk manajemen BULOG')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ Vite::asset('resources/css/management.css') }}">
+    @vite(['resources/css/management.css'])
 @endpush
 
 @section('content')
