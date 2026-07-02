@@ -14,13 +14,15 @@
     </div>
     <div class="action-row">
         <a class="btn-ui btn-secondary-ui" href="{{ route($asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops') }}">Kembali</a>
-        <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit Aset</a>
-        <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" class="inline-form">
-            @csrf
-            @method('DELETE')
-            <input type="hidden" name="redirect_to" value="{{ route($asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops') }}">
-            <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus Aset</button>
-        </form>
+        @if(auth()->check() && auth()->user()->role === 'admin_it')
+            <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.edit', $asset) }}">Edit Aset</a>
+            <form method="POST" action="{{ route('frontend.assets.destroy', $asset) }}" class="inline-form">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="redirect_to" value="{{ route($asset->jenis === 'printer' ? 'frontend.assets.printers' : 'frontend.assets.laptops') }}">
+                <button class="btn-ui btn-danger-ui" type="submit" onclick="return confirm('Hapus aset ini?')">Hapus Aset</button>
+            </form>
+        @endif
     </div>
 </section>
 

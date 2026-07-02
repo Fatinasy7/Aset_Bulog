@@ -13,7 +13,9 @@
     </div>
     <div class="page-actions">
         <div>
-            <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.create', ['jenis' => 'laptop']) }}">Tambah Aset</a>
+            @if(auth()->check() && auth()->user()->role === 'admin_it')
+                <a class="btn-ui btn-primary-ui" href="{{ route('frontend.assets.create', ['jenis' => 'laptop']) }}">Tambah Aset</a>
+            @endif
         </div>
     </div>
 </section>

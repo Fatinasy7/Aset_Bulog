@@ -58,11 +58,19 @@
                         <a class="sidebar-link {{ request()->routeIs('frontend.dashboard') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard') }}">Dashboard</a>
                         <a class="sidebar-link {{ request()->routeIs('frontend.assets.laptops') ? 'is-active' : '' }}" href="{{ route('frontend.assets.laptops') }}">Data Laptop</a>
                         <a class="sidebar-link {{ request()->routeIs('frontend.assets.printers') ? 'is-active' : '' }}" href="{{ route('frontend.assets.printers') }}">Data Printer</a>
-                        <a class="sidebar-link {{ request()->routeIs('frontend.scan-qr') ? 'is-active' : '' }}" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>
-                        <a class="sidebar-link {{ request()->routeIs('frontend.reports.index') ? 'is-active' : '' }}" href="{{ route('frontend.reports.index') }}">Laporan</a>
-                        <a class="sidebar-link {{ request()->routeIs('frontend.settings') ? 'is-active' : '' }}" href="{{ route('frontend.settings') }}">Pengaturan</a>
-                        <a class="sidebar-link {{ request()->routeIs('frontend.pics.index') ? 'is-active' : '' }}" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
-                        <a class="sidebar-link {{ request()->routeIs('frontend.dashboard.management') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard.management') }}">Dashboard Manajemen</a>
+                        @if(auth()->check() && auth()->user()->role !== 'manajemen')
+                            <a class="sidebar-link {{ request()->routeIs('frontend.scan-qr') ? 'is-active' : '' }}" href="{{ route('frontend.scan-qr') }}">Scan QR Code</a>
+                        @endif
+                        @if(auth()->check() && in_array(auth()->user()->role, ['admin_it', 'manajemen'], true))
+                            <a class="sidebar-link {{ request()->routeIs('frontend.reports.index') ? 'is-active' : '' }}" href="{{ route('frontend.reports.index') }}">Laporan</a>
+                        @endif
+                        @if(auth()->check() && auth()->user()->role === 'admin_it')
+                            <a class="sidebar-link {{ request()->routeIs('frontend.settings') ? 'is-active' : '' }}" href="{{ route('frontend.settings') }}">Pengaturan</a>
+                            <a class="sidebar-link {{ request()->routeIs('frontend.pics.index') ? 'is-active' : '' }}" href="{{ route('frontend.pics.index') }}">Manajemen PIC</a>
+                        @endif
+                        @if(auth()->check() && in_array(auth()->user()->role, ['admin_it', 'manajemen'], true))
+                            <a class="sidebar-link {{ request()->routeIs('frontend.dashboard.management') ? 'is-active' : '' }}" href="{{ route('frontend.dashboard.management') }}">Dashboard Manajemen</a>
+                        @endif
                     </nav>
                 </div>
                 @if(auth()->check())

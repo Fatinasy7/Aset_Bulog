@@ -15,22 +15,27 @@ class DatabaseSeeder extends Seeder
     {
         User::query()->updateOrCreate(
             ['email' => 'admin@bulog.co.id'],
-            ['name' => 'Admin IT', 'password' => bcrypt('password'), 'role' => 'admin', 'phone' => '081200000001']
+            ['name' => 'Admin IT', 'password' => bcrypt('password'), 'role' => 'admin_it', 'phone' => '081200000001']
         );
 
         User::query()->updateOrCreate(
             ['email' => 'andi@bulog.co.id'],
-            ['name' => 'Andi Saputra', 'password' => bcrypt('password'), 'role' => 'pic', 'phone' => '081200000002']
+            ['name' => 'Andi Saputra', 'password' => bcrypt('password'), 'role' => 'user_pic', 'phone' => '081200000002']
         );
 
         User::query()->updateOrCreate(
             ['email' => 'sari@bulog.co.id'],
-            ['name' => 'Sari Wulandari', 'password' => bcrypt('password'), 'role' => 'pic', 'phone' => '081200000003']
+            ['name' => 'Sari Wulandari', 'password' => bcrypt('password'), 'role' => 'user_pic', 'phone' => '081200000003']
         );
 
         User::query()->updateOrCreate(
             ['email' => 'rudi@bulog.co.id'],
-            ['name' => 'Rudi Hartono', 'password' => bcrypt('password'), 'role' => 'pic', 'phone' => '081200000004']
+            ['name' => 'Rudi Hartono', 'password' => bcrypt('password'), 'role' => 'user_pic', 'phone' => '081200000004']
+        );
+
+        User::query()->updateOrCreate(
+            ['email' => 'manager@bulog.co.id'],
+            ['name' => 'Direktur Operasional', 'password' => bcrypt('password'), 'role' => 'manajemen', 'phone' => '081200000005']
         );
 
         if (Asset::count() === 0) {

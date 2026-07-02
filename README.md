@@ -99,23 +99,31 @@ npm run dev
 
 ## Akun Default & Login
 
-### Akun seeder default
-- Email: `admin@bulog.local`
-- Password: `password123`
-- Role: `admin_it`
+### Akun Seeder Default (3 Role)
+
+| Role | Email | Password | Deskripsi |
+|------|-------|----------|-----------|
+| **Admin IT** | `admin@bulog.co.id` | `password` | Full CRUD akses, manage PIC, backup, export report |
+| **PIC** | `andi@bulog.co.id` | `password` | Scan QR, view aset, lihat dashboard |
+| **Manajemen** | `manager@bulog.co.id` | `password` | ⭐ **NEW** - View aset & download laporan (PDF/Excel) |
+
+**Catatan:** Tambahkan akun PIC lainnya: `sari@bulog.co.id` dan `rudi@bulog.co.id`
 
 Aplikasi backend menggunakan endpoint login API:
 
 ```bash
-POST /api/auth/login
-Content-Type: application/json
-{
-  "email": "admin@bulog.local",
-  "password": "password123"
-}
+# Login Admin IT
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@bulog.co.id","password":"password"}'
+
+# Login Manajemen (NEW)
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"manager@bulog.co.id","password":"password"}'
 ```
 
-Jika frontend statis di `public/index.html` belum terhubung sepenuhnya ke backend, gunakan API langsung untuk pengujian.
+**Untuk detail lengkap hak akses per role, lihat:** [AKUN_LOGIN_DOKUMENTASI.md](AKUN_LOGIN_DOKUMENTASI.md)
 
 ## API Utama
 

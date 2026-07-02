@@ -19,7 +19,7 @@ class PicController extends Controller
     {
         $pics = User::whereIn('role', ['user_pic', 'admin_it', 'manajemen'])
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role', 'telepon', 'created_at', 'updated_at']);
+            ->get(['id', 'name', 'email', 'role', 'phone', 'created_at', 'updated_at']);
 
         return response()->json($pics->map(function (User $pic) {
             return [
@@ -27,7 +27,7 @@ class PicController extends Controller
                 'nama' => $pic->name,
                 'jabatan' => $this->mapRole($pic->role),
                 'email' => $pic->email,
-                'telepon' => $pic->telepon,
+                'phone' => $pic->phone,
                 'createdAt' => $pic->created_at?->toISOString(),
                 'updatedAt' => $pic->updated_at?->toISOString(),
             ];
@@ -41,7 +41,7 @@ class PicController extends Controller
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['nullable', 'string', 'min:6'],
             'jabatan' => ['required', 'string', 'max:50'],
-            'telepon' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20'],
         ]);
 
         $user = User::create([
@@ -49,7 +49,7 @@ class PicController extends Controller
             'email' => strtolower($validated['email']),
             'password' => Hash::make($validated['password'] ?? 'Password123!'),
             'role' => $this->normalizeRole($validated['jabatan']),
-            'telepon' => $validated['telepon'] ?? null,
+            'phone' => $validated['phone'] ?? null,
         ]);
 
         return response()->json($this->mapPic($user), Response::HTTP_CREATED);
@@ -62,14 +62,14 @@ class PicController extends Controller
             'email' => ['required', 'email', 'unique:users,email,' . $pic->id],
             'password' => ['nullable', 'string', 'min:6'],
             'jabatan' => ['required', 'string', 'max:50'],
-            'telepon' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20'],
         ]);
 
         $data = [
             'name' => $validated['nama'],
             'email' => strtolower($validated['email']),
             'role' => $this->normalizeRole($validated['jabatan']),
-            'telepon' => $validated['telepon'] ?? $pic->telepon,
+            'phone' => $validated['phone'] ?? $pic->phone,
         ];
 
         if (! empty($validated['password'])) {
@@ -144,7 +144,7 @@ class PicController extends Controller
             'nama' => $user->name,
             'jabatan' => $this->mapRole($user->role),
             'email' => $user->email,
-            'telepon' => $user->telepon,
+            'phone' => $user->phone,
             'createdAt' => $user->created_at?->toISOString(),
             'updatedAt' => $user->updated_at?->toISOString(),
         ];

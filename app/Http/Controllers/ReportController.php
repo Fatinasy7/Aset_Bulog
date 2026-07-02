@@ -45,6 +45,14 @@ class ReportController extends Controller
         return $this->downloadPdf($request);
     }
 
+    /**
+     * Alias untuk index() - digunakan di routes
+     */
+    public function assets(Request $request)
+    {
+        return $this->index($request);
+    }
+
     protected function buildReportQuery(Request $request)
     {
         $query = Asset::query()->with('pic:id,nama,jabatan,email')->orderBy('created_at', 'desc');
